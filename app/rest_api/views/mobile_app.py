@@ -170,7 +170,7 @@ class MobileAppConfigurationAPI(generics.GenericAPIView):
                 "id":
                 1,
                 "demo_video_url":
-                "https://file-examples.com/storage/fee589dbcc6394c129ba7e9/2017/04/file_example_MP4_480_1_5MG.mp4"
+                "https://localvoice.pythonanywhere.com/assets/sample-mp4-file-small.mp4"
             }
         })
         data = self.serializer_class(MobileAppConfiguration.objects.first(),
