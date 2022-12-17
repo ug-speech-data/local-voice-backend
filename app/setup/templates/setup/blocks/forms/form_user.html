@@ -1,0 +1,95 @@
+<form action="{% url 'setup:change_user' %}" class="needs-validation my-4" method="POST" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="user_id" value="{{user.id}}">
+    <div class="form-group mt-3">
+        <label for="username">Username <span class="text text-danger">*</span></label>
+        <input class="form-control" placeholder="johndoe" {% if user %} disabled {% endif %} required name="username"
+            type="text" id="username" value="{{user.username}}">
+        <div class="invalid-feedback">
+            Please this field is required.
+        </div>
+    </div>
+
+    <div class="form-group mt-3">
+        <label for="surname">Surname <span class="text text-danger">*</span></label>
+        <input class="form-control" placeholder="Mensah" value="{{user.surname}}" type="text" name="surname"
+            id="surname" required>
+        <div class="invalid-feedback">
+            Please this field is required.
+        </div>
+    </div>
+
+    <div class="form-group mt-3">
+        <label for="other_names">Other Names <span class="text text-danger">*</span></label>
+        <input class="form-control" placeholder="Mensah" value="{{user.other_names}}" type="text" name="other_names"
+            id="other_names" required>
+        <div class="invalid-feedback">
+            Please this field is required.
+        </div>
+    </div>
+
+    <div class="form-group mt-3">
+        <label for="phone">Phone<span class="text text-danger">*</span></label>
+        <input class="form-control" minlength="10" maxlength="10" placeholder="0240000000" value="{{user.phone}}"
+            type="text" name="phone" id="phone" required>
+        <div class="invalid-feedback">
+            Please enter a valid 10 digit phone number.
+        </div>
+    </div>
+
+    <div class="form-group mt-3">
+        <label for="groups">Group/Role</label>
+        <br>
+        <small class="text text-info">Hold down Ctrl/Cmd to select multiple.</small>
+        <select class="form-select" name="groups" id="groups" multiple aria-label="multiple select groups/roles">
+            {% for role in roles %}
+            <option value="{{role.id}}" {% if role in user.groups.all %}selected{% endif %}>{{role.name}}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group mt-3">
+        <label for="region">Region <span class="text text-danger">*</span></label>
+        <select name="region" id="region" class="form-control" required>
+            <option value="">---Click to select region---</option>
+            <option value="AHAFO" {% if user.region == 'AHAFO' %}selected{%endif%}>AHAFO</option>
+            <option value="ASHANTI" {% if user.region == 'ASHANTI' %}selected{%endif%}>ASHANTI</option>
+            <option value="BONO EAST" {% if user.region == 'BONO EAST' %}selected{%endif%}>BONO EAST</option>
+            <option value="BRONG AHAFO" {% if user.region == 'BRONG AHAFO' %}selected{%endif%}>BRONG AHAFO</option>
+            <option value="CENTRAL" {% if user.region == 'CENTRAL' %}selected{%endif%}>CENTRAL</option>
+            <option value="EASTERN" {% if user.region == 'EASTERN' %}selected{%endif%}>EASTERN</option>
+            <option value="GREATER ACCRA" {% if user.region == 'GREATER ACCRA' %}selected{%endif%}>GREATER ACCRA</option>
+            <option value="NORTH EAST" {% if user.region == 'NORTH EAST' %}selected{%endif%}>NORTH EAST</option>
+            <option value="NORTHERN" {% if user.region == 'NORTHERN' %}selected{%endif%}>NORTHERN</option>
+            <option value="OTI" {% if user.region == 'OTI' %}selected{%endif%}>OTI</option>
+            <option value="SAVANNAH" {% if user.region == 'SAVANNAH' %}selected{%endif%}>SAVANNAH</option>
+            <option value="UPPER EAST" {% if user.region == 'UPPER EAST' %}selected{%endif%}>UPPER EAST</option>
+            <option value="UPPER WEST" {% if user.region == 'UPPER WEST' %}selected{%endif%}>UPPER WEST</option>
+            <option value="WESTERN" {% if user.region == 'WESTERN' %}selected{%endif%}>WESTERN</option>
+            <option value="WESTERN NORTH" {% if user.region == 'WESTERN NORTH' %}selected{%endif%}>WESTERN NORTH</option>
+            <option value="VOLTA" {% if user.region == 'VOLTA' %}selected{%endif%}>VOLTA</option>
+        </select>
+    </div>
+
+    <h6 class="text text-primary mt-5">{% if user %}CHANGE{% else %}SET{% endif %} PASSWORD</h6>
+    <div class="form-group">
+        <label for="name">Password <span class="text text-danger">*</span></label>
+        <input class="form-control" placeholder="**********" type="password" name="password" id="password"
+            {% if not user %}required{% endif %}>
+        <div class="invalid-feedback">
+            Please this field is required.
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="name">Confirm Password <span class="text text-danger">*</span></label>
+        <input class="form-control" placeholder="**********" type="password" name="conf_password" id="password"
+            {% if not user %}required{% endif %}>
+        <div class="invalid-feedback">
+            Please this field is required.
+        </div>
+    </div>
+
+    <div class="form-group my-3">
+        <button type="submit" class="btn btn-primary py-2 px-4">Submit</button>
+    </div>
+</form>

@@ -1,0 +1,219 @@
+{% extends 'templates/dashboard/base.html' %}
+{% block pagetitle %}Profile{%endblock%}
+{% block active-sidebar-item-id %}my-profile{%endblock%}
+
+{% block breadcrum %}
+<a href="/" class="item">Dashboard <i class="bi bi-chevron-compact-right"></i></a>
+<a class="item">Profile <i class="bi bi-chevron-compact-right"></i></a>
+{% endblock %}
+
+{% block content %}
+<div class="col-md-10 mx-auto col-11">
+    <div class="col-md-12 col-12 mx-auto">
+        <h4 class="mt-2">Hi, {{request.user.display_name}} <i>!</i></h4>
+
+        {% if not request.user.phone_verified %}
+        <div class="col-xl-6">
+            <div class="alert alert-danger alert-dismissible fade show py-3 mt-1" role="alert">
+                <strong>Attention!</strong>
+                <span>Please your number has not been verified. You will not be able to receive sms notifications if it
+                    is not verified.
+                    <form action="{% url 'accounts:send_otp' %}" class="d-inline" method="post">
+                        {% csrf_token %}
+                        Click <button type="submit" class="btn btn-sm btn-danger">here</button> to
+                        verified now.
+                    </form>
+                </span>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card-shadow">
+                    <div class="d-flex justify-content-center">
+                        <img src="{{request.user.profile_picture}}" class="profile-img" height="100"
+                            alt="{{request.user.get_name}}">
+                    </div>
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <label class="d-flex justify-content-center align-items-center" for="photo"
+                            style="background-color: #f0f0f0; height: 5em; width: 100%; border: 1px dashed gray; cursor: pointer;">
+                            <p class="chosen-file-name">Upload New Image</p>
+                            <input type="file" class="file-input form-control d-none" name="photo" id="photo">
+                        </label>
+                        <p class="text-end"><button type="submit" class="btn my-2 btn-sm btn-primary">Save</button></p>
+                    </form>
+                </div>
+                <div class="card-shadow">
+                    <div class="col-12">
+                        <h5 class="mt-2">Change Password</h5>
+                    </div>
+                    <form action="{% url 'accounts:change_password' %}" method="post" class="needs-validation"
+                        novalidate>
+                        {% csrf_token %}
+                        <div class="form-group col-md-12 mb-3">
+                            <label for="password">Current Password</label>
+                            <input type="password" class="form-control" name="current_password" required>
+                        </div>
+
+                        <div class="col-12 row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="password">Password</label>
+                                <input type="password" class="form-control" name="new_password" required minlength="5">
+                                <div class="invalid-feedback">
+                                    Please password should have a minimum 5 characters.
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="confirm_password">Confirm Password</label>
+                                <input type="password" class="form-control" name="confirm_password" required>
+                                <div class="invalid-feedback">
+                                    Please enter a valid password.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group col-12 mb-3 d-flex justify-content-end">
+                            <button type="submit" class="btn btn-sm btn-primary">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card-shadow">
+                    <div class="col-12">
+                        <h5 class="mt-2">Biography</h5>
+                    </div>
+                    <form action="" method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="col-12 row">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="email_address">Username</label>
+                                <input type="text" class="form-control" type="text" disabled
+                                    value="{{request.user.username}}">
+                            </div>
+
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="title">Title</label>
+                                <input type="text" class="form-control" type="text" name="title"
+                                    value="{{request.user.title}}">
+                                <div class="invalid-feedback" required>
+                                    Please enter a valid title.
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="surname">Surname</label>
+                                <input type="text" class="form-control" name="surname" value="{{request.user.surname}}"
+                                    required>
+                                <div class="invalid-feedback">
+                                    Please enter a valid surname.
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="other_names">Other Names</label>
+                                <input type="text" class="form-control" name="other_names"
+                                    value="{{request.user.other_names}}" required>
+                                <div class="invalid-feedback">
+                                    Please enter a valid surname.
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="email_address">Email Address</label>
+                                <input class="form-control" name="email_address" type="email"
+                                    value="{{request.user.email_address}}" required>
+                                <div class="invalid-feedback">
+                                    Please enter a valid email address.
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="phone">Phone
+                                    {% if request.user.phone_verified %}
+                                    <span class="text text-success"><i class="bi bi-check-circle"></i> verified</span>
+                                    {% else %}
+                                    <span class="text text-danger"><i class="bi bi-x-lg"></i> not verified</span>
+                                    {% endif %}
+                                </label>
+                                <i class="bi-bi-circle"></i>
+                                {% if request.user.phone_verified %}
+                                <p class="p-0 m-0 text-primary">
+                                    <small>You may contact the administrator to change your
+                                        verified phone number.
+                                    </small>
+                                </p>
+                                {% endif %}
+                                <input {% if request.user.phone_verified %} disabled {% endif %} name="phone"
+                                    type="text" class="form-control" value="{{request.user.phone}}" required
+                                    minlength="10" maxlength="10">
+                                <div class="invalid-feedback">
+                                    Please enter a valid 10-digit phone number.
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="region">Region</label>
+                                <select name="region" id="region" class="form-control" required>
+                                    <option value="">Select Region</option>
+                                    {% for region in regions %}
+                                    <option value="{{region}}"
+                                        {% if request.user.region == region %}selected{% endif %}>{{region}}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please enter a valid 10-digit phone number.
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="gender">Gender</label>
+                                <select name="gender" id="gender" class="form-control" required>
+                                    <option>---Select----</option>
+                                    <option value="Male" {% if request.user.gender == 'Male' %}selected {% endif %}>Male</option>
+                                    <option value="Female"{% if request.user.gender == 'Female' %}selected {% endif %}>Female</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please enter a valid 10-digit phone number.
+                                </div>
+                            </div>
+
+                            <div class="form-group col-12 mb-3">
+                                <label for="display_name">Display Name</label>
+                                <p class="p-0 m-0 text-primary"><small><i class="bi bi-info-circle"></i>
+                                        This is how your name will be displayed on the documents sign.</small></p>
+                                <input type="text" class="form-control" name="display_name"
+                                    placeholder="e.g., ANTHONY ARTHUR/SUPT" value="{{request.user.display_name}}"
+                                    required>
+                                <div class="invalid-feedback">
+                                    Please enter a valid name
+                                </div>
+                            </div>
+
+                            <div class="form-group col-12 mb-3">
+                                <label for="position">Position/Role</label>
+                                <input type="text" class="form-control" name="position"
+                                    placeholder="e.g., SUPT/PENSIONS" value="{{request.user.position}}" required>
+                                <div class="invalid-feedback">
+                                    Please enter a valid name
+                                </div>
+                            </div>
+
+                            <div class="form-group col-12 mb-3 d-flex justify-content-end">
+                                <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="form-group col-12 mb-3">
+            <button type="button" class="btn btn-sm btn-primary" onclick="history.back()"><i
+                    class="bi bi-arrow-left"></i> Back</button>
+        </div>
+    </div>
+</div>
+</div>
+{%endblock%}

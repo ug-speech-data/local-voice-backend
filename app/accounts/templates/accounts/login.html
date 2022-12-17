@@ -1,0 +1,49 @@
+{% extends 'templates/accounts/base_template.html' %}
+{% block page_title %}Login{% endblock %}
+
+{% load static %}
+
+{% block content %}
+<div
+    class="col-md-6 col-lg-3 card-shadow col-10  p-5 bg-white mx-auto h-100 mt-5 d-flex justify-content-center align-items-center">
+    <section>
+        <form class="form needs-validation" method="POST" novalidate>
+            {% csrf_token %}
+            <img class="mx-auto d-block" src="{% static 'images/logo.png' %}" alt="Site Logo" height="100">
+            <h6 class="text text-center my-3 font-weight-normal">Please sign in.</h6>
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{message.tags}} alert-dismissible fade show" role="alert">
+                {{message}}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <div class="form-group my-3">
+                <input type="email" id="email_address" name="email_address" value="{{email_address}}" class="form-control py-2"
+                    placeholder="Email Address" required autofocus>
+                <div class="invalid-feedback">
+                    Please a valid email address.
+                </div>
+            </div>
+
+            <div class="form-group my-3">
+                <input type="password" id="password" name="password" value="{{password}}" class="form-control  py-2"
+                    placeholder="Password" required>
+                <div class="invalid-feedback">
+                    Please enter your password.
+                </div>
+            </div>
+
+            <div class="form-group d-flex justify-content-center my-3">
+                <button class="btn btn-sm btn-primary" type="submit">Sign in</button>
+            </div>
+        </form>
+
+        <p class="m-0 p-0 text-primary text-center">Forgot your password?</p>
+        <p class="m-0 p-0 text-center"><a href="{% url 'accounts:reset_password' %}"
+                class="btn btn-sm btn-outline-primary">Reset password.</a></p>
+    </section>
+</div>
+{% endblock %}

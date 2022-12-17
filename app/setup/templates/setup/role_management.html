@@ -1,0 +1,53 @@
+{% extends 'templates/dashboard/base.html' %}
+<title>{% block pagetitle %}Setup | Edit Role{%endblock%}</title>
+
+{% block breadcrum %}
+<a href="{% url 'dashboard:index' %}" class="item">Home <i class="bi bi-chevron-compact-right"></i></a>
+<a href="{% url 'setup:index' %}" class="item">Setup <i class="bi bi-chevron-compact-right"></i></a>
+<a href="" class="item">Role Management<i class="bi bi-chevron-compact-right"></i></a>
+{%endblock%}
+
+{% block content %}
+
+<div class="row col-md-11 mx-auto">
+    <div class="card-shadow">
+        <div>
+            <h6>ROLE MANAGEMENT</h6>
+            <p class="text text-muted">{{role.name}}</p>
+        </div>
+
+        <form action="" method="POST">
+            {% csrf_token %}
+            <div class="col-md-6 mx-auto" style="max-height: 60vh; overflow-y: auto;">
+                <table class="table table-sm">
+                    <thead style="position: sticky; top: 0; background-color: white;">
+                        <tr>
+                            <th>PERMISSION NAME</th>
+                            <th class="text text-center">GRANTED</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for permission in permissions %}
+                        <tr>
+                            <td>{{permission.name}}</td>
+                            <td class="text text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions" value="{{permission.codename}}"
+                                    {% if permission in role.permissions.all %}checked{% endif %}>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-md-6 my-3 mx-auto">
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-12 my-3 d-flex justify-content-start">
+        <a href="{% url 'setup:index' %}" class="btn btn-primary"><i class="bi bi-arrow-left"></i> Back</a>
+    </div>
+</div>
+{% endblock %}

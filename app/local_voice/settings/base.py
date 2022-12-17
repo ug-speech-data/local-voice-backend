@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from pathlib import Path
 
+from django.contrib import messages
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -60,8 +62,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'knox',
     'corsheaders',
+    
     'accounts.apps.AccountsConfig',
     'rest_api.apps.RestApiConfig',
+    'dashboard.apps.DashboardConfig',
+    'setup.apps.SetupConfig'
 ]
 
 MIDDLEWARE = [
@@ -79,7 +84,7 @@ ROOT_URLCONF = 'local_voice.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "dist"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -149,9 +154,19 @@ STATIC_ROOT = BASE_DIR / 'staticfiles/'
 MEDIA_ROOT = BASE_DIR / 'assets/'
 MEDIA_URL = '/assets/'
 
-STATICFILES_DIRS = []
+STATICFILES_DIRS = [
+    BASE_DIR / "dist",
+    BASE_DIR / "static",
+]
+
+
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger',
+    50: 'critical',
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+ARKESEL_API = os.environ.get("ARKESEL_API")

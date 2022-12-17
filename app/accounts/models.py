@@ -1,8 +1,16 @@
+import logging
+from random import sample
+
+import requests
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.utils import timezone
 
 from .managers import UserManager
+from setup.models import SysConfig
+
+logger = logging.getLogger("app")
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -50,3 +58,55 @@ class Participant(models.Model):
 
     def __str__(self) -> str:
         return str(self.id)
+
+
+class Otp(models.Model):
+
+    def get_pin():
+        return "".join(
+            sample(["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"], 6))
+
+    address = models.CharField(max_length=100)
+    pin = models.CharField(max_length=10, default=get_pin)
+    duration = models.IntegerField(default=3)
+    created_at = models.DateTimeField(default=timezone.now)
+    delivered = models.BooleanField(default=False)
+
+    def validate(self, pin):
+        return not self.expired() and pin == self.pin
+
+    def send_sms(self):
+        number = self.address
+        config = SysConfig.objects.first()
+        sender_id = config.sms_sender_id
+        api_key = config.api_key or settings.ARKESEL_API
+        message = f"Your authorization PIN/OTP is {self.pin}"
+        url = f"https://sms.arkesel.com/sms/api?action=send-sms&api_key={api_key}&to={number}&from={sender_id}&sms={message}"
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                self.delivered = True
+                self.save()
+                return True
+        except Exception as e:
+            logger.error(str(e))
+        return False
+
+    def get_time_left(self):
+        return max(
+            0.01,
+            round((self.created_at + timedelta(minutes=self.duration) -
+                   timezone.now()).total_seconds(), 2))
+
+    def expired(self):
+        return timezone.now() > self.created_at + timedelta(
+            minutes=self.duration)
+
+
+class ActivityLog(models.Model):
+    username = models.CharField(max_length=100)
+    action = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return "%s %s" % (self.username, self.action)

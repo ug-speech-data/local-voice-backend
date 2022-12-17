@@ -1,0 +1,46 @@
+{% extends 'templates/dashboard/base.html' %}
+{% block pagetitle %}Profile{%endblock%}
+{% block active-sidebar-item-id %}my-profile{%endblock%}
+
+{% block breadcrum %}
+<a href="/" class="item">Dashboard <i class="bi bi-chevron-compact-right"></i></a>
+<a class="item">Profile <i class="bi bi-chevron-compact-right"></i></a>
+{% endblock %}
+
+{% block content %}
+<div class="col-md-10 mx-auto col-11">
+    <div class="col-md-12 col-12 mx-auto">
+        <div class="row">
+            <div class="col-md-6 col-lg-5 mx-auto">
+                <div class="card-shadow">
+                    <form method="POST" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <p class="text text-center">A PIN has been sent to your number: <span
+                                class="badge bg-primary">{{otp.address}}</span></p>
+                        <div class="d-flex">
+                            <div class="col-10">
+                                <input type="text" name="pin" class="form-control" placeholder="Enter OTP" required>
+                                <div class="invalid-feedback">
+                                    Please enter your code here.
+                                </div>
+                            </div>
+                            <div class="col-2 d-flex">
+                                <button type="submit" class="btn btn-sm btn-primary">Submit</button>
+                            </div>
+                        </div>
+                    </form>
+                    <form class="{% url 'accounts:send_otp' %}" method="POST">
+                        {% csrf_token %}
+                        <div class="form-group my-2">
+                            Your PIN expires in <span class="count-down text-info" data-start="{{otp.get_time_left}}"
+                                data-target="#resend-btn">{{otp.duration}}</span> minute(s).
+                            <button type="submit" class="btn btn-sm btn-primary" disabled
+                                id="resend-btn">Resend</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

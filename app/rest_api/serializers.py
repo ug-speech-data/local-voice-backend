@@ -1,8 +1,7 @@
+from accounts.models import Participant, User
 from django.contrib.auth import authenticate
-from rest_framework import serializers
-
-from accounts.models import User, Participant
 from rest_api.models import MobileAppConfiguration
+from rest_framework import serializers
 
 
 class UserSerializer(serializers.ModelSerializer):
