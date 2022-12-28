@@ -7,8 +7,9 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.utils import timezone
 
-from .managers import UserManager
 from setup.models import SysConfig
+
+from .managers import UserManager
 
 logger = logging.getLogger("app")
 

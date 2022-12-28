@@ -1,5 +1,5 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 
 
 # General system config table - only one row.
@@ -27,4 +27,9 @@ class SetupPerms(models.Model):
         # and "view" default permissions
         permissions = [
             ('manage_setup', 'Can manage system setup'),
+            ("validate_image", "Can validate image"),
+            ("validate_audio", "Can validate audio"),
+            ("transcribe_audio", "Can transcribe audio"),
+            ("validate_transcription", "Can validate transcription"),
+            ("manage_collected_data", "Can manage collected data"),
         ]

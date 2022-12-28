@@ -1,6 +1,6 @@
 from django.contrib import admin
-from setup.models import SysConfig
 
+from setup.models import SysConfig
 
 # Default
 try:

@@ -1,8 +1,8 @@
 from django import forms
 from django.contrib.auth.models import Group
+from notifications.models import SmsTemplate
 
 from accounts.models import User
-from notifications.models import SmsTemplate
 from setup.models import (ApplicationDocumentType, Rank, Relationship,
                           RetirementReason)
 

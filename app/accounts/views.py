@@ -1,6 +1,5 @@
 from asyncio.log import logger
 
-from accounts.models import Otp, User
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -8,6 +7,8 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
+
+from accounts.models import Otp, User
 from local_voice.utils.functions import get_errors_from_form
 
 

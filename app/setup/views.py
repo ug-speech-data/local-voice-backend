@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 
 from accounts.models import User
-from setup.forms import (GroupForm, UserEditForm, UserForm)
+from setup.forms import GroupForm, UserEditForm, UserForm
 from setup.mixins import CreateUpdateMixin, DeletionMixin
 from setup.models import SysConfig
 
