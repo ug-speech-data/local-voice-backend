@@ -27,4 +27,6 @@ urlpatterns += [
     path("categories/", views.CategoriesAPI.as_view()),
     path("groups/", views.GroupsAPI.as_view()),
     path("permissions/group/<int:group_id>/", views.PermissionsAPI.as_view()),
+    path("users/", views.UsersAPI.as_view()),
+    path("configurations/", views.AppConfigurationAPI.as_view()),
 ]

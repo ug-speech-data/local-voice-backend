@@ -1,10 +1,11 @@
 from django.contrib import admin
 
-from setup.models import SysConfig
+from .models import AppConfiguration
 
+admin.site.register(AppConfiguration)
 # Default
 try:
-    if not SysConfig.objects.all():
-        SysConfig.objects.create()
+    if not AppConfiguration.objects.all():
+        AppConfiguration.objects.create()
 except Exception as e:
     pass

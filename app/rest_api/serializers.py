@@ -4,12 +4,16 @@ from rest_framework import serializers
 
 from accounts.models import Participant, User
 from dashboard.models import Category
-from rest_api.models import MobileAppConfiguration
+from setup.models import AppConfiguration
 
 
 class UserSerializer(serializers.ModelSerializer):
     photo_url = serializers.SerializerMethodField()
     short_name = serializers.SerializerMethodField()
+    groups = serializers.SerializerMethodField()
+
+    def get_groups(self, obj):
+        return obj.groups.values_list("name", flat=True)
 
     def get_photo_url(self, obj):
         request = self.context.get("request")
@@ -32,6 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
             "phone",
             "surname",
             "other_names",
+            "groups",
         ]
 
 
@@ -92,7 +97,7 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
         return ""
 
     class Meta:
-        model = MobileAppConfiguration
+        model = AppConfiguration
         exclude = ["demo_video"]
 
 
@@ -119,4 +124,18 @@ class GroupPermissionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Permission
+        fields = "__all__"
+
+
+class AppConfigurationSerializer(serializers.ModelSerializer):
+    demo_video_url = serializers.SerializerMethodField()
+
+    def get_demo_video_url(self, obj):
+        request = self.context.get("request")
+        if obj.demo_video:
+            return request.build_absolute_uri(obj.demo_video.url)
+        return ""
+
+    class Meta:
+        model = AppConfiguration
         fields = "__all__"

@@ -1,21 +1,21 @@
 from django.conf import settings
 from django.db import models
 
+#yapf: disable
 
 # General system config table - only one row.
-class SysConfig(models.Model):
+class AppConfiguration(models.Model):
     DEFAULT_API_KEY = settings.ARKESEL_API or ""
-    sms_sender_id = models.CharField(max_length=11,
-                                     unique=True,
-                                     default="GHPOLPEN")
-    api_key = models.CharField(max_length=50,
-                               unique=True,
-                               default=DEFAULT_API_KEY)
+    demo_video = models.FileField(upload_to='demovideo/', null=True, blank=True)
+    sms_sender_id = models.CharField(max_length=11, unique=True, default="LOCALVOICE")
+    api_key = models.CharField(max_length=50, unique=True, default=DEFAULT_API_KEY)
     send_sms = models.BooleanField(default=True)
-
-    def __str__(self) -> str:
-        return self.name
-
+    max_background_noise_level = models.IntegerField(default=100)
+    max_category_for_image = models.IntegerField(default=5)
+    required_image_validation_count = models.IntegerField(default=3)
+    required_audio_validation_count = models.IntegerField(default=3)
+    required_transcription_validation_count = models.IntegerField(default=3)
+    required_image_description_count = models.IntegerField(default=3)
 
 # Just for permissions
 class SetupPerms(models.Model):

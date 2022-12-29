@@ -7,7 +7,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.utils import timezone
 
-from setup.models import SysConfig
+from setup.models import AppConfiguration
 
 from .managers import UserManager
 
@@ -78,7 +78,7 @@ class Otp(models.Model):
 
     def send_sms(self):
         number = self.address
-        config = SysConfig.objects.first()
+        config = AppConfiguration.objects.first()
         sender_id = config.sms_sender_id
         api_key = config.api_key or settings.ARKESEL_API
         message = f"Your authorization PIN/OTP is {self.pin}"

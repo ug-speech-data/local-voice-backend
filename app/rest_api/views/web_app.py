@@ -7,6 +7,8 @@ from rest_framework.response import Response
 
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
+from rest_api.serializers import AppConfigurationSerializer
+from local_voice.utils.functions import get_errors_from_form
 from dashboard.forms import CategoryForm
 from dashboard.models import Category
 from local_voice.utils.functions import relevant_permission_objects
@@ -15,6 +17,7 @@ from rest_api.serializers import (CategorySerializer,
                                   GroupPermissionSerializer, GroupSerializer,
                                   UserSerializer)
 from rest_api.views.mixins import SimpleCrudMixin
+from setup.models import AppConfiguration
 
 
 class GetImagesToValidate(generics.GenericAPIView):
@@ -148,9 +151,9 @@ class SubmitTranscription(generics.GenericAPIView):
 
 class CategoriesAPI(SimpleCrudMixin):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    add_permissions = ["setup.add_category", "setup.manage_setup"]
-    change_permissions = ["setup.change_category", "setup.manage_setup"]
-    delete_permissions = ["setup.delete_category", "setup.manage_setup"]
+    add_permissions = ["dashboard.add_category", "setup.manage_setup"]
+    change_permissions = ["dashboard.change_category", "setup.manage_setup"]
+    delete_permissions = ["dashboard.delete_category", "setup.manage_setup"]
 
     serializer_class = CategorySerializer
     model_class = Category
@@ -205,15 +208,82 @@ class PermissionsAPI(SimpleCrudMixin):
         group.permissions.set(permissions)
         return Response({"message": "Permissions updated successfully"})
 
+
 class UsersAPI(SimpleCrudMixin):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    add_permissions = ["setup.add_user", "setup.manage_setup"]
-    change_permissions = ["setup.change_user", "setup.manage_setup"]
-    delete_permissions = ["setup.delete_user", "setup.manage_setup"]
+    add_permissions = ["accounts.add_user", "setup.manage_setup"]
+    change_permissions = ["accounts.change_user", "setup.manage_setup"]
+    delete_permissions = ["accounts.delete_user", "setup.manage_setup"]
 
     serializer_class = UserSerializer
     model_class = User
     form_class = UserForm
     response_data_label = "user"
     response_data_label_plural = "users"
-    
+
+    def post(self, request, *args, **kwargs):
+        obj_id = request.data.get("id")
+        new_password = request.data.get("password")
+        group_names = request.data.get("groups")
+        groups = Group.objects.filter(name__in=group_names)
+        obj = None
+        if obj_id:
+            obj = self.model_class.objects.filter(id=obj_id).first()
+        form = self.form_class(request.data, instance=obj)
+        if form.is_valid():
+            user = form.save()
+            if new_password and len(new_password) > 0:
+                user.set_password(new_password)
+            user.groups.set(groups)
+            user.save()
+            return Response({
+                "message":
+                f"{self.model_class.__name__} saved successfully",
+                self.response_data_label:
+                self.serializer_class(form.instance).data,
+            })
+        return Response({
+            "message": f"{self.model_class.__name__} could not be saved",
+            "error_message": get_errors_from_form(form),
+        })
+
+
+class AppConfigurationAPI(generics.GenericAPIView):
+    """
+    Manage app configuration.
+    """
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.manage_setup"]
+    serializer_class = AppConfigurationSerializer
+
+    def get(self, request, *args, **kwargs):
+        configuration = AppConfiguration.objects.first()
+        data = self.serializer_class(configuration,
+                                     context={
+                                         "request": request
+                                     }).data
+        return Response({"configurations": data})
+
+    def post(self, request, *args, **kwargs):
+        configuration = AppConfiguration.objects.first()
+        try:
+            for key, value in request.data.items():
+                print(key, value, "key value")
+                if not value: continue
+                if hasattr(configuration, key):
+                    setattr(configuration, key, value)
+            configuration.save()
+        except Exception as e:
+            return Response({
+                "error_message": str(e),
+                "message": "Configuration could not be updated"
+            })
+
+        return Response({
+            "message":
+            "Configuration updated successfully",
+            "configurations":
+            self.serializer_class(configuration, context={
+                "request": request
+            }).data
+        })
