@@ -7,12 +7,29 @@ from local_voice.utils.functions import get_errors_from_form
 QUERY_PAGE_SIZE = 50
 
 
+def apply_filters(objects, filters):
+    print("filters", filters)
+    filters = filters.split(",")
+    for filter in filters:
+        filter = filter.split(":")
+        if len(filter) == 2:
+            objects = objects.filter(**{filter[0]: filter[1]})
+    print("objects",objects)
+    return objects
+
+
 class SimpleCrudMixin(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
+        filters = request.GET.get("filters")
         objects = self.model_class.objects.all().order_by("-id")
-        page = int(request.GET.get("page", 1))
-        page_size = int(request.GET.get("page_size", QUERY_PAGE_SIZE))
+        if filters:
+            objects = apply_filters(objects, filters)
+
+        page = request.GET.get("page", "")
+        page_size = request.GET.get("page_size", "")
+        page = int(page) if page.isnumeric() else 1
+        page_size = int(page_size) if page_size.isnumeric() else QUERY_PAGE_SIZE
 
         paginated_objects = objects[(page - 1) * page_size:page * page_size]
         prev_page = page - 1 if page > 1 else None
@@ -22,7 +39,7 @@ class SimpleCrudMixin(generics.GenericAPIView):
         #yapf: disable
         response_data = {
             self.response_data_label_plural:
-            self.serializer_class(paginated_objects, many=True).data,
+            self.serializer_class(paginated_objects,context={"request": request},many=True).data,
             "page": page,
             "page_size": page_size,
             "total": objects.count(),

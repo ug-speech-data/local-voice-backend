@@ -3,6 +3,8 @@ from django.contrib.auth.models import Group, Permission
 from rest_framework import serializers
 
 from accounts.models import Participant, User
+from dashboard.models import ImageValidation
+from dashboard.models import Image
 from dashboard.models import Category
 from setup.models import AppConfiguration
 
@@ -138,4 +140,41 @@ class AppConfigurationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AppConfiguration
+        fields = "__all__"
+
+
+class ImageValidationSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+
+    def get_user(self, obj):
+        return obj.user.email_address
+
+    class Meta:
+        model = ImageValidation
+        fields = ["user", "is_valid"]
+
+
+class ImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+    categories = CategorySerializer(many=True, read_only=True)
+    validations = serializers.SerializerMethodField()
+
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.file:
+            return request.build_absolute_uri(obj.file.url)
+        return ""
+
+    def get_validations(self, obj):
+        request = self.context.get("request")
+        validations = obj.validations.all()
+        return ImageValidationSerializer(validations,
+                                         many=True,
+                                         context={
+                                             "request": request
+                                         }).data
+
+    class Meta:
+        model = Image
         fields = "__all__"

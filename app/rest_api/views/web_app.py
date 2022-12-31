@@ -7,6 +7,8 @@ from rest_framework.response import Response
 
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
+from rest_api.serializers import ImageSerializer
+from dashboard.models import Image
 from rest_api.serializers import AppConfigurationSerializer
 from local_voice.utils.functions import get_errors_from_form
 from dashboard.forms import CategoryForm
@@ -23,60 +25,27 @@ from setup.models import AppConfiguration
 class GetImagesToValidate(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
     required_permissions = ["setup.validate_image"]
+    serializer_class = ImageSerializer
 
     def get(self, request, *args, **kwargs):
-        images = [
-            {
-                "id":
-                6,
-                "name":
-                "image6",
-                "image_url":
-                "http://cdn.cnn.com/cnnnext/dam/assets/180508141319-03-amazing-places-africa---victoria-falls.jpg",
-            },
-            {
-                "id":
-                1,
-                "name":
-                "image1",
-                "image_url":
-                "https://upload.wikimedia.org/wikipedia/commons/9/96/Pair_of_Merops_apiaster_feeding.jpg",
-            },
-            {
-                "id":
-                2,
-                "name":
-                "image2",
-                "image_url":
-                "https://www.gravatar.com/avatar/e5ea2c87d14565ecfec13c3db67428a2?s=256&d=identicon&r=PG",
-            },
-            {
-                "id":
-                3,
-                "name":
-                "image3",
-                "image_url":
-                "https://media.cntraveler.com/photos/57c0695b523900e805f2e31e/master/w_2048,h_1536,c_limit/table-mountain-cape-town-GettyImages-185108998.jpg",
-            },
-            {
-                "id":
-                4,
-                "name":
-                "image4",
-                "image_url":
-                "https://www.exoticca.com/uk/magazine/wp-content/uploads/2021/05/Avenue-of-Baobabs-BLOG.png",
-            },
-            {
-                "id":
-                5,
-                "name":
-                "image5",
-                "image_url":
-                "https://cdn.thecoolist.com/wp-content/uploads/2021/02/Most-beautiful-places-in-Africa.jpg",
-            },
-        ]
+        configuration = AppConfiguration.objects.first()
+        offset = request.GET.get("offset", -1)
+        required_image_validation_count = configuration.required_image_validation_count
+
+        image = Image.objects.filter(
+            id__gt=offset,
+            is_downloaded=True,
+            is_accepted=False,
+            validation_count__lt=required_image_validation_count)\
+                .exclude(validations__user=request.user) \
+            .order_by("id")\
+                .first()
+
+        data = self.serializer_class(image, context={
+            "request": request
+        }).data if image else None
         return Response({
-            "image": sample(images, 1)[0],
+            "image": data,
         })
 
 
@@ -85,8 +54,13 @@ class ValidateImage(generics.GenericAPIView):
     required_permissions = ["setup.validate_image"]
 
     def post(self, request, *args, **kwargs):
-        print(request.data)
-        sleep(1)
+        image_id = request.data.get("image_id")
+        status = request.data.get("status")
+        category_names = request.data.get("categories")
+        image = Image.objects.filter(id=image_id).first()
+        if image:
+            image.validate(request.user, status, category_names)
+
         return Response({"message": "Image validated successfully"})
 
 
@@ -284,6 +258,46 @@ class AppConfigurationAPI(generics.GenericAPIView):
             "Configuration updated successfully",
             "configurations":
             self.serializer_class(configuration, context={
+                "request": request
+            }).data
+        })
+
+
+class UploadedImagesAPI(SimpleCrudMixin):
+    """
+    Get Images API
+    """
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    add_permissions = ["dashboard.add_image", "setup.manage_setup"]
+    change_permissions = ["dashboard.change_image", "setup.manage_setup"]
+    delete_permissions = ["dashboard.delete_image", "setup.manage_setup"]
+
+    serializer_class = ImageSerializer
+    model_class = Image
+    response_data_label = "image"
+    response_data_label_plural = "images"
+
+    def post(self, request, *args, **kwargs):
+        image_id = request.data.get("id") or -1
+        image_obj = self.model_class.objects.filter(id=image_id).first()
+        category_names = request.data.pop("categories", None)
+        categories = Category.objects.filter(name__in=category_names)
+        image_obj.categories.set(categories)
+        image_obj.save()
+        for key, value in request.data.items():
+            if hasattr(image_obj, key):
+                setattr(image_obj, key, value)
+
+        if not (image_obj.is_accepted and image_obj.is_downloaded):
+            image_obj.validations.all().delete()
+            image_obj.categories.clear()
+        image_obj.save()
+
+        return Response({
+            "message":
+            "Image uploaded successfully",
+            self.response_data_label:
+            self.serializer_class(image_obj, context={
                 "request": request
             }).data
         })
