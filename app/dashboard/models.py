@@ -1,10 +1,8 @@
 from io import BytesIO
 
 import requests
-from django.core import files
 from django.core.files.base import ContentFile
 from django.db import models
-from django.db.utils import IntegrityError
 from PIL import Image as PillowImage
 from PIL import UnidentifiedImageError
 
