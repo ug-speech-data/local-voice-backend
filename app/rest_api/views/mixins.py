@@ -1,10 +1,11 @@
 import math
+
 from rest_framework import generics
 from rest_framework.response import Response
 
 from local_voice.utils.functions import get_errors_from_form
 
-QUERY_PAGE_SIZE = 50
+QUERY_PAGE_SIZE = 10
 
 
 def apply_filters(objects, filters):

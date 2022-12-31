@@ -7,17 +7,15 @@ from rest_framework.response import Response
 
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
-from rest_api.serializers import ImageSerializer
-from dashboard.models import Image
-from rest_api.serializers import AppConfigurationSerializer
-from local_voice.utils.functions import get_errors_from_form
 from dashboard.forms import CategoryForm
-from dashboard.models import Category
-from local_voice.utils.functions import relevant_permission_objects
+from dashboard.models import Category, Image
+from local_voice.utils.functions import (get_errors_from_form,
+                                         relevant_permission_objects)
 from rest_api.permissions import APILevelPermissionCheck
-from rest_api.serializers import (CategorySerializer,
+from rest_api.serializers import (AppConfigurationSerializer,
+                                  CategorySerializer,
                                   GroupPermissionSerializer, GroupSerializer,
-                                  UserSerializer)
+                                  ImageSerializer, UserSerializer)
 from rest_api.views.mixins import SimpleCrudMixin
 from setup.models import AppConfiguration
 

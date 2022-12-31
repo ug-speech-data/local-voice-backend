@@ -1,4 +1,5 @@
 from django import forms
+
 from setup.models import AppConfiguration
 
 

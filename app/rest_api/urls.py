@@ -32,3 +32,8 @@ urlpatterns += [
 
     path("images/", views.UploadedImagesAPI.as_view()),
 ]
+
+
+urlpatterns += [
+    path("submit-crawler-images/", views.SubmitCrawlerImages.as_view()),
+]

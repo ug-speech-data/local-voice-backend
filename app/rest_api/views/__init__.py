@@ -1,3 +1,51 @@
+from io import BytesIO
+
+import requests
+from django.core import files
+from django.core.files.base import ContentFile
+from django.db.utils import IntegrityError
+from PIL import Image as PillowImage
+from PIL import UnidentifiedImageError
+from rest_framework import generics, permissions
+from rest_framework.response import Response
+
+from dashboard.models import Image
+
 from .common import *
 from .mobile_app import *
 from .web_app import *
+
+
+class SubmitCrawlerImages(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        source_url = request.data.get("url")
+        filename = source_url.split("/")[-1]
+        filename = filename.split("?")[0]
+
+        response = requests.get(source_url)
+        if response.status_code != requests.codes.ok:
+            return Response({"message": "error"}, status=400)
+
+        try:
+            image = PillowImage.open(BytesIO(response.content))
+            width, height = image.size
+            if width >= 400 and height >= 400:
+                Image.objects.create(source_url=source_url,
+                                     name=filename,
+                                     is_downloaded=True,
+                                     file=files.File(
+                                         ContentFile(response.content),
+                                         filename))
+            total_images = Image.objects.count()
+            return Response(
+                {
+                    "message": "success",
+                    "total_images": total_images
+                },
+                status=200)
+
+        except (UnidentifiedImageError, IntegrityError) as e:
+            print(e)
+        return Response({"message": "error"}, status=400)

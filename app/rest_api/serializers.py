@@ -3,9 +3,7 @@ from django.contrib.auth.models import Group, Permission
 from rest_framework import serializers
 
 from accounts.models import Participant, User
-from dashboard.models import ImageValidation
-from dashboard.models import Image
-from dashboard.models import Category
+from dashboard.models import Category, Image, ImageValidation
 from setup.models import AppConfiguration
 
 
@@ -158,7 +156,18 @@ class ImageSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
     categories = CategorySerializer(many=True, read_only=True)
     validations = serializers.SerializerMethodField()
+    height = serializers.SerializerMethodField()
+    width = serializers.SerializerMethodField()
 
+    def get_height(self, obj):
+        if obj.file:
+            return obj.file.height
+        return 0
+
+    def get_width(self, obj):
+        if obj.file:
+            return obj.file.width
+        return 0
 
     def get_image_url(self, obj):
         request = self.context.get("request")

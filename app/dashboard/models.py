@@ -1,11 +1,20 @@
+from io import BytesIO
+
+import requests
+from django.core import files
+from django.core.files.base import ContentFile
 from django.db import models
+from django.db.utils import IntegrityError
+from PIL import Image as PillowImage
+from PIL import UnidentifiedImageError
+
 from accounts.models import User
 from setup.models import AppConfiguration
 
 
 #yapf: disable
 class Category(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
 
     class Meta:
         verbose_name_plural = 'Categories'
@@ -17,7 +26,7 @@ class Category(models.Model):
 class Image(models.Model):
     name = models.CharField(max_length=255)
     categories = models.ManyToManyField(Category, blank=True, related_name='images')
-    source_url = models.URLField(blank=True, null=True)
+    source_url = models.URLField(blank=True, null=True, unique=True)
     file = models.ImageField(upload_to='images/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_accepted = models.BooleanField(default=False)
@@ -28,7 +37,8 @@ class Image(models.Model):
         return self.name
 
     def save(self, *args, **kwargs) -> None:
-        self.validation_count = self.validations.count()
+        if self.pk is not None:
+            self.validation_count = self.validations.count()
         return super().save(*args, **kwargs)
 
     def validate(self, user, status, category_names):
@@ -45,6 +55,24 @@ class Image(models.Model):
         self.is_accepted = self.validations.filter(is_valid=True).count() >= required_image_validation_count and len(categories) > 0
 
         self.save()
+    
+    def download(self):
+        if self.is_downloaded:
+            return
+
+        response = requests.get(self.source_url)
+        if response.status_code != requests.codes.ok:
+            return
+
+        try:
+            image = PillowImage.open(BytesIO(response.content))
+            width, height = image.size
+            if width >= 400 and height >= 400:
+                self.file.save(self.name, ContentFile(response.content))
+                self.is_downloaded = True
+                self.save()
+        except (UnidentifiedImageError) as e:
+            print(e)
 
 
 class ImageValidation(models.Model):
