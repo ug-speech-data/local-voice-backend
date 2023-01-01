@@ -158,6 +158,13 @@ class ImageSerializer(serializers.ModelSerializer):
     validations = serializers.SerializerMethodField()
     height = serializers.SerializerMethodField()
     width = serializers.SerializerMethodField()
+    thumbnail = serializers.SerializerMethodField()
+
+    def get_thumbnail(self, obj):
+        request = self.context.get("request")
+        if obj.thumbnail:
+            return request.build_absolute_uri(obj.thumbnail.url)
+        return self.get_image_url(obj)
 
     def get_height(self, obj):
         if obj.file:

@@ -30,14 +30,23 @@ class SubmitCrawlerImages(generics.GenericAPIView):
 
         try:
             image = PillowImage.open(BytesIO(response.content))
+            thumbnail = PillowImage.open(BytesIO(response.content))
+            thumbnail.thumbnail((100, 100), PillowImage.ANTIALIAS)
+            thumb_io = BytesIO()
+            thumbnail = thumbnail.convert('RGB')
+            thumbnail.save(thumb_io, "jpeg", quality=50)
+
             width, height = image.size
             if width >= 400 and height >= 400:
-                Image.objects.create(source_url=source_url,
-                                     name=filename,
-                                     is_downloaded=True,
-                                     file=files.File(
-                                         ContentFile(response.content),
-                                         filename))
+                i = Image.objects.create(
+                    source_url=source_url,
+                    name=filename,
+                    is_downloaded=True,
+                    thumbnail=files.File(thumb_io, filename),
+                    file=files.File(ContentFile(response.content), filename))
+
+                print("thumbnail", i.thumbnail)
+
             total_images = Image.objects.count()
             return Response(
                 {

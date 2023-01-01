@@ -1,6 +1,7 @@
 from io import BytesIO
 
 import requests
+from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import models
 from PIL import Image as PillowImage
@@ -30,6 +31,7 @@ class Image(models.Model):
     is_accepted = models.BooleanField(default=False)
     is_downloaded = models.BooleanField(default=False)
     validation_count = models.IntegerField(default=0)
+    thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -53,7 +55,7 @@ class Image(models.Model):
         self.is_accepted = self.validations.filter(is_valid=True).count() >= required_image_validation_count and len(categories) > 0
 
         self.save()
-    
+
     def download(self):
         if self.is_downloaded:
             return
@@ -67,6 +69,15 @@ class Image(models.Model):
             width, height = image.size
             if width >= 400 and height >= 400:
                 self.file.save(self.name, ContentFile(response.content))
+
+                # Create thumbnail
+                thumbnail = PillowImage.open(BytesIO(response.content))
+                thumbnail.thumbnail((100, 100), PillowImage.ANTIALIAS)
+                thumb_io = BytesIO()
+                thumbnail = thumbnail.convert('RGB')
+                thumbnail.save(thumb_io, "jpeg", quality=50)
+                self.thumbnail = File(thumb_io, name=self.name.split(".")[0] + ".jpg")
+
                 self.is_downloaded = True
                 self.save()
         except (UnidentifiedImageError) as e:
