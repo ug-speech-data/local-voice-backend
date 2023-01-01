@@ -20,9 +20,13 @@ urlpatterns = [
 urlpatterns += [
     path("get-image-to-validate", views.GetImagesToValidate.as_view()),
     path("get-audio-to-validate", views.GetAudiosToValidate.as_view()),
+    path("get-audio-to-transcribe", views.GetAudiosToTranscribe.as_view()),
+    path("get-transcription-to-validate", views.GetTranscriptionToValidate.as_view()),
+
     path("validate-image/", views.ValidateImage.as_view()),
     path("validate-audio/", views.ValidateAudio.as_view()),
     path("submit-transcription/", views.SubmitTranscription.as_view()),
+    path("validate-transcription/", views.ValidateTranscription.as_view()),
 
     path("categories/", views.CategoriesAPI.as_view()),
     path("groups/", views.GroupsAPI.as_view()),
@@ -30,7 +34,8 @@ urlpatterns += [
     path("users/", views.UsersAPI.as_view()),
     path("configurations/", views.AppConfigurationAPI.as_view()),
 
-    path("images/", views.UploadedImagesAPI.as_view()),
+    path("collected-images/", views.CollectedImagesAPI.as_view()),
+    path("collected-audios/", views.CollectedAudiosAPI.as_view()),
 ]
 
 

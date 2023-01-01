@@ -44,23 +44,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email_address
 
 
-class Participant(models.Model):
-    user = models.ForeignKey(User,
-                             on_delete=models.SET_NULL,
-                             null=True,
-                             blank=True)
-    local_id = models.IntegerField(default=0)
-    gender = models.CharField(max_length=10)
-    age = models.IntegerField()
-    created_at = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        db_table = "participants"
-
-    def __str__(self) -> str:
-        return str(self.id)
-
-
 class Otp(models.Model):
 
     def get_pin():

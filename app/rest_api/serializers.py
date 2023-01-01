@@ -2,8 +2,9 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
 from rest_framework import serializers
 
-from accounts.models import Participant, User
-from dashboard.models import Category, Image, ImageValidation
+from accounts.models import User
+from dashboard.models import Transcription
+from dashboard.models import Category, Image, Validation, Participant, Audio
 from setup.models import AppConfiguration
 
 
@@ -74,19 +75,6 @@ class LoginSerializer(serializers.Serializer):
         raise serializers.ValidationError("Incorrect Credentials")
 
 
-class ParticipantSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Participant
-        fields = ['id', 'gender', 'age', 'user', 'local_id']
-        extra_kwargs = {"id": {"read_only": True}}
-
-    def create(self, validated_data):
-        Participant = self.Meta.model(**validated_data)
-        Participant.save()
-        return Participant
-
-
 class MobileAppConfigurationSerializer(serializers.ModelSerializer):
     demo_video_url = serializers.SerializerMethodField()
 
@@ -141,14 +129,14 @@ class AppConfigurationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ImageValidationSerializer(serializers.ModelSerializer):
+class ValidationSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
 
     def get_user(self, obj):
         return obj.user.email_address
 
     class Meta:
-        model = ImageValidation
+        model = Validation
         fields = ["user", "is_valid"]
 
 
@@ -185,12 +173,80 @@ class ImageSerializer(serializers.ModelSerializer):
     def get_validations(self, obj):
         request = self.context.get("request")
         validations = obj.validations.all()
-        return ImageValidationSerializer(validations,
-                                         many=True,
-                                         context={
-                                             "request": request
-                                         }).data
+        return ValidationSerializer(validations,
+                                    many=True,
+                                    context={
+                                        "request": request
+                                    }).data
 
     class Meta:
         model = Image
+        fields = "__all__"
+
+
+class ParticipantSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Participant
+        fields = ['id', 'gender', 'age', 'user', 'local_id']
+        extra_kwargs = {"id": {"read_only": True}}
+
+
+class AudioSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+    validations = serializers.SerializerMethodField()
+    thumbnail = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+    submitted_by = serializers.SerializerMethodField()
+    audio_url = serializers.SerializerMethodField()
+
+    def get_audio_url(self, obj):
+        request = self.context.get("request")
+        if obj.file:
+            return request.build_absolute_uri(obj.file.url)
+        return ""
+
+    def get_submitted_by(self, obj):
+        if obj.submitted_by:
+            return obj.submitted_by.email_address
+        return ""
+
+    def get_name(self, obj):
+        if obj.file and obj.file.name:
+            return obj.file.name.split("/")[-1]
+        return "No file"
+
+    def get_thumbnail(self, obj):
+        request = self.context.get("request")
+        if obj.image.thumbnail:
+            return request.build_absolute_uri(obj.image.thumbnail.url)
+        return self.get_image_url(obj)
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.image.file:
+            return request.build_absolute_uri(obj.image.file.url)
+        return ""
+
+    def get_validations(self, obj):
+        request = self.context.get("request")
+        validations = obj.validations.all()
+        return ValidationSerializer(validations,
+                                    many=True,
+                                    context={
+                                        "request": request
+                                    }).data
+
+    class Meta:
+        model = Audio
+        fields = "__all__"
+
+
+class TranscriptionSerializer(serializers.ModelSerializer):
+    audio = AudioSerializer(read_only=True)
+    participant = ParticipantSerializer(read_only=True)
+
+
+    class Meta:
+        model = Transcription
         fields = "__all__"

@@ -1,14 +1,12 @@
-from random import sample
-from time import sleep
-
 from django.contrib.auth.models import Group, Permission
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
+from rest_api.serializers import AudioSerializer, TranscriptionSerializer
 from dashboard.forms import CategoryForm
-from dashboard.models import Category, Image
+from dashboard.models import Category, Image, Audio, Transcription
 from local_voice.utils.functions import (get_errors_from_form,
                                          relevant_permission_objects)
 from rest_api.permissions import APILevelPermissionCheck
@@ -65,37 +63,80 @@ class ValidateImage(generics.GenericAPIView):
 class GetAudiosToValidate(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
     required_permissions = ["setup.validate_audio"]
+    serializer_class = AudioSerializer
 
     def get(self, request, *args, **kwargs):
-        sleep(1)
-        audios = [
-            {
-                "id": 6,
-                "name": "image6",
-                "image_url":
-                "http://cdn.cnn.com/cnnnext/dam/assets/180508141319-03-amazing-places-africa---victoria-falls.jpg",
-                "audio_url":
-                "https://download.samplelib.com/mp3/sample-12s.mp3"
-            },
-            {
-                "id": 1,
-                "name": "image1",
-                "image_url":
-                "https://upload.wikimedia.org/wikipedia/commons/9/96/Pair_of_Merops_apiaster_feeding.jpg",
-                "audio_url":
-                "https://samplelib.com/lib/preview/mp3/sample-15s.mp3"
-            },
-            {
-                "id": 2,
-                "name": "image2",
-                "image_url":
-                "https://www.gravatar.com/avatar/e5ea2c87d14565ecfec13c3db67428a2?s=256&d=identicon&r=PG",
-                "audio_url":
-                "https://samplelib.com/lib/preview/mp3/sample-6s.mp3"
-            },
-        ]
+        configuration = AppConfiguration.objects.first()
+        offset = request.GET.get("offset", -1)
+        required_audio_validation_count = configuration.required_audio_validation_count
+
+        audio = Audio.objects.filter(
+            id__gt=offset,
+            is_accepted=False,
+            validation_count__lt=required_audio_validation_count)\
+                .exclude(validations__user=request.user) \
+            .order_by("id")\
+                .first()
+
+        data = self.serializer_class(audio, context={
+            "request": request
+        }).data if audio else None
         return Response({
-            "audio": sample(audios, 1)[0],
+            "audio": data,
+        })
+
+
+class GetAudiosToTranscribe(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.validate_transcription"]
+    serializer_class = AudioSerializer
+
+    def get(self, request, *args, **kwargs):
+        configuration = AppConfiguration.objects.first()
+        required_transcription_validation_count = configuration.required_transcription_validation_count
+        offset = request.GET.get("offset", -1)
+
+        audio = Audio.objects.filter(
+            id__gt=offset,
+            is_accepted=True,
+            transcription_count__lt=required_transcription_validation_count)\
+                .exclude(validations__user=request.user) \
+            .order_by("id")\
+                .first()
+
+        data = self.serializer_class(audio, context={
+            "request": request
+        }).data if audio else None
+        return Response({
+            "audio": data,
+        })
+
+
+class GetTranscriptionToValidate(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.transcribe_audio"]
+    serializer_class = TranscriptionSerializer
+
+    def get(self, request, *args, **kwargs):
+        configuration = AppConfiguration.objects.first()
+        required_transcription_validation_count = configuration.required_transcription_validation_count
+        offset = request.GET.get("offset", -1)
+
+
+        transcription = Transcription.objects.filter(
+            id__gt=offset,
+            is_accepted=False,
+            validation_count__lt=required_transcription_validation_count)\
+                .exclude(validations__user=request.user) \
+            .order_by("id")\
+                .first()
+
+        data = self.serializer_class(transcription,
+                                     context={
+                                         "request": request
+                                     }).data if transcription else None
+        return Response({
+            "transcription": data,
         })
 
 
@@ -104,9 +145,11 @@ class ValidateAudio(generics.GenericAPIView):
     required_permissions = ["setup.validate_audio"]
 
     def post(self, request, *args, **kwargs):
-        print(request.data, "validate audio")
-        from time import sleep
-        sleep(1)
+        audio_id = request.data.get("id")
+        status = request.data.get("status")
+        audio = Audio.objects.filter(id=audio_id).first()
+        if audio:
+            audio.validate(request.user, status)
         return Response({"message": "Image validated successfully"})
 
 
@@ -115,10 +158,27 @@ class SubmitTranscription(generics.GenericAPIView):
     required_permissions = ["setup.transcribe_audio"]
 
     def post(self, request, *args, **kwargs):
-        print(request.data, "submit transcription")
-        from time import sleep
-        sleep(1)
+        audio_id = request.data.get("id")
+        text = request.data.get("text")
+        transcription, _ = Transcription.objects.get_or_create(
+            audio_id=audio_id, user=request.user)
+        transcription.text = text
+        transcription.save()
         return Response({"message": "Image validated successfully"})
+
+
+class ValidateTranscription(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.validate_transcription"]
+
+    def post(self, request, *args, **kwargs):
+        transcription_id = request.data.get("id")
+        status = request.data.get("status")
+        transcription = Transcription.objects.filter(
+            id=transcription_id).first()
+        if transcription:
+            transcription.validate(request.user, status)
+        return Response({"message": "Transcription validated successfully"})
 
 
 class CategoriesAPI(SimpleCrudMixin):
@@ -261,7 +321,7 @@ class AppConfigurationAPI(generics.GenericAPIView):
         })
 
 
-class UploadedImagesAPI(SimpleCrudMixin):
+class CollectedImagesAPI(SimpleCrudMixin):
     """
     Get Images API
     """
@@ -293,7 +353,39 @@ class UploadedImagesAPI(SimpleCrudMixin):
 
         return Response({
             "message":
-            "Image uploaded successfully",
+            "Image updated successfully",
+            self.response_data_label:
+            self.serializer_class(image_obj, context={
+                "request": request
+            }).data
+        })
+
+
+class CollectedAudiosAPI(SimpleCrudMixin):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    add_permissions = ["dashboard.add_audio", "setup.manage_setup"]
+    change_permissions = ["dashboard.change_audio", "setup.manage_setup"]
+    delete_permissions = ["dashboard.delete_audio", "setup.manage_setup"]
+
+    serializer_class = AudioSerializer
+    model_class = Audio
+    response_data_label = "audio"
+    response_data_label_plural = "audios"
+
+    def post(self, request, *args, **kwargs):
+        object_id = request.data.pop("id") or -1
+        image_obj = self.model_class.objects.filter(id=object_id).first()
+        for key, value in request.data.items():
+            if hasattr(image_obj, key):
+                setattr(image_obj, key, value)
+
+        if not image_obj.is_accepted:
+            image_obj.validations.all().delete()
+        image_obj.save()
+
+        return Response({
+            "message":
+            "Audio update successfully",
             self.response_data_label:
             self.serializer_class(image_obj, context={
                 "request": request

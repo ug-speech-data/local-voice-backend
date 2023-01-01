@@ -9,13 +9,11 @@ QUERY_PAGE_SIZE = 10
 
 
 def apply_filters(objects, filters):
-    print("filters", filters)
     filters = filters.split(",")
     for filter in filters:
         filter = filter.split(":")
         if len(filter) == 2:
             objects = objects.filter(**{filter[0]: filter[1]})
-    print("objects",objects)
     return objects
 
 
@@ -30,7 +28,8 @@ class SimpleCrudMixin(generics.GenericAPIView):
         page = request.GET.get("page", "")
         page_size = request.GET.get("page_size", "")
         page = int(page) if page.isnumeric() else 1
-        page_size = int(page_size) if page_size.isnumeric() else QUERY_PAGE_SIZE
+        page_size = int(
+            page_size) if page_size.isnumeric() else QUERY_PAGE_SIZE
 
         paginated_objects = objects[(page - 1) * page_size:page * page_size]
         prev_page = page - 1 if page > 1 else None

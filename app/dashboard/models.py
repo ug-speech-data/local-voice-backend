@@ -21,24 +21,33 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+class Validation(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_valid = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user} - {self.is_valid}'
+
 
 class Image(models.Model):
     name = models.CharField(max_length=255)
     categories = models.ManyToManyField(Category, blank=True, related_name='images')
     source_url = models.URLField(blank=True, null=True, unique=True)
     file = models.ImageField(upload_to='images/', blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
     is_accepted = models.BooleanField(default=False)
     is_downloaded = models.BooleanField(default=False)
     validation_count = models.IntegerField(default=0)
     thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
+    validations = models.ManyToManyField(Validation, related_name='image_validations', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
 
     def save(self, *args, **kwargs) -> None:
         if self.pk is not None:
-            self.validation_count = self.validations.count()
+            self.validation_count = self.validations.all().count()
         return super().save(*args, **kwargs)
 
     def validate(self, user, status, category_names):
@@ -48,11 +57,14 @@ class Image(models.Model):
         categories = self.categories.union(Category.objects.filter(name__in=category_names))[:max_categories_for_image]
         self.categories.set(categories)
 
-        validation,_  = ImageValidation.objects.get_or_create(image=self, user=user)
-        validation.is_valid=status=="accepted"
+        validation,_  = Validation.objects.get_or_create(user=user)
+        validation.is_valid = status=="accepted"
+        self.validations.add(validation)
         validation.save()
+        self.save()
 
-        self.is_accepted = self.validations.filter(is_valid=True).count() >= required_image_validation_count and len(categories) > 0
+        is_accepted  = self.validation_count >= required_image_validation_count and self.validation_count == self.validations.filter(is_valid=True) and  len(categories) > 0
+        self.is_accepted = is_accepted
 
         self.save()
 
@@ -84,11 +96,90 @@ class Image(models.Model):
             print(e)
 
 
-class ImageValidation(models.Model):
-    image = models.ForeignKey(Image, related_name="validations", on_delete=models.CASCADE)
-    user = models.ForeignKey(User, related_name="image_validations", on_delete=models.CASCADE)
-    is_valid = models.BooleanField(default=False)
+class Participant(models.Model):
+    momo_number = models.CharField(max_length=255, blank=True, null=True)
+    age = models.IntegerField(blank=True, null=True)
+    gender = models.CharField(max_length=255, blank=True, null=True)
+    fullname = models.CharField(max_length=255, blank=True, null=True)
+    slug = models.SlugField(max_length=255, blank=True, null=True)
+    submitted_by = models.OneToOneField(User, related_name="participant", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            slug = "-".join(sorted(self.fullname.split()))
+            self.slug = slug
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.slug
+
+
+class Audio(models.Model):
+    image = models.ForeignKey(Image, related_name="audios", on_delete=models.CASCADE)
+    file = models.FileField(upload_to='audios/')
+    submitted_by = models.ForeignKey(User, related_name="audios", on_delete=models.CASCADE)
+    participant = models.ForeignKey(Participant, related_name="audios", on_delete=models.CASCADE)
+    device_id = models.CharField(max_length=255, blank=True, null=True)
+    validation_count = models.IntegerField(default=0)
+    transcription_count = models.IntegerField(default=0)
+    year = models.IntegerField(blank=True, default=2023, null=True)
+    locale = models.CharField(max_length=255, blank=True, null=True)
+    environment = models.CharField(max_length=255, blank=True, null=True)
+    is_accepted = models.BooleanField(default=False)
+    validations = models.ManyToManyField(Validation, related_name='audio_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.image.name} - {self.is_valid}'
+        return f'{self.image.name} - {self.submitted_by}'
+
+    def save(self, *args, **kwargs) -> None:
+        if self.pk is not None:
+            self.validation_count = self.validations.all().count()
+            self.transcription_count = self.transcriptions.filter().count()
+        return super().save(*args, **kwargs)
+
+    def validate(self, user, status):
+        required_audio_validation_count = AppConfiguration.objects.first().required_audio_validation_count
+
+        validation,_  = Validation.objects.get_or_create(user=user)
+        validation.is_valid = status=="accepted"
+        self.validations.add(validation)
+        validation.save()
+        self.save()
+
+        is_accepted = self.validation_count >= required_audio_validation_count and self.validations.filter(is_valid=True).count() == self.validation_count
+        self.is_accepted = is_accepted
+
+        self.save()
+
+class Transcription(models.Model):
+    audio = models.ForeignKey(Audio, related_name="transcriptions", on_delete=models.CASCADE)
+    text = models.TextField()
+    user = models.ForeignKey(User, related_name="transcriptions", on_delete=models.CASCADE)
+    validations = models.ManyToManyField(Validation, related_name='transcription_validations', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_accepted = models.BooleanField(default=False)
+    validation_count = models.IntegerField(default=0)
+
+    def save(self, *args, **kwargs) -> None:
+        if self.pk is not None:
+            self.validation_count = self.validations.all().count()
+        return super().save(*args, **kwargs)
+
+    def validate(self, user, status):
+        required_transcription_validation_count = AppConfiguration.objects.first().required_transcription_validation_count
+
+        validation,_  = Validation.objects.get_or_create(user=user)
+        validation.is_valid = status=="accepted"
+        self.validations.add(validation)
+        validation.save()
+        self.save()
+
+        is_accepted = self.validation_count >= required_transcription_validation_count and self.validations.filter(is_valid=True).count() == self.validation_count
+        self.is_accepted = is_accepted
+
+        self.save()
+
+    def __str__(self):
+        return self.text.split(" ")[50]
