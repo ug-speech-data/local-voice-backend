@@ -9,6 +9,8 @@ from PIL import UnidentifiedImageError
 
 from accounts.models import User
 from setup.models import AppConfiguration
+from django.db.models import Q
+from functools import reduce
 
 
 #yapf: disable
@@ -45,6 +47,12 @@ class Image(models.Model):
     def __str__(self):
         return self.name
 
+
+    @staticmethod
+    def generate_query(query):
+        queries = [Q(**{f"{key}__icontains": query}) for key in ["name", "categories__name"]]
+        return reduce(lambda x, y: x | y, queries)
+
     def save(self, *args, **kwargs) -> None:
         if self.pk is not None:
             self.validation_count = self.validations.all().count()
@@ -57,7 +65,9 @@ class Image(models.Model):
         categories = self.categories.union(Category.objects.filter(name__in=category_names))[:max_categories_for_image]
         self.categories.set(categories)
 
-        validation,_  = Validation.objects.get_or_create(user=user)
+        validation = Validation.objects.filter(user=user, image_validations=self).first()
+        if validation is None:
+            validation = Validation.objects.create(user=user)
         validation.is_valid = status=="accepted"
         self.validations.add(validation)
         validation.save()
@@ -139,10 +149,18 @@ class Audio(models.Model):
             self.transcription_count = self.transcriptions.filter().count()
         return super().save(*args, **kwargs)
 
+
+    @staticmethod
+    def generate_query(query):
+        queries = [Q(**{f"{key}__icontains": query}) for key in ["environment", "locale", "device_id", "submitted_by__email_address", "year", "image__name"]]
+        return reduce(lambda x, y: x | y, queries)
+
     def validate(self, user, status):
         required_audio_validation_count = AppConfiguration.objects.first().required_audio_validation_count
 
-        validation,_  = Validation.objects.get_or_create(user=user)
+        validation = Validation.objects.filter(user=user, audio_validations=self).first()
+        if validation is None:
+            validation = Validation.objects.create(user=user)
         validation.is_valid = status=="accepted"
         self.validations.add(validation)
         validation.save()
@@ -162,6 +180,11 @@ class Transcription(models.Model):
     is_accepted = models.BooleanField(default=False)
     validation_count = models.IntegerField(default=0)
 
+    @staticmethod
+    def generate_query(query):
+        queries = [Q(**{f"{key}__icontains": query}) for key in ["audio__environment", "user__email_address", "audio__locale"]]
+        return reduce(lambda x, y: x | y, queries)
+
     def save(self, *args, **kwargs) -> None:
         if self.pk is not None:
             self.validation_count = self.validations.all().count()
@@ -170,10 +193,12 @@ class Transcription(models.Model):
     def validate(self, user, status):
         required_transcription_validation_count = AppConfiguration.objects.first().required_transcription_validation_count
 
-        validation,_  = Validation.objects.get_or_create(user=user)
+        validation = Validation.objects.filter(user=user, transcription_validations=self).first()
+        if validation is None:
+            validation = Validation.objects.create(user=user)
         validation.is_valid = status=="accepted"
-        self.validations.add(validation)
         validation.save()
+        self.validations.add(validation)
         self.save()
 
         is_accepted = self.validation_count >= required_transcription_validation_count and self.validations.filter(is_valid=True).count() == self.validation_count

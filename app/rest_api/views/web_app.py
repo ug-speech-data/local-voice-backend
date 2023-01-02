@@ -347,7 +347,7 @@ class CollectedImagesAPI(SimpleCrudMixin):
                 setattr(image_obj, key, value)
 
         if not (image_obj.is_accepted and image_obj.is_downloaded):
-            image_obj.validations.all().delete()
+            image_obj.validations.clear()
             image_obj.categories.clear()
         image_obj.save()
 
@@ -380,7 +380,7 @@ class CollectedAudiosAPI(SimpleCrudMixin):
                 setattr(image_obj, key, value)
 
         if not image_obj.is_accepted:
-            image_obj.validations.all().delete()
+            image_obj.validations.clear()
         image_obj.save()
 
         return Response({
@@ -388,6 +388,41 @@ class CollectedAudiosAPI(SimpleCrudMixin):
             "Audio update successfully",
             self.response_data_label:
             self.serializer_class(image_obj, context={
+                "request": request
+            }).data
+        })
+
+
+class CollectedTranscriptionsAPI(SimpleCrudMixin):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    change_permissions = [
+        "dashboard.change_transcription", "setup.manage_setup"
+    ]
+    delete_permissions = [
+        "dashboard.delete_transcription", "setup.manage_setup"
+    ]
+
+    serializer_class = TranscriptionSerializer
+    model_class = Transcription
+    response_data_label = "transcription"
+    response_data_label_plural = "transcriptions"
+
+    def post(self, request, *args, **kwargs):
+        object_id = request.data.pop("id") or -1
+        selected_obj = self.model_class.objects.filter(id=object_id).first()
+        for key, value in request.data.items():
+            if hasattr(selected_obj, key):
+                setattr(selected_obj, key, value)
+
+        if not selected_obj.is_accepted:
+            selected_obj.validations.clear()
+        selected_obj.save()
+
+        return Response({
+            "message":
+            "Transcription update successfully",
+            self.response_data_label:
+            self.serializer_class(selected_obj, context={
                 "request": request
             }).data
         })

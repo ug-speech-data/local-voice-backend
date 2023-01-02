@@ -21,19 +21,27 @@ class SimpleCrudMixin(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         filters = request.GET.get("filters")
+        query = request.GET.get("query") or request.GET.get("q")
+
         objects = self.model_class.objects.all().order_by("-id")
         if filters:
             objects = apply_filters(objects, filters)
+        if query and hasattr(self.model_class, "generate_query"):
+            objects = objects.filter(self.model_class.generate_query(query))
 
         page = request.GET.get("page", "")
         page_size = request.GET.get("page_size", "")
-        page = int(page) if page.isnumeric() else 1
         page_size = int(
             page_size) if page_size.isnumeric() else QUERY_PAGE_SIZE
+        total_pages = max(1, math.ceil(objects.count() / page_size))
+
+        page = int(page) if page.isnumeric() else 1
+        if page > total_pages:
+            page = total_pages
+        page = max(page, 1)
 
         paginated_objects = objects[(page - 1) * page_size:page * page_size]
         prev_page = page - 1 if page > 1 else None
-        total_pages = math.ceil(objects.count() / page_size)
         next_page = page + 1 if total_pages > page else None
 
         #yapf: disable

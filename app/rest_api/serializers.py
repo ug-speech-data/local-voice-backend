@@ -245,7 +245,22 @@ class AudioSerializer(serializers.ModelSerializer):
 class TranscriptionSerializer(serializers.ModelSerializer):
     audio = AudioSerializer(read_only=True)
     participant = ParticipantSerializer(read_only=True)
+    submitted_by = serializers.SerializerMethodField()
+    validations = serializers.SerializerMethodField()
 
+    def get_validations(self, obj):
+        request = self.context.get("request")
+        validations = obj.validations.all()
+        return ValidationSerializer(validations,
+                                    many=True,
+                                    context={
+                                        "request": request
+                                    }).data
+
+    def get_submitted_by(self, obj):
+        if obj.user:
+            return obj.user.email_address
+        return ""
 
     class Meta:
         model = Transcription
