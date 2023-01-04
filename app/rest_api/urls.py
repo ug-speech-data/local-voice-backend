@@ -37,6 +37,7 @@ urlpatterns += [
     path("collected-images/", views.CollectedImagesAPI.as_view()),
     path("collected-audios/", views.CollectedAudiosAPI.as_view()),
     path("collected-transcriptions/", views.CollectedTranscriptionsAPI.as_view()),
+    path("collected-participants/", views.CollectedParticipantsAPI.as_view()),
 ]
 
 

@@ -1,3 +1,4 @@
+from datetime import datetime
 from io import BytesIO
 
 import requests
@@ -105,15 +106,58 @@ class Image(models.Model):
         except (UnidentifiedImageError) as e:
             print(e)
 
+class Transaction(models.Model):
+    TRANSACTION_STATUS = [
+        ("new", "New"),
+        ("pending", "Pending"),
+        ("success", "Success"),
+        ("failed", "Failed"),
+    ]
+    transaction_id = models.CharField(max_length=255, blank=True, null=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    paid = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    network = models.CharField(max_length=255, blank=True, null=True)
+    response_data = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=255, blank=True, null=True, choices=TRANSACTION_STATUS, default="new")
+
+    def __str__(self):
+        return self.transaction_id
 
 class Participant(models.Model):
     momo_number = models.CharField(max_length=255, blank=True, null=True)
+    network = models.CharField(max_length=10, blank=True, null=True)
     age = models.IntegerField(blank=True, null=True)
     gender = models.CharField(max_length=255, blank=True, null=True)
     fullname = models.CharField(max_length=255, blank=True, null=True)
     slug = models.SlugField(max_length=255, blank=True, null=True)
     submitted_by = models.OneToOneField(User, related_name="participant", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    audio_duration_in_seconds = models.IntegerField(default=0)
+    paid = models.BooleanField(default=False)
+    transaction = models.ForeignKey(Transaction, related_name="participants", on_delete=models.CASCADE, blank=True, null=True)
+
+    def pay_participant(self):
+        if self.paid:
+            return
+
+        transaction,_ = Transaction.objects.get_or_create(participants=self)
+        transaction.amount = self.amount
+        transaction.phone_number = self.momo_number
+        transaction.network = self.network
+        transaction.status = "pending"
+        transaction.save()
+        self.transaction = transaction
+        self.save()
+
+
+    @staticmethod
+    def generate_query(query):
+        queries = [Q(**{f"{key}__icontains": query}) for key in ["momo_number", "fullname", "gender"]]
+        return reduce(lambda x, y: x | y, queries)
+
 
     def save(self, *args, **kwargs):
         if self.pk is None:
@@ -147,6 +191,7 @@ class Audio(models.Model):
         if self.pk is not None:
             self.validation_count = self.validations.all().count()
             self.transcription_count = self.transcriptions.filter().count()
+            self.year = datetime.now().year
         return super().save(*args, **kwargs)
 
 

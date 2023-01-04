@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from accounts.models import User
 from dashboard.models import Transcription
-from dashboard.models import Category, Image, Validation, Participant, Audio
+from dashboard.models import Category, Image, Validation, Participant, Audio, Transaction
 from setup.models import AppConfiguration
 
 
@@ -184,12 +184,25 @@ class ImageSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class TransactionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Transaction
+        fields = "__all__"
+
+
 class ParticipantSerializer(serializers.ModelSerializer):
+    transaction = TransactionSerializer(read_only=True)
+    submitted_by = serializers.SerializerMethodField()
+
+    def get_submitted_by(self, obj):
+        if obj.submitted_by:
+            return obj.submitted_by.email_address
+        return ""
 
     class Meta:
         model = Participant
-        fields = ['id', 'gender', 'age', 'user', 'local_id']
-        extra_kwargs = {"id": {"read_only": True}}
+        fields = "__all__"
 
 
 class AudioSerializer(serializers.ModelSerializer):

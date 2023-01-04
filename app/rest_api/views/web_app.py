@@ -4,9 +4,9 @@ from rest_framework.response import Response
 
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
-from rest_api.serializers import AudioSerializer, TranscriptionSerializer
+from rest_api.serializers import AudioSerializer, TranscriptionSerializer, ParticipantSerializer
 from dashboard.forms import CategoryForm
-from dashboard.models import Category, Image, Audio, Transcription
+from dashboard.models import Category, Image, Audio, Transcription, Participant
 from local_voice.utils.functions import (get_errors_from_form,
                                          relevant_permission_objects)
 from rest_api.permissions import APILevelPermissionCheck
@@ -421,6 +421,34 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
         return Response({
             "message":
             "Transcription update successfully",
+            self.response_data_label:
+            self.serializer_class(selected_obj, context={
+                "request": request
+            }).data
+        })
+
+
+class CollectedParticipantsAPI(SimpleCrudMixin):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    change_permissions = ["dashboard.change_participant", "setup.manage_setup"]
+    delete_permissions = ["dashboard.delete_participant", "setup.manage_setup"]
+
+    serializer_class = ParticipantSerializer
+    model_class = Participant
+    response_data_label = "participant"
+    response_data_label_plural = "participants"
+
+    def post(self, request, *args, **kwargs):
+        object_id = request.data.pop("id") or -1
+        selected_obj = self.model_class.objects.filter(id=object_id).first()
+        for key, value in request.data.items():
+            if hasattr(selected_obj, key):
+                setattr(selected_obj, key, value)
+        selected_obj.save()
+
+        return Response({
+            "message":
+            "Participant update successfully",
             self.response_data_label:
             self.serializer_class(selected_obj, context={
                 "request": request
