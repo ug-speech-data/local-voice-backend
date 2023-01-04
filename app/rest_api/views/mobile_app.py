@@ -49,7 +49,7 @@ class CreateParticipantAPI(generics.GenericAPIView):
 
 
 class MobileAppConfigurationAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     serializer_class = MobileAppConfigurationSerializer
 
     def get(self, request, *args, **kwargs):
