@@ -17,6 +17,10 @@ from rest_api.serializers import (AppConfigurationSerializer,
 from rest_api.views.mixins import SimpleCrudMixin
 from setup.models import AppConfiguration
 
+import logging
+
+logger = logging.getLogger("app")
+
 
 class GetImagesToValidate(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
@@ -297,19 +301,24 @@ class AppConfigurationAPI(generics.GenericAPIView):
         return Response({"configurations": data})
 
     def post(self, request, *args, **kwargs):
+        enumerators_group_name = request.data.get("enumerators_group_name")
+        enumerators_group = Group.objects.filter(
+            name=enumerators_group_name).first()
         configuration = AppConfiguration.objects.first()
         try:
             for key, value in request.data.items():
-                print(key, value, "key value")
                 if not value: continue
                 if hasattr(configuration, key):
                     setattr(configuration, key, value)
+            configuration.enumerators_group = enumerators_group
             configuration.save()
         except Exception as e:
-            return Response({
-                "error_message": str(e),
-                "message": "Configuration could not be updated"
-            })
+            return Response(
+                {
+                    "error_message": str(e),
+                    "message": "Configuration could not be updated"
+                },
+                status=400)
 
         return Response({
             "message":
@@ -453,4 +462,46 @@ class CollectedParticipantsAPI(SimpleCrudMixin):
             self.serializer_class(selected_obj, context={
                 "request": request
             }).data
+        })
+
+
+class ReShuffleImageIntoBatches(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.manage_setup"]
+
+    def post(self, request, *args, **kwargs):
+        number_of_batches = AppConfiguration.objects.first().number_of_batches
+        for count, image in enumerate(
+                Image.objects.filter(is_accepted=True).order_by("id")):
+            image.batch_number = count % number_of_batches + 1
+            image.save()
+        logger.info(
+            f"Reshuffle {count + 1} images into {number_of_batches} batches.")
+        return Response({
+            "message":
+            f"Reshuffle {count + 1} images into {number_of_batches} batches."
+        })
+
+
+class AssignImageBatchToUsers(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.manage_setup"]
+
+    def post(self, request, *args, **kwargs):
+        configuration = AppConfiguration.objects.first()
+        enumerators_group = configuration.enumerators_group
+        number_of_batches = configuration.number_of_batches
+
+        # Reset all assigned image batch
+        User.objects.filter(assigned_image_batch__gt=-1).update(
+            assigned_image_batch=-1)
+
+        count = -1
+        for count, user in enumerate(enumerators_group.user_set.all()):
+            user.assigned_image_batch = count % number_of_batches + 1
+            user.save()
+
+        return Response({
+            "message":
+            f"Shuffled {count + 1} users among {number_of_batches} batches."
         })

@@ -1,9 +1,16 @@
+import json
+import logging
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from setup.models import AppConfiguration
+from dashboard.models import Participant, Audio, Image
 
 from rest_api.serializers import (MobileAppConfigurationSerializer,
-                                  ParticipantSerializer, UserSerializer)
+                                  ImageSerializer, ParticipantSerializer,
+                                  UserSerializer)
+
+logger = logging.getLogger("app")
 
 
 class MyProfile(generics.GenericAPIView):
@@ -53,15 +60,7 @@ class MobileAppConfigurationAPI(generics.GenericAPIView):
     serializer_class = MobileAppConfigurationSerializer
 
     def get(self, request, *args, **kwargs):
-        return Response({
-            "configuration": {
-                "id":
-                1,
-                "demo_video_url":
-                "https://localvoice.pythonanywhere.com/assets/sample-mp4-file-small.mp4"
-            }
-        })
-        data = self.serializer_class(MobileAppConfiguration.objects.first(),
+        data = self.serializer_class(AppConfiguration.objects.first(),
                                      context={
                                          "request": request
                                      }).data
@@ -70,84 +69,58 @@ class MobileAppConfigurationAPI(generics.GenericAPIView):
 
 class GetAssignedImagesAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = MobileAppConfigurationSerializer
+    serializer_class = ImageSerializer
 
     def get(self, request, *args, **kwargs):
-        return Response({
-            "images": [
-                {
-                    "id":
-                    6,
-                    "name":
-                    "image6",
-                    "image_url":
-                    "https://upload.wikimedia.org/wikipedia/commons/9/96/Pair_of_Merops_apiaster_feeding.jpg",
-                },
-                {
-                    "id":
-                    1,
-                    "name":
-                    "image1",
-                    "image_url":
-                    "https://upload.wikimedia.org/wikipedia/commons/9/96/Pair_of_Merops_apiaster_feeding.jpg",
-                },
-                {
-                    "id":
-                    2,
-                    "name":
-                    "image2",
-                    "image_url":
-                    "https://upload.wikimedia.org/wikipedia/commons/9/96/Pair_of_Merops_apiaster_feeding.jpg",
-                },
-                {
-                    "id":
-                    3,
-                    "name":
-                    "image3",
-                    "image_url":
-                    "https://upload.wikimedia.org/wikipedia/commons/9/96/Pair_of_Merops_apiaster_feeding.jpg",
-                },
-                {
-                    "id":
-                    4,
-                    "name":
-                    "image4",
-                    "image_url":
-                    "https://upload.wikimedia.org/wikipedia/commons/9/96/Pair_of_Merops_apiaster_feeding.jpg",
-                },
-                {
-                    "id":
-                    5,
-                    "name":
-                    "image5",
-                    "image_url":
-                    "https://upload.wikimedia.org/wikipedia/commons/9/96/Pair_of_Merops_apiaster_feeding.jpg",
-                },
-            ]
-        })
-        data = self.serializer_class(MobileAppConfiguration.objects.first(),
+        batch_number = request.user.assigned_image_batch
+        images = Image.objects.filter(is_accepted=True,
+                                      batch_number=batch_number)
+        data = self.serializer_class(images,
+                                     many=True,
                                      context={
                                          "request": request
                                      }).data
-        return Response({"configuration": data})
+        return Response({"images": data})
 
 
 class UploadAudioAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    # serializer_class = MobileAppConfigurationSerializer
-
     def post(self, request, *args, **kwargs):
         file = request.FILES.get("audio_file")
-        remote_image_id = request.POST.get("remote_image_id")
-        print(file, remote_image_id)
+        audio_data = request.data.get("audio_data")
+        participant_data = request.data.get("participant_data")
+        audio_data = json.loads(audio_data)
+        participant_data = json.loads(participant_data)
 
-        return Response({
-            "success": True,
-            "message": "Audio uploaded successfully"
-        })
-        # data = self.serializer_class(MobileAppConfiguration.objects.first(),
-        #                              context={
-        #                                  "request": request
-        #                              }).data
-        # return Response({"configuration": data})
+        image_id = audio_data.get("remoteImageID", -1)
+        image_object = Image.objects.filter(id=image_id).first()
+        image_object = image_object or Image.objects.first()
+
+        try:
+            if image_id and image_object and file and audio_data and participant_data:
+                participant_object = Participant.objects.create(
+                    momo_number=participant_data.get("momoNumber"),
+                    network=participant_data.get("network"),
+                    fullname=participant_data.get("fullname"),
+                    gender=participant_data.get("gender"),
+                    submitted_by=request.user,
+                    age=participant_data.get("age"),
+                )
+
+                Audio.objects.create(
+                    image=image_object,
+                    submitted_by=request.user,
+                    file=file,
+                    locale=request.user.locale,
+                    device_id=participant_data.get("deviceId"),
+                    environment=participant_data.get("environment"),
+                    participant=participant_object,
+                )
+                return Response({
+                    "success": True,
+                    "message": "Audio uploaded successfully"
+                })
+        except Exception as e:
+            logger.error(e)
+        return Response({"success": False, "message": "Error uploading audio"})

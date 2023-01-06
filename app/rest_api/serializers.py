@@ -36,6 +36,8 @@ class UserSerializer(serializers.ModelSerializer):
             "last_login_date",
             "phone",
             "surname",
+            "locale",
+            'assigned_image_batch',
             "other_names",
             "groups",
         ]
@@ -48,6 +50,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "email_address",
+            "locale",
             "phone",
             "surname",
             "other_names",
@@ -86,7 +89,18 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AppConfiguration
-        exclude = ["demo_video"]
+        exclude = [
+            "demo_video",
+            "sms_sender_id",
+            "api_key",
+            "send_sms",
+            "required_image_validation_count",
+            "required_audio_validation_count",
+            "required_transcription_validation_count",
+            "required_image_description_count",
+            "number_of_batches",
+            "enumerators_group",
+        ]
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -117,6 +131,7 @@ class GroupPermissionSerializer(serializers.ModelSerializer):
 
 class AppConfigurationSerializer(serializers.ModelSerializer):
     demo_video_url = serializers.SerializerMethodField()
+    enumerators_group = GroupSerializer(read_only=True)
 
     def get_demo_video_url(self, obj):
         request = self.context.get("request")
@@ -147,6 +162,12 @@ class ImageSerializer(serializers.ModelSerializer):
     height = serializers.SerializerMethodField()
     width = serializers.SerializerMethodField()
     thumbnail = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
+
+    def get_category(self, obj):
+        if obj.categories.first():
+            return obj.categories.first().name
+        return ""
 
     def get_thumbnail(self, obj):
         request = self.context.get("request")

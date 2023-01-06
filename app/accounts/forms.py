@@ -20,6 +20,8 @@ class UserForm(forms.ModelForm):
         fields = [
             'email_address',
             'phone',
-            'surname',
+            'locale',
+            'assigned_image_batch',
+            'other_names',
             'other_names',
         ]

@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-
+from django.contrib.auth.models import Group
 #yapf: disable
 
 # General system config table - only one row.
@@ -16,6 +16,8 @@ class AppConfiguration(models.Model):
     required_audio_validation_count = models.IntegerField(default=3)
     required_transcription_validation_count = models.IntegerField(default=3)
     required_image_description_count = models.IntegerField(default=3)
+    number_of_batches = models.IntegerField(default=10)
+    enumerators_group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
 
 # Just for permissions
 class SetupPerms(models.Model):
