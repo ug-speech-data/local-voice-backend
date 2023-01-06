@@ -62,16 +62,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'knox',
     'corsheaders',
-    
     'accounts.apps.AccountsConfig',
     'rest_api.apps.RestApiConfig',
     'dashboard.apps.DashboardConfig',
-    'setup.apps.SetupConfig'
+    'setup.apps.SetupConfig',
 ]
 
 # Allow CORS
 CORS_ALLOW_ALL_ORIGINS = True
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -91,7 +89,7 @@ ROOT_URLCONF = 'local_voice.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "dist"],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -162,10 +160,8 @@ MEDIA_ROOT = BASE_DIR / 'assets/'
 MEDIA_URL = '/assets/'
 
 STATICFILES_DIRS = [
-    BASE_DIR / "dist",
     BASE_DIR / "static",
 ]
-
 
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',
@@ -179,8 +175,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ARKESEL_API = os.environ.get("ARKESEL_API")
 
 CSRF_TRUSTED_ORIGINS = [
-    # 'https://*.akuafohallug.com',
-    # 'http://*.akuafohallug.com',
     'http://*.127.0.0.1',
     'http://localhost',
 ]
+
+CELERY_BROKER_URL = os.environ.get("REDIS_URL", "redis://localhost:6379")
+CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL", "redis://localhost:6379")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_IMPORTS = []
+
+REDIS_HOST = os.environ.get(
+    "REDIS_URL", "redis://localhost:6379").split("//")[1].split(":")[0]
+REDIS_PORT = os.environ.get(
+    "REDIS_URL", "redis://localhost:6379").split("//")[1].split(":")[1]
