@@ -179,6 +179,10 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost',
 ]
 
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 CELERY_BROKER_URL = os.environ.get("REDIS_URL", "redis://localhost:6379")
 CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL", "redis://localhost:6379")
 CELERY_ACCEPT_CONTENT = ["json"]
