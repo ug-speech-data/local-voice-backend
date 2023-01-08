@@ -45,8 +45,6 @@ class SubmitCrawlerImages(generics.GenericAPIView):
                     thumbnail=files.File(thumb_io, filename),
                     file=files.File(ContentFile(response.content), filename))
 
-                print("thumbnail", i.thumbnail)
-
             total_images = Image.objects.count()
             return Response(
                 {

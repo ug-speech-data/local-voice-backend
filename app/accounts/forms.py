@@ -22,6 +22,6 @@ class UserForm(forms.ModelForm):
             'phone',
             'locale',
             'assigned_image_batch',
-            'other_names',
+            'surname',
             'other_names',
         ]
