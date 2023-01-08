@@ -46,4 +46,5 @@ urlpatterns += [
 
 urlpatterns += [
     path("submit-crawler-images/", views.SubmitCrawlerImages.as_view()),
+    path("web-app-configurations/", views.WebAppConfigurations.as_view()),
 ]

@@ -505,3 +505,18 @@ class AssignImageBatchToUsers(generics.GenericAPIView):
             "message":
             f"Shuffled {count + 1} users among {number_of_batches} batches."
         })
+
+
+class WebAppConfigurations(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        config = AppConfiguration.objects.first()
+        return Response({
+            "message": "Web app configurations",
+            "configurations": {
+                "android_apk_url":
+                request.build_absolute_uri(config.android_apk.url)
+                if config.android_apk else "",
+            }
+        })
