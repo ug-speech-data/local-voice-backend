@@ -15,7 +15,8 @@ def export_audio_data(user_id, data, base_url):
     if not os.path.exists(temp):
         os.makedirs(temp)
 
-    output_filename = f"temps/export_audio_{datetime.today()}.zip"
+    timestamp = str(datetime.today()).split(".")[0]
+    output_filename = f"temps/export_audio_{timestamp}.zip"
     output_dir = settings.MEDIA_ROOT / output_filename
     zip_file = zipfile.ZipFile(output_dir, 'w')
 
@@ -69,9 +70,10 @@ def export_audio_data(user_id, data, base_url):
     zip_file.close()
     os.remove(temp + '/waxal-project-data.xlsx')
 
-    Notification.objects.create(message="Data exported successfully",
-                                url=base_url + settings.MEDIA_URL +
-                                output_filename,
-                                title="Data Exported",
-                                type="success",
-                                user_id=user_id)
+    Notification.objects.create(
+        message=
+        "Data exported successfully. Click on the link below to download.",
+        url=base_url + settings.MEDIA_URL + output_filename,
+        title="Data Exported",
+        type="success",
+        user_id=user_id)
