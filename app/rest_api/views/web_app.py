@@ -548,12 +548,12 @@ class ExportAudioData(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         # Create temp directory
         temp = os.path.join(settings.MEDIA_ROOT, "temps")
+        if not os.path.exists(temp):
+            os.makedirs(temp)
+
         output_filename = 'temps/download.zip'
         output_dir = settings.MEDIA_ROOT / output_filename
         zip_file = zipfile.ZipFile(output_dir, 'w')
-
-        if not os.path.exists(temp):
-            os.makedirs(temp)
 
         columns = [
             'IMAGE_URL',
