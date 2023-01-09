@@ -41,6 +41,9 @@ urlpatterns += [
 
     path("reshuffle-images/", views.ReShuffleImageIntoBatches.as_view()),
     path("assign-images-batch-to-user/", views.AssignImageBatchToUsers.as_view()),
+
+    path("export-audio-data/", views.ExportAudioData.as_view()),
+    path("notifications/", views.NotificationAPI.as_view()),
 ]
 
 

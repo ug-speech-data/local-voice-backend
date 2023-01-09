@@ -5,7 +5,6 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from local_voice.utils.functions import get_all_user_permissions
-from rest_api.permissions import APILevelPermissionCheck
 from rest_api.serializers import (LoginSerializer, RegisterSerializer,
                                   UserSerializer)
 

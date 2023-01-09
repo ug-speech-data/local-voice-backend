@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from accounts.models import User
 from dashboard.models import Transcription
-from dashboard.models import Category, Image, Validation, Participant, Audio, Transaction
+from dashboard.models import Category, Image, Validation, Participant, Audio, Transaction, Notification
 from setup.models import AppConfiguration
 
 
@@ -298,4 +298,15 @@ class TranscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Transcription
+        fields = "__all__"
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    minutes_ago = serializers.SerializerMethodField()
+
+    def get_minutes_ago(self, obj):
+        return "1 minute ago"
+
+    class Meta:
+        model = Notification
         fields = "__all__"
