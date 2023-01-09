@@ -193,6 +193,7 @@ class Audio(models.Model):
     transcription_count = models.IntegerField(default=0)
     year = models.IntegerField(blank=True, default=2023, null=True)
     locale = models.CharField(max_length=255, blank=True, null=True)
+    duration = models.IntegerField(default=-1,blank=True, null=True)
     environment = models.CharField(max_length=255, blank=True, null=True)
     is_accepted = models.BooleanField(default=False)
     validations = models.ManyToManyField(Validation, related_name='audio_validations', blank=True)

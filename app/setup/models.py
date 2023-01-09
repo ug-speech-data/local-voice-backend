@@ -20,6 +20,7 @@ class AppConfiguration(models.Model):
     number_of_batches = models.IntegerField(default=10)
     enumerators_group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
     android_apk = models.FileField(upload_to="apks/", null=True, blank=True)
+    amount_per_audio = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
 
 # Just for permissions
 class SetupPerms(models.Model):

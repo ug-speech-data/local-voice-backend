@@ -215,11 +215,15 @@ class TransactionSerializer(serializers.ModelSerializer):
 class ParticipantSerializer(serializers.ModelSerializer):
     transaction = TransactionSerializer(read_only=True)
     submitted_by = serializers.SerializerMethodField()
+    audio_count = serializers.SerializerMethodField()
 
     def get_submitted_by(self, obj):
         if obj.submitted_by:
             return obj.submitted_by.email_address
         return ""
+
+    def get_audio_count(self, obj):
+        return obj.audios.count()
 
     class Meta:
         model = Participant

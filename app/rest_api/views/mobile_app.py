@@ -96,6 +96,7 @@ class UploadAudioAPI(generics.GenericAPIView):
         image_id = audio_data.get("remoteImageID", -1)
         image_object = Image.objects.filter(id=image_id).first()
         image_object = image_object or Image.objects.first()
+        amount_per_audio = AppConfiguration.objects.first().amount_per_audio
 
         try:
             if image_id and image_object and file and audio_data and participant_data:
@@ -106,12 +107,14 @@ class UploadAudioAPI(generics.GenericAPIView):
                     gender=participant_data.get("gender"),
                     submitted_by=request.user,
                     age=participant_data.get("age"),
+                    amount=amount_per_audio,
                 )
 
                 Audio.objects.create(
                     image=image_object,
                     submitted_by=request.user,
                     file=file,
+                    duration=audio_data.get("duration"),
                     locale=request.user.locale,
                     device_id=participant_data.get("deviceId"),
                     environment=participant_data.get("environment"),
