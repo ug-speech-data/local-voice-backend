@@ -4,6 +4,7 @@ from rest_framework.response import Response
 
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
+from rest_api.tasks import export_audio_data
 from rest_api.serializers import AudioSerializer, TranscriptionSerializer, ParticipantSerializer, NotificationSerializer
 from dashboard.forms import CategoryForm
 from dashboard.models import Category, Image, Audio, Transcription, Participant, Notification
@@ -16,10 +17,6 @@ from rest_api.serializers import (AppConfigurationSerializer,
                                   ImageSerializer, UserSerializer)
 from rest_api.views.mixins import SimpleCrudMixin
 from setup.models import AppConfiguration
-import pandas as pd
-from django.conf import settings
-import os
-import zipfile
 
 import logging
 
@@ -541,81 +538,16 @@ class NotificationAPI(generics.GenericAPIView):
 
 
 class ExportAudioData(generics.GenericAPIView):
-    # permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     required_permissions = ["setup.manage_setup"]
 
     def get(self, request, *args, **kwargs):
-        # Create temp directory
-        temp = os.path.join(settings.MEDIA_ROOT, "temps")
-        if not os.path.exists(temp):
-            os.makedirs(temp)
-
-        output_filename = 'temps/download.zip'
-        output_dir = settings.MEDIA_ROOT / output_filename
-        zip_file = zipfile.ZipFile(output_dir, 'w')
-
-        columns = [
-            'IMAGE_URL',
-            "AUDIO_URL",
-            'ORG_NAME',
-            'PROJECT_NAME ',
-            'SPEAKER_ID',
-            "LOCALE",
-            "GENDER",
-            "AGE",
-            "DEVICE",
-            "ENVIRONMENT",
-            "YEAR",
-        ]
-        rows = []
-        audios = Audio.objects.all()
-        for audio in audios:
-            if not (audio.file and audio.image and audio.image.file):
-                continue
-
-            # Copy audio and image files to temp directory
-            audio_filename = audio.file.name
-            image_filename = audio.image.file.name
-            zip_file.write(settings.MEDIA_ROOT / audio_filename,
-                           arcname=audio_filename)
-            zip_file.write(settings.MEDIA_ROOT / image_filename,
-                           arcname=image_filename)
-
-            row = [
-                audio.image.file.url,
-                audio.file.url,
-                "University of Ghana",
-                "Waxal",
-                audio.participant.id,
-                audio.locale,
-                audio.participant.gender,
-                audio.participant.age,
-                audio.device_id,
-                audio.environment,
-                audio.year,
-            ]
-            rows.append(row)
-
-        # Write data to excel file
-        df = pd.DataFrame(rows, columns=columns)
-        df.to_excel(temp + '/waxal-project-data.xlsx')
-        zip_file.write(temp + '/waxal-project-data.xlsx',
-                       arcname='waxal-project-data.xlsx')
-        zip_file.close()
-        os.remove(temp + '/waxal-project-data.xlsx')
-
-        Notification.objects.create(
-            message="Data exported successfully",
-            url=request.build_absolute_uri(settings.MEDIA_URL +
-                                           output_filename),
-            title="Data Exported",
-            type="success",
-            user=request.user)
+        base_url = request.build_absolute_uri("/").strip("/")
+        export_audio_data.delay(user_id=request.user.id,
+                                data=request.data,
+                                base_url=base_url)
 
         return Response({
             "message":
-            "Data exported successfully",
-            "url":
-            request.build_absolute_uri(settings.MEDIA_URL + output_filename)
+            "Audio export status. You'll receive a notification when done.",
         })

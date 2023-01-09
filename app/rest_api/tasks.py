@@ -3,19 +3,34 @@ from django.conf import settings
 import os
 import zipfile
 
+from dashboard.models import Audio, Notification
+from celery import shared_task
+from datetime import datetime
 
-def export_data(context):
+
+@shared_task()
+def export_audio_data(user_id, data, base_url):
     # Create temp directory
     temp = os.path.join(settings.MEDIA_ROOT, "temps")
-    output_filename = settings.MEDIA_ROOT / 'temps/download.zip'
-    zip_file = zipfile.ZipFile(output_filename, 'w')
-
     if not os.path.exists(temp):
         os.makedirs(temp)
 
+    output_filename = f"temps/export_audio_{datetime.today()}.zip"
+    output_dir = settings.MEDIA_ROOT / output_filename
+    zip_file = zipfile.ZipFile(output_dir, 'w')
+
     columns = [
-        'IMAGE_URL', "AUDIO_URL", 'ORG_NAME', 'PROJECT_NAME ', 'SPEAKER_ID',
-        "LOCALE", "GENDER", "AGE", "DEVICE", "ENVIRONMENT", "YEAR"
+        'IMAGE_URL',
+        "AUDIO_URL",
+        'ORG_NAME',
+        'PROJECT_NAME ',
+        'SPEAKER_ID',
+        "LOCALE",
+        "GENDER",
+        "AGE",
+        "DEVICE",
+        "ENVIRONMENT",
+        "YEAR",
     ]
     rows = []
     audios = Audio.objects.all()
@@ -27,9 +42,9 @@ def export_data(context):
         audio_filename = audio.file.name
         image_filename = audio.image.file.name
         zip_file.write(settings.MEDIA_ROOT / audio_filename,
-                       arcname=audio_filename)
+                       arcname="assets/" + audio_filename)
         zip_file.write(settings.MEDIA_ROOT / image_filename,
-                       arcname=image_filename)
+                       arcname="assets/" + image_filename)
 
         row = [
             audio.image.file.url,
@@ -54,9 +69,9 @@ def export_data(context):
     zip_file.close()
     os.remove(temp + '/waxal-project-data.xlsx')
 
-    return Response({
-        "message":
-        "Data exported successfully",
-        "url":
-        request.build_absolute_uri(settings.MEDIA_URL + 'temps/download.zip')
-    })
+    Notification.objects.create(message="Data exported successfully",
+                                url=base_url + settings.MEDIA_URL +
+                                output_filename,
+                                title="Data Exported",
+                                type="success",
+                                user_id=user_id)

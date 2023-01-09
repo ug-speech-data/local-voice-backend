@@ -302,10 +302,29 @@ class TranscriptionSerializer(serializers.ModelSerializer):
 
 
 class NotificationSerializer(serializers.ModelSerializer):
-    minutes_ago = serializers.SerializerMethodField()
+    time_ago = serializers.SerializerMethodField()
 
-    def get_minutes_ago(self, obj):
-        return "1 minute ago"
+    def get_time_ago(self, obj):
+        from datetime import datetime
+        from django.utils.timezone import make_aware
+
+        diff = make_aware(datetime.now()) - obj.created_at
+
+        total_seconds = diff.total_seconds()
+        seconds = int(total_seconds % 60)
+        minutes = int(total_seconds // 60)
+        hours = int(total_seconds // (60 * 60))
+        days = int(total_seconds // (60 * 60 * 24))
+
+        if days:
+            return f"{days} days ago"
+        if hours:
+            return f"{hours} hours ago"
+
+        if minutes:
+            return f"{minutes} minutes ago"
+
+        return f"{seconds} seconds ago"
 
     class Meta:
         model = Notification
