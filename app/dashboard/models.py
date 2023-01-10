@@ -152,6 +152,7 @@ class Participant(models.Model):
     audio_duration_in_seconds = models.IntegerField(default=0)
     paid = models.BooleanField(default=False)
     transaction = models.ForeignKey(Transaction, related_name="participants", on_delete=models.CASCADE, blank=True, null=True)
+    accepted_privacy_policy = models.BooleanField(default=False)
 
     def pay_participant(self):
         if self.paid:

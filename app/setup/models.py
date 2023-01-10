@@ -21,6 +21,7 @@ class AppConfiguration(models.Model):
     enumerators_group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
     android_apk = models.FileField(upload_to="apks/", null=True, blank=True)
     amount_per_audio = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    participant_privacy_statement = models.TextField(default="",null=True, blank=True)
 
 # Just for permissions
 class SetupPerms(models.Model):
