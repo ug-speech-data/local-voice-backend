@@ -108,6 +108,7 @@ class UploadAudioAPI(generics.GenericAPIView):
                     submitted_by=request.user,
                     age=participant_data.get("age"),
                     amount=amount_per_audio,
+                    accepted_privacy_policy=participant_data.get("acceptedPrivacyPolicy", False),
                 )
 
                 Audio.objects.create(
