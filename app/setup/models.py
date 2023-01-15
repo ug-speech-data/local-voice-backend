@@ -38,4 +38,5 @@ class SetupPerms(models.Model):
             ("transcribe_audio", "Can transcribe audio"),
             ("validate_transcription", "Can validate transcription"),
             ("manage_collected_data", "Can manage collected data"),
+            ("manage_payment", "Can manage payments"),
         ]

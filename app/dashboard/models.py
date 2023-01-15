@@ -139,6 +139,9 @@ class Transaction(models.Model):
     def __str__(self):
         return self.transaction_id
 
+    def execute(self):
+        print("Paying ...")
+
 class Participant(models.Model):
     momo_number = models.CharField(max_length=255, blank=True, null=True)
     network = models.CharField(max_length=10, blank=True, null=True)
@@ -158,15 +161,20 @@ class Participant(models.Model):
         if self.paid:
             return
 
-        transaction,_ = Transaction.objects.get_or_create(participants=self)
+        transaction = Transaction.objects.filter(participants=self).first()
+        if not transaction:
+            transaction = Transaction.objects.create()
         transaction.amount = self.amount
         transaction.phone_number = self.momo_number
         transaction.network = self.network
         transaction.status = "pending"
         transaction.save()
         self.transaction = transaction
+        transaction.execute()
         self.save()
 
+    def check_payment_status(self):
+        print("Checking payment status")
 
     @staticmethod
     def generate_query(query):

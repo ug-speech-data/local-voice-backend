@@ -51,3 +51,11 @@ urlpatterns += [
     path("submit-crawler-images/", views.SubmitCrawlerImages.as_view()),
     path("web-app-configurations/", views.WebAppConfigurations.as_view()),
 ]
+
+# Bulk Actions
+urlpatterns += [
+    path("participants-bulk-actions/", views.ParticipantsBulkAction.as_view()),
+    path("images-bulk-actions/", views.ImagesBulkAction.as_view()),
+    path("audios-bulk-actions/", views.AudiosBulkAction.as_view()),
+    path("transcriptions-bulk-actions/", views.TranscriptionsBulkAction.as_view()),
+]
