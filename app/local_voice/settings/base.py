@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'rest_api.apps.RestApiConfig',
     'dashboard.apps.DashboardConfig',
     'setup.apps.SetupConfig',
+    'payments.apps.PaymentsConfig',
 ]
 
 # Allow CORS
@@ -187,9 +188,15 @@ CELERY_BROKER_URL = os.environ.get("REDIS_URL", "redis://localhost:6379")
 CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL", "redis://localhost:6379")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
-CELERY_IMPORTS = []
+CELERY_IMPORTS = [
+    "payments.tasks",
+]
 
 REDIS_HOST = os.environ.get(
     "REDIS_URL", "redis://localhost:6379").split("//")[1].split(":")[0]
 REDIS_PORT = os.environ.get(
     "REDIS_URL", "redis://localhost:6379").split("//")[1].split(":")[1]
+
+# PayHub Credentials
+PAYHUB_SECRET_TOKEN = os.environ.get('PAYHUB_SECRET_TOKEN', None)
+PAYHUB_WALLET_ID = os.environ.get('PAYHUB_WALLET_ID', None)

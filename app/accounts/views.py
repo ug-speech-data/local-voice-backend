@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 
-from accounts.models import Otp, User
+from accounts.models import User
 from local_voice.utils.functions import get_errors_from_form
 
 

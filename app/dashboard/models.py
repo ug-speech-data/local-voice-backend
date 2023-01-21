@@ -9,6 +9,8 @@ from PIL import Image as PillowImage
 from PIL import UnidentifiedImageError
 
 from accounts.models import User
+from local_voice.utils.constants import TransactionDirection
+from payments.models import Transaction
 from setup.models import AppConfiguration
 from django.db.models import Q
 from functools import reduce
@@ -23,6 +25,9 @@ class Notification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     url = models.URLField(blank=True, null=True)
 
+    class Meta:
+        db_table = "notifications"
+
     def __str__(self):
         return self.title
 
@@ -32,6 +37,7 @@ class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
     class Meta:
+        db_table = "categories"
         verbose_name_plural = 'Categories'
 
     def __str__(self):
@@ -41,6 +47,9 @@ class Validation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     is_valid = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "validations"
 
     def __str__(self):
         return f'{self.user} - {self.is_valid}'
@@ -59,9 +68,11 @@ class Image(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     batch_number = models.IntegerField(default=-1, null=True, blank=True)
 
+    class Meta:
+        db_table = "images"
+
     def __str__(self):
         return self.name
-
 
     @staticmethod
     def generate_query(query):
@@ -120,27 +131,6 @@ class Image(models.Model):
         except (UnidentifiedImageError) as e:
             print(e)
 
-class Transaction(models.Model):
-    TRANSACTION_STATUS = [
-        ("new", "New"),
-        ("pending", "Pending"),
-        ("success", "Success"),
-        ("failed", "Failed"),
-    ]
-    transaction_id = models.CharField(max_length=255, blank=True, null=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    paid = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
-    network = models.CharField(max_length=255, blank=True, null=True)
-    response_data = models.TextField(blank=True, null=True)
-    status = models.CharField(max_length=255, blank=True, null=True, choices=TRANSACTION_STATUS, default="new")
-
-    def __str__(self):
-        return self.transaction_id
-
-    def execute(self):
-        print("Paying ...")
 
 class Participant(models.Model):
     momo_number = models.CharField(max_length=255, blank=True, null=True)
@@ -154,10 +144,13 @@ class Participant(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     audio_duration_in_seconds = models.IntegerField(default=0)
     paid = models.BooleanField(default=False)
-    transaction = models.ForeignKey(Transaction, related_name="participants", on_delete=models.CASCADE, blank=True, null=True)
+    transaction = models.OneToOneField(Transaction, related_name="participant", on_delete=models.SET_NULL, blank=True, null=True)
     accepted_privacy_policy = models.BooleanField(default=False)
 
-    def pay_participant(self):
+    class Meta:
+        db_table = "participants"
+
+    def pay_participant(self, user):
         if self.paid:
             return
 
@@ -167,14 +160,25 @@ class Participant(models.Model):
         transaction.amount = self.amount
         transaction.phone_number = self.momo_number
         transaction.network = self.network
-        transaction.status = "pending"
+        transaction.status = "new"
+        transaction.fullname= self.fullname
+        transaction.note = "PARTICIPANT_PAYMENT"
+        transaction.initiated_by=user,
+        transaction.direction = TransactionDirection.OUT.value
         transaction.save()
         self.transaction = transaction
-        transaction.execute()
         self.save()
 
+        # Make API calls
+        transaction.execute()
+
     def check_payment_status(self):
-        print("Checking payment status")
+        if self.transaction:
+            if self.transaction.success():
+                self.paid = True
+                self.save()
+            else:
+                self.transaction.recheck_status()
 
     @staticmethod
     def generate_query(query):
@@ -207,6 +211,9 @@ class Audio(models.Model):
     is_accepted = models.BooleanField(default=False)
     validations = models.ManyToManyField(Validation, related_name='audio_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "audios"
 
     def __str__(self):
         return f'{self.image.name} - {self.submitted_by}'
@@ -248,6 +255,9 @@ class Transcription(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_accepted = models.BooleanField(default=False)
     validation_count = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "transcriptions"
 
     @staticmethod
     def generate_query(query):

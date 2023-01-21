@@ -1,17 +1,16 @@
 import logging
-from random import sample
-
-import requests
-from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.utils import timezone
 
-from setup.models import AppConfiguration
-
 from .managers import UserManager
+from functools import reduce
+import decimal
+from django.db.models import Q
 
 logger = logging.getLogger("app")
+
+#yapf: disable
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -20,9 +19,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     surname = models.CharField(max_length=200, null=True, blank=True)
     other_names = models.CharField(max_length=200, null=True, blank=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
+    phone_network = models.CharField(max_length=20, null=True, blank=True)
     last_login_date = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
+    wallet = models.ForeignKey("Wallet", related_name="owner", on_delete=models.SET_NULL, null=True, blank=True)
     locale = models.CharField(max_length=20, default="", null=True, blank=True)
     assigned_image_batch = models.IntegerField(default=-1,
                                                blank=True,
@@ -44,51 +45,40 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_name(self):
         return self.fullname or self.email_address
 
+    @property
+    def fullname(self):
+        return f"{self.surname} {self.other_names}"
+
+    @staticmethod
+    def generate_query(query):
+        queries = [Q(**{f"{key}__icontains": query}) for key in ["email_address", "surname", "other_names"]]
+        return reduce(lambda x, y: x | y, queries)
+
     def __str__(self):
         return self.email_address
 
 
-class Otp(models.Model):
+class Wallet(models.Model):
+    total_payout = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    accrued_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    def get_pin():
-        return "".join(
-            sample(["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"], 6))
+    def __str__(self):
+        return str(self.owner)
 
-    address = models.CharField(max_length=100)
-    pin = models.CharField(max_length=10, default=get_pin)
-    duration = models.IntegerField(default=3)
-    created_at = models.DateTimeField(default=timezone.now)
-    delivered = models.BooleanField(default=False)
+    def save(self, *args, **kwargs) -> None:
+        self.balance = self.accrued_amount - self.total_payout
+        return super().save(*args, **kwargs)
 
-    def validate(self, pin):
-        return not self.expired() and pin == self.pin
+    def credit_wallet(self, amount):
+        self.accrued_amount += decimal.Decimal(amount)
+        self.save()
 
-    def send_sms(self):
-        number = self.address
-        config = AppConfiguration.objects.first()
-        sender_id = config.sms_sender_id
-        api_key = config.api_key or settings.ARKESEL_API
-        message = f"Your authorization PIN/OTP is {self.pin}"
-        url = f"https://sms.arkesel.com/sms/api?action=send-sms&api_key={api_key}&to={number}&from={sender_id}&sms={message}"
-        try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                self.delivered = True
-                self.save()
-                return True
-        except Exception as e:
-            logger.error(str(e))
-        return False
-
-    def get_time_left(self):
-        return max(
-            0.01,
-            round((self.created_at + timedelta(minutes=self.duration) -
-                   timezone.now()).total_seconds(), 2))
-
-    def expired(self):
-        return timezone.now() > self.created_at + timedelta(
-            minutes=self.duration)
+    def increase_payout_amount(self, amount):
+        self.total_payout += decimal.Decimal(amount)
+        self.save()
 
 
 class ActivityLog(models.Model):

@@ -22,15 +22,4 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
             ],
         ),
-        migrations.CreateModel(
-            name='Otp',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('address', models.CharField(max_length=100)),
-                ('pin', models.CharField(default=accounts.models.Otp.get_pin, max_length=10)),
-                ('duration', models.IntegerField(default=3)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
-                ('delivered', models.BooleanField(default=False)),
-            ],
-        ),
     ]

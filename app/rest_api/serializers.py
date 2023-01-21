@@ -2,10 +2,12 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
 from rest_framework import serializers
 
-from accounts.models import User
-from dashboard.models import Transcription
-from dashboard.models import Category, Image, Validation, Participant, Audio, Transaction, Notification
+from accounts.models import User, Wallet
+from dashboard.models import Category, Image, Validation, Participant, Audio, Transcription, Notification
 from setup.models import AppConfiguration
+from datetime import datetime
+from django.utils.timezone import make_aware
+from payments.models import Transaction
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -305,31 +307,99 @@ class TranscriptionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+def time_ago(datetime_from):
+    diff = make_aware(datetime.now()) - datetime_from
+    total_seconds = diff.total_seconds()
+    seconds = int(total_seconds % 60)
+    minutes = int(total_seconds // 60)
+    hours = int(total_seconds // (60 * 60))
+    days = int(total_seconds // (60 * 60 * 24))
+
+    if days:
+        return f"{days} day(s) ago"
+    if hours:
+        return f"{hours} hour(s) ago"
+
+    if minutes:
+        return f"{minutes} minute(s) ago"
+
+    return f"{seconds} second(s) ago"
+
+
 class NotificationSerializer(serializers.ModelSerializer):
     time_ago = serializers.SerializerMethodField()
 
     def get_time_ago(self, obj):
-        from datetime import datetime
-        from django.utils.timezone import make_aware
-
-        diff = make_aware(datetime.now()) - obj.created_at
-
-        total_seconds = diff.total_seconds()
-        seconds = int(total_seconds % 60)
-        minutes = int(total_seconds // 60)
-        hours = int(total_seconds // (60 * 60))
-        days = int(total_seconds // (60 * 60 * 24))
-
-        if days:
-            return f"{days} days ago"
-        if hours:
-            return f"{hours} hours ago"
-
-        if minutes:
-            return f"{minutes} minutes ago"
-
-        return f"{seconds} seconds ago"
+        return time_ago(obj.created_at)
 
     class Meta:
         model = Notification
+        fields = "__all__"
+
+
+class WalletSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Wallet
+        fields = "__all__"
+
+
+class PaymentUserSerializer(serializers.ModelSerializer):
+    photo_url = serializers.SerializerMethodField()
+    short_name = serializers.SerializerMethodField()
+    accrued_amount = serializers.SerializerMethodField()
+    total_payout = serializers.SerializerMethodField()
+    balance = serializers.SerializerMethodField()
+    fullname = serializers.SerializerMethodField()
+    wallet_last_updated_at = serializers.SerializerMethodField()
+
+    def get_fullname(self, obj):
+        return obj.fullname
+
+    def get_wallet_last_updated_at(self, obj):
+        if not obj.wallet:
+            obj.wallet = Wallet.objects.create()
+            obj.save()
+        return time_ago(obj.wallet.updated_at)
+
+    def get_accrued_amount(self, obj):
+        if not obj.wallet:
+            obj.wallet = Wallet.objects.create()
+            obj.save()
+        return str(obj.wallet.accrued_amount)
+
+    def get_total_payout(self, obj):
+        if not obj.wallet:
+            obj.wallet = Wallet.objects.create()
+            obj.save()
+        return str(obj.wallet.total_payout)
+
+    def get_balance(self, obj):
+        if not obj.wallet:
+            obj.wallet = Wallet.objects.create()
+            obj.save()
+        return str(obj.wallet.balance)
+
+    def get_photo_url(self, obj):
+        request = self.context.get("request")
+        if obj.photo and request:
+            return request.build_absolute_uri(obj.photo.url)
+        return "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+
+    def get_short_name(self, obj):
+        return obj.email_address.split("@")[0]
+
+    class Meta:
+        model = User
+        fields = [
+            "id", "email_address", "photo_url", "short_name", "phone",
+            "surname", "other_names", "accrued_amount", "total_payout",
+            "balance", "fullname", "wallet_last_updated_at"
+        ]
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Transaction
         fields = "__all__"
