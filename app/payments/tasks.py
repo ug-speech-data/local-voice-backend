@@ -77,6 +77,13 @@ def execute_transaction(transaction_id, callback_url) -> None:
         transaction.status_message = TransactionStatusMessages.SUCCESS.value
         transaction.save()
         transaction.update_wallet_balances()
+
+        # If the transaction is for a participant
+        if hasattr(transaction, "participant"):
+            participant = transaction.participant
+            participant.paid = True
+            participant.save()
+
     logger.error("Transaction {} status: {}".format(transaction_id,
                                                     response.text))
 

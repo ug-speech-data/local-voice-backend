@@ -25,9 +25,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     updated_at = models.DateTimeField(auto_now=True)
     wallet = models.ForeignKey("Wallet", related_name="owner", on_delete=models.SET_NULL, null=True, blank=True)
     locale = models.CharField(max_length=20, default="", null=True, blank=True)
-    assigned_image_batch = models.IntegerField(default=-1,
-                                               blank=True,
-                                               null=True)
+    assigned_image_batch = models.IntegerField(default=-1, blank=True, null=True)
+    assigned_audio_batch = models.IntegerField(default=-1, blank=True, null=True)
 
     # Django stuff for authentication
     USERNAME_FIELD = "email_address"

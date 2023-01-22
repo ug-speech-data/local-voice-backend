@@ -75,14 +75,19 @@ class GetAudiosToValidate(generics.GenericAPIView):
         offset = request.GET.get("offset", -1)
         required_audio_validation_count = configuration.required_audio_validation_count
 
-        audio = Audio.objects.filter(
+        audios = Audio.objects.filter(
             id__gt=offset,
             is_accepted=False,
             validation_count__lt=required_audio_validation_count)\
-                .exclude(validations__user=request.user) \
-            .order_by("id")\
-                .first()
+                .exclude(validations__user=request.user, submitted_by=request.user) \
+            .order_by("image", "id")
 
+        # If the user has been assigned a batch of images, they can only validate audios belonging to that batch
+        if request.user.assigned_audio_batch >= 0:
+            audios = audios.filter(
+                image__batch_number=request.user.assigned_audio_batch, )
+
+        audio = audios.first()
         data = self.serializer_class(audio, context={
             "request": request
         }).data if audio else None
@@ -303,8 +308,12 @@ class AppConfigurationAPI(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         enumerators_group_name = request.data.get("enumerators_group_name")
+        validators_group_name = request.data.get("validators_group_name")
+
         enumerators_group = Group.objects.filter(
             name=enumerators_group_name).first()
+        validators_group = Group.objects.filter(
+            name=validators_group_name).first()
         configuration = AppConfiguration.objects.first()
         try:
             for key, value in request.data.items():
@@ -312,6 +321,7 @@ class AppConfigurationAPI(generics.GenericAPIView):
                 if hasattr(configuration, key):
                     setattr(configuration, key, value)
             configuration.enumerators_group = enumerators_group
+            configuration.validators_group = validators_group
             configuration.save()
         except Exception as e:
             return Response(
@@ -491,16 +501,25 @@ class AssignImageBatchToUsers(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         configuration = AppConfiguration.objects.first()
         enumerators_group = configuration.enumerators_group
+        validators_group = configuration.validators_group
         number_of_batches = configuration.number_of_batches
 
         # Reset all assigned image batch
         User.objects.filter(assigned_image_batch__gt=-1).update(
-            assigned_image_batch=-1)
+            assigned_audio_batch=-1, assigned_image_batch=-1)
 
         count = -1
-        for count, user in enumerate(enumerators_group.user_set.all()):
+        for count, user in enumerate(
+                enumerators_group.user_set.all().order_by("id")):
             user.assigned_image_batch = count % number_of_batches + 1
             user.save()
+
+        # Assign audio batches
+        for user in validators_group.user_set.all().order_by("id"):
+            if user.assigned_image_batch >= 0:  # Else this user wasn't assigned a batch of images hence can validate any batch
+                user.assigned_audio_batch = (user.assigned_image_batch +
+                                             1) % number_of_batches
+                user.save()
 
         return Response({
             "message":

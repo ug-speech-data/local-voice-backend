@@ -35,7 +35,7 @@ class ParticipantsBulkAction(generics.GenericAPIView):
 
         if action == "pay":
             for participant in participants:
-                participant.pay_participant()
+                participant.pay_participant(request.user)
             return Response({
                 "message":
                 f"Payment request successfully submitted for {participants.count()} participants."

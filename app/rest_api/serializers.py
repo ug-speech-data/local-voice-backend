@@ -35,11 +35,13 @@ class UserSerializer(serializers.ModelSerializer):
             "photo_url",
             "created_at",
             "short_name",
+            "phone_network",
             "last_login_date",
             "phone",
             "surname",
             "locale",
             'assigned_image_batch',
+            "assigned_audio_batch",
             "other_names",
             "groups",
         ]
@@ -134,6 +136,7 @@ class GroupPermissionSerializer(serializers.ModelSerializer):
 class AppConfigurationSerializer(serializers.ModelSerializer):
     demo_video_url = serializers.SerializerMethodField()
     enumerators_group = GroupSerializer(read_only=True)
+    validators_group = GroupSerializer(read_only=True)
 
     def get_demo_video_url(self, obj):
         request = self.context.get("request")
@@ -239,6 +242,10 @@ class AudioSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     submitted_by = serializers.SerializerMethodField()
     audio_url = serializers.SerializerMethodField()
+    image_batch_number = serializers.SerializerMethodField()
+
+    def get_image_batch_number(self, obj):
+        return obj.image.batch_number
 
     def get_audio_url(self, obj):
         request = self.context.get("request")

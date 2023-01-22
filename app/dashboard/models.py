@@ -60,13 +60,13 @@ class Image(models.Model):
     categories = models.ManyToManyField(Category, blank=True, related_name='images')
     source_url = models.URLField(blank=True, null=True, unique=True)
     file = models.ImageField(upload_to='images/', blank=True, null=True)
-    is_accepted = models.BooleanField(default=False)
+    is_accepted = models.BooleanField(default=False, db_index=True)
     is_downloaded = models.BooleanField(default=False)
     validation_count = models.IntegerField(default=0)
     thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
     validations = models.ManyToManyField(Validation, related_name='image_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    batch_number = models.IntegerField(default=-1, null=True, blank=True)
+    batch_number = models.IntegerField(default=-1, db_index=True, null=True, blank=True)
 
     class Meta:
         db_table = "images"
@@ -133,7 +133,7 @@ class Image(models.Model):
 
 
 class Participant(models.Model):
-    momo_number = models.CharField(max_length=255, blank=True, null=True)
+    momo_number = models.CharField(max_length=255, db_index=True, blank=True, null=True)
     network = models.CharField(max_length=10, blank=True, null=True)
     age = models.IntegerField(blank=True, null=True)
     gender = models.CharField(max_length=255, blank=True, null=True)
@@ -143,7 +143,7 @@ class Participant(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     audio_duration_in_seconds = models.IntegerField(default=0)
-    paid = models.BooleanField(default=False)
+    paid = models.BooleanField(default=False, db_index=True)
     transaction = models.OneToOneField(Transaction, related_name="participant", on_delete=models.SET_NULL, blank=True, null=True)
     accepted_privacy_policy = models.BooleanField(default=False)
 
@@ -154,7 +154,7 @@ class Participant(models.Model):
         if self.paid:
             return
 
-        transaction = Transaction.objects.filter(participants=self).first()
+        transaction = Transaction.objects.filter(participant=self).first()
         if not transaction:
             transaction = Transaction.objects.create()
         transaction.amount = self.amount
@@ -163,7 +163,7 @@ class Participant(models.Model):
         transaction.status = "new"
         transaction.fullname= self.fullname
         transaction.note = "PARTICIPANT_PAYMENT"
-        transaction.initiated_by=user,
+        transaction.initiated_by = user
         transaction.direction = TransactionDirection.OUT.value
         transaction.save()
         self.transaction = transaction
@@ -197,18 +197,18 @@ class Participant(models.Model):
 
 
 class Audio(models.Model):
-    image = models.ForeignKey(Image, related_name="audios", on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, db_index=True, related_name="audios", on_delete=models.CASCADE)
     file = models.FileField(upload_to='audios/')
     submitted_by = models.ForeignKey(User, related_name="audios", on_delete=models.CASCADE)
     participant = models.ForeignKey(Participant, related_name="audios", on_delete=models.CASCADE)
     device_id = models.CharField(max_length=255, blank=True, null=True)
-    validation_count = models.IntegerField(default=0)
+    validation_count = models.IntegerField(default=0, db_index=True)
     transcription_count = models.IntegerField(default=0)
     year = models.IntegerField(blank=True, default=2023, null=True)
     locale = models.CharField(max_length=255, blank=True, null=True)
     duration = models.IntegerField(default=-1,blank=True, null=True)
     environment = models.CharField(max_length=255, blank=True, null=True)
-    is_accepted = models.BooleanField(default=False)
+    is_accepted = models.BooleanField(default=False, db_index=True)
     validations = models.ManyToManyField(Validation, related_name='audio_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -248,13 +248,13 @@ class Audio(models.Model):
         self.save()
 
 class Transcription(models.Model):
-    audio = models.ForeignKey(Audio, related_name="transcriptions", on_delete=models.CASCADE)
+    audio = models.ForeignKey(Audio, db_index=True, related_name="transcriptions", on_delete=models.CASCADE)
     text = models.TextField()
-    user = models.ForeignKey(User, related_name="transcriptions", on_delete=models.CASCADE)
+    user = models.ForeignKey(User, db_index=True, related_name="transcriptions", on_delete=models.CASCADE)
     validations = models.ManyToManyField(Validation, related_name='transcription_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    is_accepted = models.BooleanField(default=False)
-    validation_count = models.IntegerField(default=0)
+    is_accepted = models.BooleanField(default=False, db_index=True)
+    validation_count = models.IntegerField(default=0, db_index=True)
 
     class Meta:
         db_table = "transcriptions"
