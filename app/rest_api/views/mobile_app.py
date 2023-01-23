@@ -7,23 +7,9 @@ from setup.models import AppConfiguration
 from dashboard.models import Participant, Audio, Image
 
 from rest_api.serializers import (MobileAppConfigurationSerializer,
-                                  ImageSerializer, ParticipantSerializer,
-                                  UserSerializer)
+                                  ImageSerializer, ParticipantSerializer)
 
 logger = logging.getLogger("app")
-
-
-class MyProfile(generics.GenericAPIView):
-    """
-    Returns the profile of the logged in user.
-    """
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = UserSerializer
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        data = self.serializer_class(user).data
-        return Response({"user": data})
 
 
 class CreateParticipantAPI(generics.GenericAPIView):
@@ -108,7 +94,8 @@ class UploadAudioAPI(generics.GenericAPIView):
                     submitted_by=request.user,
                     age=participant_data.get("age"),
                     amount=amount_per_audio,
-                    accepted_privacy_policy=participant_data.get("acceptedPrivacyPolicy", False),
+                    accepted_privacy_policy=participant_data.get(
+                        "acceptedPrivacyPolicy", False),
                 )
 
                 Audio.objects.create(

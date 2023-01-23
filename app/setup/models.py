@@ -40,4 +40,7 @@ class SetupPerms(models.Model):
             ("validate_transcription", "Can validate transcription"),
             ("manage_collected_data", "Can manage collected data"),
             ("manage_payment", "Can manage payments"),
+            ("record_self", "Can record oneself"),
+            ("record_others", "Can record others"),
+
         ]

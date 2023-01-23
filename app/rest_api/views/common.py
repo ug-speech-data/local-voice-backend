@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from local_voice.utils.functions import get_all_user_permissions
 from rest_api.serializers import (LoginSerializer, RegisterSerializer,
                                   UserSerializer)
+from accounts.forms import UserForm
+from accounts.models import User
 
 
 class UserRegistrationAPI(generics.GenericAPIView):
@@ -123,11 +125,39 @@ class MyProfile(generics.GenericAPIView):
     """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = UserSerializer
+    model_class = User
+    form_class = UserForm
+    response_data_label = "user"
+    response_data_label_plural = "users"
 
     def get(self, request, *args, **kwargs):
         user = request.user
         data = self.serializer_class(user).data
-        return Response({"user": data})
+        return Response({self.response_data_label: data})
+
+    def post(self, request, *args, **kwargs):
+        accepted_privacy_policy = request.data.get("accepted_privacy_policy")
+        user = request.user
+        try:
+            for key, value in request.data.items():
+                if hasattr(user, key):
+                    print(key, value)
+                    setattr(user, key, value)
+            user.accepted_privacy_policy = accepted_privacy_policy == "true"
+            user.save()
+            return Response({
+                "message":
+                f"{self.model_class.__name__} saved successfully",
+                self.response_data_label:
+                self.serializer_class(user).data,
+            })
+        except Exception as e:
+            return Response(
+                {
+                    "message":
+                    f"{self.model_class.__name__} could not be saved",
+                    "error_message": str(e),
+                }, 400)
 
 
 class LogoutApiView(generics.GenericAPIView):

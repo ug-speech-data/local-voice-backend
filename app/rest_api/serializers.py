@@ -14,6 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
     photo_url = serializers.SerializerMethodField()
     short_name = serializers.SerializerMethodField()
     groups = serializers.SerializerMethodField()
+    permissions = serializers.SerializerMethodField()
 
     def get_groups(self, obj):
         return obj.groups.values_list("name", flat=True)
@@ -27,23 +28,21 @@ class UserSerializer(serializers.ModelSerializer):
     def get_short_name(self, obj):
         return obj.email_address.split("@")[0]
 
+    def get_permissions(self, user):
+        permissions = []
+        for perm in user.get_all_permissions():
+            permissions.append(perm.split(".")[-1])
+        return sorted(permissions)
+
     class Meta:
         model = User
-        fields = [
-            "id",
-            "email_address",
-            "photo_url",
-            "created_at",
-            "short_name",
-            "phone_network",
-            "last_login_date",
-            "phone",
-            "surname",
-            "locale",
-            'assigned_image_batch',
-            "assigned_audio_batch",
-            "other_names",
-            "groups",
+        exclude = [
+            "password",
+            "is_staff",
+            "is_superuser",
+            "is_active",
+            "wallet",
+            "user_permissions",
         ]
 
 

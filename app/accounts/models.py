@@ -20,13 +20,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     other_names = models.CharField(max_length=200, null=True, blank=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
     phone_network = models.CharField(max_length=20, null=True, blank=True)
+    age = models.IntegerField(blank=True, null=True)
     last_login_date = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     wallet = models.ForeignKey("Wallet", related_name="owner", on_delete=models.SET_NULL, null=True, blank=True)
     locale = models.CharField(max_length=20, default="", null=True, blank=True)
+    gender = models.CharField(max_length=20, default="", null=True, blank=True)
+    recording_environment = models.CharField(max_length=20, default="", null=True, blank=True)
     assigned_image_batch = models.IntegerField(default=-1, blank=True, null=True)
     assigned_audio_batch = models.IntegerField(default=-1, blank=True, null=True)
+    accepted_privacy_policy = models.BooleanField(default=False)
 
     # Django stuff for authentication
     USERNAME_FIELD = "email_address"
