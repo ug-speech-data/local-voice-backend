@@ -141,7 +141,6 @@ class MyProfile(generics.GenericAPIView):
         try:
             for key, value in request.data.items():
                 if hasattr(user, key):
-                    print(key, value)
                     setattr(user, key, value)
             user.accepted_privacy_policy = accepted_privacy_policy == "true"
             user.save()

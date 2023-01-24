@@ -200,7 +200,7 @@ class Audio(models.Model):
     image = models.ForeignKey(Image, db_index=True, related_name="audios", on_delete=models.CASCADE)
     file = models.FileField(upload_to='audios/')
     submitted_by = models.ForeignKey(User, related_name="audios", on_delete=models.CASCADE)
-    participant = models.ForeignKey(Participant, related_name="audios", on_delete=models.CASCADE)
+    participant = models.ForeignKey(Participant, related_name="audios", on_delete=models.SET_NULL, null=True, blank=True)
     device_id = models.CharField(max_length=255, blank=True, null=True)
     validation_count = models.IntegerField(default=0, db_index=True)
     transcription_count = models.IntegerField(default=0)

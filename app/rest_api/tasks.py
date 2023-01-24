@@ -47,15 +47,17 @@ def export_audio_data(user_id, data, base_url):
         zip_file.write(settings.MEDIA_ROOT / image_filename,
                        arcname="assets/" + image_filename)
 
+        participant = audio.participant
+
         row = [
             audio.image.file.url,
             audio.file.url,
             "University of Ghana",
             "Waxal",
-            audio.participant.id,
+            participant.id if participant else audio.submitted_by.id,
             audio.locale,
-            audio.participant.gender,
-            audio.participant.age,
+            participant.gender if participant else audio.submitted_by.gender,
+            participant.age if participant else audio.submitted_by.age,
             audio.device_id,
             audio.environment,
             audio.year,

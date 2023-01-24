@@ -83,9 +83,10 @@ class UploadAudioAPI(generics.GenericAPIView):
         image_object = Image.objects.filter(id=image_id).first()
         image_object = image_object or Image.objects.first()
         amount_per_audio = AppConfiguration.objects.first().amount_per_audio
+        participant_object = None
 
         try:
-            if image_id and image_object and file and audio_data and participant_data:
+            if participant_data:
                 participant_object = Participant.objects.create(
                     momo_number=participant_data.get("momoNumber"),
                     network=participant_data.get("network"),
@@ -98,14 +99,15 @@ class UploadAudioAPI(generics.GenericAPIView):
                         "acceptedPrivacyPolicy", False),
                 )
 
+            if image_object and file and audio_data:
                 Audio.objects.create(
                     image=image_object,
                     submitted_by=request.user,
                     file=file,
                     duration=audio_data.get("duration"),
                     locale=request.user.locale,
-                    device_id=participant_data.get("deviceId"),
-                    environment=participant_data.get("environment"),
+                    device_id=audio_data.get("deviceId"),
+                    environment=audio_data.get("environment"),
                     participant=participant_object,
                 )
                 return Response({

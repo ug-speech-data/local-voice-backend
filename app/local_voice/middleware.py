@@ -45,8 +45,8 @@ class AddPermissionToResponse(object):
         Add user's permission bloom filter to every API request.
         """
         response = self.get_response(request)
-        if request.user.is_authenticated:
-            if settings.DEBUG and request.user.user_permissions.count() == 0:
-                for perm in Permission.objects.all():
-                    request.user.user_permissions.add(perm)
+        # if request.user.is_authenticated:
+        #     if settings.DEBUG and request.user.user_permissions.count() == 0:
+        #         for perm in Permission.objects.all():
+        #             request.user.user_permissions.add(perm)
         return response
