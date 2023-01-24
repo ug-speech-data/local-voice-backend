@@ -79,6 +79,8 @@ class UploadAudioAPI(generics.GenericAPIView):
         audio_data = json.loads(audio_data)
         participant_data = json.loads(participant_data)
 
+        print("audio_data", request.data.get("audio_data"))
+
         image_id = audio_data.get("remoteImageID", -1)
         image_object = Image.objects.filter(id=image_id).first()
         image_object = image_object or Image.objects.first()
@@ -106,7 +108,7 @@ class UploadAudioAPI(generics.GenericAPIView):
                     file=file,
                     duration=audio_data.get("duration"),
                     locale=request.user.locale,
-                    device_id=audio_data.get("deviceId"),
+                    device_id=audio_data.get("device_id"),
                     environment=audio_data.get("environment"),
                     participant=participant_object,
                 )
