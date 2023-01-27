@@ -77,6 +77,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
 
         audios = Audio.objects.filter(
             id__gt=offset,
+            locale=request.user.locale,
             is_accepted=False,
             validation_count__lt=required_audio_validation_count)\
                 .exclude(validations__user=request.user, submitted_by=request.user) \
@@ -85,7 +86,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
         # If the user has been assigned a batch of images, they can only validate audios belonging to that batch
         if request.user.assigned_audio_batch >= 0:
             audios = audios.filter(
-                image__batch_number=request.user.assigned_audio_batch, )
+                image__batch_number=request.user.assigned_audio_batch)
 
         audio = audios.first()
         data = self.serializer_class(audio, context={

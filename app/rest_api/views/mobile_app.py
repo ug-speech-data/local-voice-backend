@@ -78,9 +78,7 @@ class UploadAudioAPI(generics.GenericAPIView):
         participant_data = request.data.get("participant_data")
         audio_data = json.loads(audio_data)
         participant_data = json.loads(participant_data)
-
-        print("audio_data", request.data.get("audio_data"))
-
+        
         image_id = audio_data.get("remoteImageID", -1)
         image_object = Image.objects.filter(id=image_id).first()
         image_object = image_object or Image.objects.first()
