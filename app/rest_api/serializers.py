@@ -15,6 +15,22 @@ class UserSerializer(serializers.ModelSerializer):
     short_name = serializers.SerializerMethodField()
     groups = serializers.SerializerMethodField()
     permissions = serializers.SerializerMethodField()
+    balance = serializers.SerializerMethodField()
+    audios_submitted = serializers.SerializerMethodField()
+    audios_validated = serializers.SerializerMethodField()
+
+    def get_balance(self, user):
+        if user.wallet:
+            return str(user.wallet.balance)
+        return 0
+
+    def get_audios_submitted(self, user):
+        from dashboard.models import Audio
+        return Audio.objects.filter(submitted_by=user).count()
+
+    def get_audios_validated(self, user):
+        from dashboard.models import Audio
+        return Audio.objects.filter(validations__user=user).count()
 
     def get_groups(self, obj):
         return obj.groups.values_list("name", flat=True)
