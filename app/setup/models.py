@@ -21,8 +21,14 @@ class AppConfiguration(models.Model):
     enumerators_group = models.OneToOneField(Group, related_name="setup_enumerator_group", on_delete=models.CASCADE, null=True, blank=True)
     validators_group = models.OneToOneField(Group, related_name="setup_validator_group", on_delete=models.CASCADE, null=True, blank=True)
     android_apk = models.FileField(upload_to="apks/", null=True, blank=True)
-    amount_per_audio = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     participant_privacy_statement = models.TextField(default="",null=True, blank=True)
+
+    # Compensation
+    participant_amount_per_audio = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    amount_per_audio_transcription = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    amount_per_audio_validation = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    audio_aggregators_amount_per_audio = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    individual_audio_aggregators_amount_per_audio = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
 
 # Just for permissions
 class SetupPerms(models.Model):
