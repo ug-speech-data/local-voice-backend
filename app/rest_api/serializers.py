@@ -142,7 +142,7 @@ class GroupPermissionSerializer(serializers.ModelSerializer):
 
     def get_group_has(self, obj):
         group = self.context.get("group")
-        return group.permissions.filter(id=obj.id).exists()
+        return group.permissions.filter(id=obj.id).exists() if group else []
 
     class Meta:
         model = Permission
