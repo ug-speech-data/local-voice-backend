@@ -105,7 +105,7 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
 
     def get_demo_video_url(self, obj):
         request = self.context.get("request")
-        if obj.demo_video:
+        if obj.demo_video and request:
             return request.build_absolute_uri(obj.demo_video.url)
         return ""
 
@@ -117,9 +117,7 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
             "api_key",
             "send_sms",
             "required_image_validation_count",
-            "required_audio_validation_count",
             "required_transcription_validation_count",
-            "required_image_description_count",
             "number_of_batches",
             "enumerators_group",
         ]
@@ -423,13 +421,8 @@ class PaymentUserSerializer(serializers.ModelSerializer):
         ]
 
 
-class TransactionSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Transaction
-        fields = "__all__"
-
 class AudioUploadSerializer(serializers.Serializer):
+
     class _AudioSerializer(serializers.Serializer):
         remoteImageID = serializers.IntegerField()
         duration = serializers.IntegerField()
@@ -438,12 +431,12 @@ class AudioUploadSerializer(serializers.Serializer):
 
     class _ParticipantSerializer(serializers.Serializer):
         momoNumber = serializers.CharField(max_length=10)
-        network = serializers.ChoiceField(["MTN","VODAFONE","AIRTELTIGO"])
+        network = serializers.ChoiceField(["MTN", "VODAFONE", "AIRTELTIGO"])
         fullname = serializers.CharField(max_length=200)
         gender = serializers.CharField(max_length=200)
         age = serializers.IntegerField()
         acceptedPrivacyPolicy = serializers.BooleanField(default=True)
-        
+
     api_client = serializers.CharField(max_length=30)
     audio_file = serializers.FileField()
     audio_data = _AudioSerializer()
@@ -453,22 +446,23 @@ class AudioUploadSerializer(serializers.Serializer):
         file = request.FILES.get("audio_file")
         api_client = request.data.get("api_client")
         audio_data = request.data.get("audio_data")
-        if audio_data and type(audio_data) == str :
+        if audio_data and type(audio_data) == str:
             audio_data = json.loads(audio_data)
         else:
             return False, "No audio data"
         participant_data = request.data.get("participant_data")
         if participant_data and type(participant_data) == str:
             participant_data = json.loads(participant_data)
-        
+
         image_id = audio_data.get("remoteImageID", -1)
         image_object = Image.objects.filter(id=image_id).first()
-        participant_amount_per_audio = AppConfiguration.objects.first().participant_amount_per_audio
+        participant_amount_per_audio = AppConfiguration.objects.first(
+        ).participant_amount_per_audio
         participant_object = None
 
         if not image_object:
             return False, "Invalid Image ID"
-        
+
         if not file:
             return False, "No file"
 
@@ -484,21 +478,19 @@ class AudioUploadSerializer(serializers.Serializer):
                     amount=participant_amount_per_audio,
                     accepted_privacy_policy=participant_data.get(
                         "acceptedPrivacyPolicy", False),
-                        api_client=api_client,
+                    api_client=api_client,
                 )
             if image_object and file and audio_data:
-                Audio.objects.create(
-                    image=image_object,
-                    submitted_by=request.user,
-                    file=file,
-                    duration=audio_data.get("duration"),
-                    locale=request.user.locale,
-                    device_id=audio_data.get("device_id"),
-                    environment=audio_data.get("environment"),
-                    participant=participant_object,
-                    api_client=api_client
-                )
+                Audio.objects.create(image=image_object,
+                                     submitted_by=request.user,
+                                     file=file,
+                                     duration=audio_data.get("duration"),
+                                     locale=request.user.locale,
+                                     device_id=audio_data.get("device_id"),
+                                     environment=audio_data.get("environment"),
+                                     participant=participant_object,
+                                     api_client=api_client)
         except Exception as e:
             logger.error(e)
-            return False,str(e)
+            return False, str(e)
         return True, "Success"
