@@ -33,7 +33,19 @@ class GetImagesToValidate(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         configuration = AppConfiguration.objects.first()
         offset = request.GET.get("offset", -1)
-        required_image_validation_count = configuration.required_image_validation_count
+        required_image_validation_count = configuration.required_image_validation_count if configuration else 0
+        max_allowed_validation = configuration.max_image_for_validation_per_user if configuration else 0
+
+        # Ensure that the user does not validate to many images
+        user_validations = Image.objects.filter(
+            validations__user=request.user).count()
+        if user_validations >= max_allowed_validation:
+            return Response({
+                "image":
+                None,
+                "message":
+                "You have exhausted your permitted number of image validations."
+            })
 
         image = Image.objects.filter(
             id__gt=offset,
@@ -75,7 +87,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         configuration = AppConfiguration.objects.first()
         offset = request.GET.get("offset", -1)
-        required_audio_validation_count = configuration.required_audio_validation_count
+        required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
 
         audios = Audio.objects.filter(
             id__gt=offset,
@@ -106,7 +118,7 @@ class GetAudiosToTranscribe(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         configuration = AppConfiguration.objects.first()
-        required_transcription_validation_count = configuration.required_transcription_validation_count
+        required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 0
         offset = request.GET.get("offset", -1)
 
         audio = Audio.objects.filter(
@@ -132,7 +144,7 @@ class GetTranscriptionToValidate(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         configuration = AppConfiguration.objects.first()
-        required_transcription_validation_count = configuration.required_transcription_validation_count
+        required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else None
         offset = request.GET.get("offset", -1)
 
 
@@ -318,6 +330,9 @@ class AppConfigurationAPI(generics.GenericAPIView):
         validators_group = Group.objects.filter(
             name=validators_group_name).first()
         configuration = AppConfiguration.objects.first()
+        if not configuration:
+            return Response({"message": "No configurations"}, 400)
+
         try:
             for key, value in request.data.items():
                 if not value: continue
@@ -361,6 +376,10 @@ class CollectedImagesAPI(SimpleCrudMixin):
     def post(self, request, *args, **kwargs):
         image_id = request.data.get("id") or -1
         image_obj = self.model_class.objects.filter(id=image_id).first()
+
+        if not image_obj:
+            return Response({"message": "Invalid image id"}, 400)
+
         category_names = request.data.pop("categories", None)
         categories = Category.objects.filter(name__in=category_names)
         image_obj.categories.set(categories)
@@ -398,6 +417,10 @@ class CollectedAudiosAPI(SimpleCrudMixin):
     def post(self, request, *args, **kwargs):
         object_id = request.data.pop("id") or -1
         image_obj = self.model_class.objects.filter(id=object_id).first()
+
+        if not image_obj:
+            return Response({"message": "Invalid image id"}, 400)
+
         for key, value in request.data.items():
             if hasattr(image_obj, key):
                 setattr(image_obj, key, value)
@@ -433,6 +456,10 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
     def post(self, request, *args, **kwargs):
         object_id = request.data.pop("id") or -1
         selected_obj = self.model_class.objects.filter(id=object_id).first()
+
+        if not selected_obj:
+            return Response({"message": "Invalid id"}, 400)
+
         for key, value in request.data.items():
             if hasattr(selected_obj, key):
                 setattr(selected_obj, key, value)
@@ -464,6 +491,10 @@ class CollectedParticipantsAPI(SimpleCrudMixin):
     def post(self, request, *args, **kwargs):
         object_id = request.data.pop("id") or -1
         selected_obj = self.model_class.objects.filter(id=object_id).first()
+
+        if not selected_obj:
+            return Response({"message": "Invalid id"}, 400)
+
         for key, value in request.data.items():
             if hasattr(selected_obj, key):
                 setattr(selected_obj, key, value)
@@ -484,7 +515,9 @@ class ReShuffleImageIntoBatches(generics.GenericAPIView):
     required_permissions = ["setup.manage_setup"]
 
     def post(self, request, *args, **kwargs):
-        number_of_batches = AppConfiguration.objects.first().number_of_batches
+        configuration = AppConfiguration.objects.first()
+        number_of_batches = configuration.number_of_batches if configuration else 0
+        count = 0
         for count, image in enumerate(
                 Image.objects.filter(is_accepted=True).order_by("id")):
             image.batch_number = count % number_of_batches + 1
@@ -503,22 +536,26 @@ class AssignImageBatchToUsers(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         configuration = AppConfiguration.objects.first()
-        enumerators_group = configuration.enumerators_group
-        validators_group = configuration.validators_group
-        number_of_batches = configuration.number_of_batches
+        enumerators_group = configuration.enumerators_group if configuration else None
+        validators_group = configuration.validators_group if configuration else None
+        number_of_batches = configuration.number_of_batches if configuration else None
+
+        if not (enumerators_group and validators_group):
+            return Response({"message": "Invalid groups"}, 400)
 
         # Reset all assigned image batch
         User.objects.filter(assigned_image_batch__gt=-1).update(
             assigned_audio_batch=-1, assigned_image_batch=-1)
 
         count = -1
-        for count, user in enumerate(
-                enumerators_group.user_set.all().order_by("id")):
-            user.assigned_image_batch = count % number_of_batches + 1
+        for count, user in enumerate(enumerators_group.user_set.all().order_by(
+                "id")):  # type: ignore
+            user.assigned_image_batch = count % number_of_batches + 1  # type: ignore
             user.save()
 
         # Assign audio batches
-        for user in validators_group.user_set.all().order_by("id"):
+        for user in validators_group.user_set.all().order_by(
+                "id"):  # type: ignore
             if user.assigned_image_batch >= 0:  # Else this user wasn't assigned a batch of images hence can validate any batch
                 user.assigned_audio_batch = (user.assigned_image_batch +
                                              1) % number_of_batches
@@ -535,14 +572,16 @@ class WebAppConfigurations(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         config = AppConfiguration.objects.first()
-        return Response({
-            "message": "Web app configurations",
-            "configurations": {
-                "android_apk_url":
-                request.build_absolute_uri(config.android_apk.url)
-                if config.android_apk else "",
-            }
-        })
+        if config:
+            return Response({
+                "message": "Web app configurations",
+                "configurations": {
+                    "android_apk_url":
+                    request.build_absolute_uri(config.android_apk.url)
+                    if config.android_apk else "",
+                }
+            })
+        return Response({}, 404)
 
 
 class NotificationAPI(generics.GenericAPIView):
@@ -565,9 +604,10 @@ class ExportAudioData(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         base_url = request.build_absolute_uri("/").strip("/")
+
         export_audio_data.delay(user_id=request.user.id,
                                 data=request.data,
-                                base_url=base_url)
+                                base_url=base_url)  # type: ignore
 
         return Response({
             "message":

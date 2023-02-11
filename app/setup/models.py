@@ -22,6 +22,7 @@ class AppConfiguration(models.Model):
     validators_group = models.OneToOneField(Group, related_name="setup_validator_group", on_delete=models.CASCADE, null=True, blank=True)
     android_apk = models.FileField(upload_to="apks/", null=True, blank=True)
     participant_privacy_statement = models.TextField(default="",null=True, blank=True)
+    max_image_for_validation_per_user = models.IntegerField(default=300)
 
     # Compensation
     participant_amount_per_audio = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
