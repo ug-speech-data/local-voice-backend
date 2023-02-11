@@ -1,14 +1,15 @@
 import json
 import logging
+
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from setup.models import AppConfiguration
-from dashboard.models import Image
 
-from rest_api.serializers import (MobileAppConfigurationSerializer,
-                                  ImageSerializer, ParticipantSerializer,
-                                  AudioUploadSerializer)
+from dashboard.models import Image
+from rest_api.serializers import (AudioUploadSerializer, ImageSerializer,
+                                  MobileAppConfigurationSerializer,
+                                  ParticipantSerializer)
+from setup.models import AppConfiguration
 
 logger = logging.getLogger("app")
 

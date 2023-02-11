@@ -4,11 +4,11 @@ from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from accounts.forms import UserForm
+from accounts.models import User
 from local_voice.utils.functions import get_all_user_permissions
 from rest_api.serializers import (LoginSerializer, RegisterSerializer,
                                   UserSerializer)
-from accounts.forms import UserForm
-from accounts.models import User
 
 
 class UserRegistrationAPI(generics.GenericAPIView):

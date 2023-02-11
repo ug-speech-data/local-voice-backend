@@ -1,8 +1,11 @@
 import os
+
 from django.db import models
 from django.dispatch import receiver
-from .models import Image, Audio
+
 from setup.models import AppConfiguration
+
+from .models import Audio, Image
 
 
 @receiver(models.signals.post_delete, sender=Image)

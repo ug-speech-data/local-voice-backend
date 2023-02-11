@@ -1,12 +1,13 @@
+import decimal
 import logging
+from functools import reduce
+
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from .managers import UserManager
-from functools import reduce
-import decimal
-from django.db.models import Q
 
 logger = logging.getLogger("app")
 

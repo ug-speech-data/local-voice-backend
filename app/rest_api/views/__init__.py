@@ -1,11 +1,11 @@
-from io import BytesIO
 import zipfile
-from django.http import HttpResponse
+from io import BytesIO
 
 import requests
 from django.core import files
 from django.core.files.base import ContentFile
 from django.db.utils import IntegrityError
+from django.http import HttpResponse
 from PIL import Image as PillowImage
 from PIL import UnidentifiedImageError
 from rest_framework import generics, permissions

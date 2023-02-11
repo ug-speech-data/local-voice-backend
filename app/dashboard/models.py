@@ -1,10 +1,12 @@
 from datetime import datetime
+from functools import reduce
 from io import BytesIO
 
 import requests
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import models
+from django.db.models import Q
 from PIL import Image as PillowImage
 from PIL import UnidentifiedImageError
 
@@ -12,8 +14,6 @@ from accounts.models import User
 from local_voice.utils.constants import TransactionDirection
 from payments.models import Transaction
 from setup.models import AppConfiguration
-from django.db.models import Q
-from functools import reduce
 
 
 class Notification(models.Model):

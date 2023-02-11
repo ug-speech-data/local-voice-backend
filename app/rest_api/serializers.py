@@ -1,14 +1,16 @@
 import json
+from datetime import datetime
+
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
+from django.utils.timezone import make_aware
 from rest_framework import serializers
 
 from accounts.models import User, Wallet
-from dashboard.models import Category, Image, Validation, Participant, Audio, Transcription, Notification
-from setup.models import AppConfiguration
-from datetime import datetime
-from django.utils.timezone import make_aware
+from dashboard.models import (Audio, Category, Image, Notification,
+                              Participant, Transcription, Validation)
 from payments.models import Transaction
+from setup.models import AppConfiguration
 
 
 class UserSerializer(serializers.ModelSerializer):

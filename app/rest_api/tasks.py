@@ -1,11 +1,12 @@
-import pandas as pd
-from django.conf import settings
 import os
 import zipfile
+from datetime import datetime
+
+import pandas as pd
+from celery import shared_task
+from django.conf import settings
 
 from dashboard.models import Audio, Notification
-from celery import shared_task
-from datetime import datetime
 
 
 @shared_task()

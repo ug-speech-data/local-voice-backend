@@ -1,8 +1,9 @@
 import os
+
 from django.contrib import admin
+from django.contrib.auth.models import Permission
 
 from accounts.models import User
-from django.contrib.auth.models import Permission
 
 admin.site.register(User)
 

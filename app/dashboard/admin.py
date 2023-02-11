@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from .models import Category, Image, Participant, Audio, Validation, Transaction
+from .models import (Audio, Category, Image, Participant, Transaction,
+                     Validation)
 
 admin.site.register(Category)
 admin.site.register(Image)

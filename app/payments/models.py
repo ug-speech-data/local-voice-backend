@@ -1,10 +1,11 @@
-from django.db import models
 import logging
-from local_voice.utils.constants import TransactionStatus
-from local_voice.utils.constants import TransactionDirection
+
+from django.db import models
 from django.db import transaction as django_db_transaction
-from django.utils.decorators import method_decorator
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+
+from local_voice.utils.constants import TransactionDirection, TransactionStatus
 
 logger = logging.getLogger("app")
 
@@ -56,7 +57,8 @@ class Transaction(models.Model):
         """Execute this transaction by making the actual API calls and updating the status, amount, wallets, etc.
         This method is idempotent.
         """
-        from payments.tasks import execute_transaction  # Avoid circular imports
+        from payments.tasks import \
+            execute_transaction  # Avoid circular imports
         return execute_transaction.delay(self.transaction_id, callback_url)
 
     def retry(self):
@@ -77,7 +79,8 @@ class Transaction(models.Model):
         As well as performing other idempotent actions related to the transactions.
         i.e., crediting stores, updating wallets, etc. supposed they've not been done already.
         """
-        from payments.tasks import check_transaction_status  # Avoid circular imports
+        from payments.tasks import \
+            check_transaction_status  # Avoid circular imports
         if self.accepted_by_provider:
             check_transaction_status.delay(self.transaction_id)
 
