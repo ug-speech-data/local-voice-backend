@@ -4,7 +4,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from setup.models import AppConfiguration
-from dashboard.models import Participant, Audio, Image
+from dashboard.models import Image
 
 from rest_api.serializers import (MobileAppConfigurationSerializer,
                                   ImageSerializer, ParticipantSerializer,
@@ -78,28 +78,27 @@ class UploadAudioAPI(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         # Convert json serialized fields into JSON object
-        data = {}
-        for key,value in request.data.items():
+        request_data = {}
+        for key, value in request.data.items():
             try:
-                data[key] = json.loads(value) if type(value) == str else value
+                request_data[key] = json.loads(value) if type(
+                    value) == str else value
             except json.decoder.JSONDecodeError as e:
                 # It is not JSON serialization.
-                data[key] = value
+                request_data[key] = value
 
-        serializer  = self.serializer_class(request.FILES, data)
+        serializer = self.serializer_class(request.FILES, request_data)
         if serializer.is_valid():
-            saved,error = serializer.create(request)
+            saved, error = serializer.create(request)
             if saved:
                 return Response({
                     "success": True,
                     "message": "Audio uploaded successfully"
                 })
             else:
-                return Response({"success": False, "message": error},400)
+                return Response({"success": False, "message": error}, 400)
         else:
             error_messages = []
             for field, errors in serializer.errors.items():
                 error_messages.append(f"{field}: " + str(errors))
-            return Response({
-                "error_messages":error_messages
-            }, 400)
+            return Response({"error_messages": error_messages}, 400)
