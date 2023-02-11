@@ -1,3 +1,4 @@
+import json
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
 from rest_framework import serializers
@@ -425,3 +426,74 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = "__all__"
+
+class AudioUploadSerializer(serializers.Serializer):
+    class _AudioSerializer(serializers.Serializer):
+        remoteImageID = serializers.IntegerField()
+        duration = serializers.IntegerField()
+        device_id = serializers.CharField()
+        environment = serializers.CharField()
+
+    class _ParticipantSerializer(serializers.Serializer):
+        momoNumber = serializers.CharField(max_length=10)
+        network = serializers.ChoiceField(["MTN","VODAFONE","AIRTELTIGO"])
+        fullname = serializers.CharField(max_length=200)
+        gender = serializers.CharField(max_length=200)
+        age = serializers.IntegerField()
+        acceptedPrivacyPolicy = serializers.BooleanField(default=True)
+        
+    api_client = serializers.CharField(max_length=30)
+    file = serializers.FileField()
+    audio_data = _AudioSerializer()
+    participant_data = _ParticipantSerializer(required=False)
+
+    def create(self, request):
+        file = request.FILES.get("audio_file")
+        api_client = request.data.get("api_client")
+        audio_data = request.data.get("audio_data")
+        if audio_data and type(audio_data) == str :
+            audio_data = json.loads(audio_data)
+        else:
+            return False, "No audio data"
+        participant_data = request.data.get("participant_data")
+        if participant_data and type(participant_data) == str:
+            participant_data = json.loads(participant_data)
+        
+        image_id = audio_data.get("remoteImageID", -1)
+        image_object = Image.objects.filter(id=image_id).first()
+        participant_amount_per_audio = AppConfiguration.objects.first().participant_amount_per_audio
+        participant_object = None
+
+        if not image_object:
+            return False, "Invalid Image ID"
+
+        try:
+            if participant_data:
+                participant_object = Participant.objects.create(
+                    momo_number=participant_data.get("momoNumber"),
+                    network=participant_data.get("network"),
+                    fullname=participant_data.get("fullname"),
+                    gender=participant_data.get("gender"),
+                    submitted_by=request.user,
+                    age=participant_data.get("age"),
+                    amount=participant_amount_per_audio,
+                    accepted_privacy_policy=participant_data.get(
+                        "acceptedPrivacyPolicy", False),
+                        api_client=api_client,
+                )
+            if image_object and file and audio_data:
+                Audio.objects.create(
+                    image=image_object,
+                    submitted_by=request.user,
+                    file=file,
+                    duration=audio_data.get("duration"),
+                    locale=request.user.locale,
+                    device_id=audio_data.get("device_id"),
+                    environment=audio_data.get("environment"),
+                    participant=participant_object,
+                    api_client=api_client
+                )
+        except Exception as e:
+            logger.error(e)
+            return False,str(e)
+        return True, "Success"

@@ -7,7 +7,8 @@ from setup.models import AppConfiguration
 from dashboard.models import Participant, Audio, Image
 
 from rest_api.serializers import (MobileAppConfigurationSerializer,
-                                  ImageSerializer, ParticipantSerializer)
+                                  ImageSerializer, ParticipantSerializer,
+                                  AudioUploadSerializer)
 
 logger = logging.getLogger("app")
 
@@ -70,50 +71,35 @@ class GetAssignedImagesAPI(generics.GenericAPIView):
 
 
 class UploadAudioAPI(generics.GenericAPIView):
+    """Upload audio file with the meta data.
+    """
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AudioUploadSerializer
 
     def post(self, request, *args, **kwargs):
-        file = request.FILES.get("audio_file")
-        audio_data = request.data.get("audio_data")
-        participant_data = request.data.get("participant_data")
-        audio_data = json.loads(audio_data)
-        participant_data = json.loads(participant_data)
-        
-        image_id = audio_data.get("remoteImageID", -1)
-        image_object = Image.objects.filter(id=image_id).first()
-        image_object = image_object or Image.objects.first()
-        amount_per_audio = AppConfiguration.objects.first().amount_per_audio
-        participant_object = None
+        # Convert json serialized fields into JSON object
+        data = {}
+        for key,value in request.data.items():
+            try:
+                data[key] = json.loads(value) if type(value) == str else value
+            except json.decoder.JSONDecodeError as e:
+                # It is not JSON serialization.
+                data[key] = value
 
-        try:
-            if participant_data:
-                participant_object = Participant.objects.create(
-                    momo_number=participant_data.get("momoNumber"),
-                    network=participant_data.get("network"),
-                    fullname=participant_data.get("fullname"),
-                    gender=participant_data.get("gender"),
-                    submitted_by=request.user,
-                    age=participant_data.get("age"),
-                    amount=amount_per_audio,
-                    accepted_privacy_policy=participant_data.get(
-                        "acceptedPrivacyPolicy", False),
-                )
-
-            if image_object and file and audio_data:
-                Audio.objects.create(
-                    image=image_object,
-                    submitted_by=request.user,
-                    file=file,
-                    duration=audio_data.get("duration"),
-                    locale=request.user.locale,
-                    device_id=audio_data.get("device_id"),
-                    environment=audio_data.get("environment"),
-                    participant=participant_object,
-                )
+        serializer  = self.serializer_class(request.FILES, data)
+        if serializer.is_valid():
+            saved,error = serializer.create(request)
+            if saved:
                 return Response({
                     "success": True,
                     "message": "Audio uploaded successfully"
                 })
-        except Exception as e:
-            logger.error(e)
-        return Response({"success": False, "message": "Error uploading audio"})
+            else:
+                return Response({"success": False, "message": error},400)
+        else:
+            error_messages = []
+            for field, errors in serializer.errors.items():
+                error_messages.append(f"{field}: " + str(errors))
+            return Response({
+                "error_messages":error_messages
+            }, 400)

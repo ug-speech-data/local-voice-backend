@@ -32,7 +32,7 @@ class Notification(models.Model):
         return self.title
 
 
-#yapf: disable
+# yapf: disable
 class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
@@ -42,6 +42,7 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Validation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -57,16 +58,20 @@ class Validation(models.Model):
 
 class Image(models.Model):
     name = models.CharField(max_length=255)
-    categories = models.ManyToManyField(Category, blank=True, related_name='images')
+    categories = models.ManyToManyField(
+        Category, blank=True, related_name='images')
     source_url = models.URLField(blank=True, null=True, unique=True)
     file = models.ImageField(upload_to='images/', blank=True, null=True)
     is_accepted = models.BooleanField(default=False, db_index=True)
     is_downloaded = models.BooleanField(default=False)
     validation_count = models.IntegerField(default=0)
-    thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
-    validations = models.ManyToManyField(Validation, related_name='image_validations', blank=True)
+    thumbnail = models.ImageField(
+        upload_to='thumbnails/', blank=True, null=True)
+    validations = models.ManyToManyField(
+        Validation, related_name='image_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    batch_number = models.IntegerField(default=-1, db_index=True, null=True, blank=True)
+    batch_number = models.IntegerField(
+        default=-1, db_index=True, null=True, blank=True)
 
     class Meta:
         db_table = "images"
@@ -76,7 +81,8 @@ class Image(models.Model):
 
     @staticmethod
     def generate_query(query):
-        queries = [Q(**{f"{key}__icontains": query}) for key in ["name", "categories__name"]]
+        queries = [Q(**{f"{key}__icontains": query})
+                   for key in ["name", "categories__name"]]
         return reduce(lambda x, y: x | y, queries)
 
     def save(self, *args, **kwargs) -> None:
@@ -85,21 +91,25 @@ class Image(models.Model):
         return super().save(*args, **kwargs)
 
     def validate(self, user, status, category_names):
-        required_image_validation_count = AppConfiguration.objects.first().required_image_validation_count
+        required_image_validation_count = AppConfiguration.objects.first(
+        ).required_image_validation_count
         max_categories_for_image = AppConfiguration.objects.first().max_category_for_image
 
-        categories = self.categories.union(Category.objects.filter(name__in=category_names))[:max_categories_for_image]
+        categories = self.categories.union(Category.objects.filter(
+            name__in=category_names))[:max_categories_for_image]
         self.categories.set(categories)
 
-        validation = Validation.objects.filter(user=user, image_validations=self).first()
+        validation = Validation.objects.filter(
+            user=user, image_validations=self).first()
         if validation is None:
             validation = Validation.objects.create(user=user)
-        validation.is_valid = status=="accepted"
+        validation.is_valid = status == "accepted"
         self.validations.add(validation)
         validation.save()
         self.save()
 
-        is_accepted  = self.validation_count >= required_image_validation_count and self.validation_count == self.validations.filter(is_valid=True) and  len(categories) > 0
+        is_accepted = self.validation_count >= required_image_validation_count and self.validation_count == self.validations.filter(
+            is_valid=True) and len(categories) > 0
         self.is_accepted = is_accepted
 
         self.save()
@@ -124,7 +134,8 @@ class Image(models.Model):
                 thumb_io = BytesIO()
                 thumbnail = thumbnail.convert('RGB')
                 thumbnail.save(thumb_io, "jpeg", quality=50)
-                self.thumbnail = File(thumb_io, name=self.name.split(".")[0] + ".jpg")
+                self.thumbnail = File(
+                    thumb_io, name=self.name.split(".")[0] + ".jpg")
 
                 self.is_downloaded = True
                 self.save()
@@ -133,19 +144,23 @@ class Image(models.Model):
 
 
 class Participant(models.Model):
-    momo_number = models.CharField(max_length=255, db_index=True, blank=True, null=True)
+    momo_number = models.CharField(
+        max_length=255, db_index=True, blank=True, null=True)
     network = models.CharField(max_length=10, blank=True, null=True)
     age = models.IntegerField(blank=True, null=True)
     gender = models.CharField(max_length=255, blank=True, null=True)
     fullname = models.CharField(max_length=255, blank=True, null=True)
     slug = models.SlugField(max_length=255, blank=True, null=True)
-    submitted_by = models.ForeignKey(User, related_name="participant", on_delete=models.CASCADE)
+    submitted_by = models.ForeignKey(
+        User, related_name="participant", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     audio_duration_in_seconds = models.IntegerField(default=0)
     paid = models.BooleanField(default=False, db_index=True)
-    transaction = models.OneToOneField(Transaction, related_name="participant", on_delete=models.SET_NULL, blank=True, null=True)
+    transaction = models.OneToOneField(
+        Transaction, related_name="participant", on_delete=models.SET_NULL, blank=True, null=True)
     accepted_privacy_policy = models.BooleanField(default=False)
+    api_client = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         db_table = "participants"
@@ -161,7 +176,7 @@ class Participant(models.Model):
         transaction.phone_number = self.momo_number
         transaction.network = self.network
         transaction.status = "new"
-        transaction.fullname= self.fullname
+        transaction.fullname = self.fullname
         transaction.note = "PARTICIPANT_PAYMENT"
         transaction.initiated_by = user
         transaction.direction = TransactionDirection.OUT.value
@@ -182,9 +197,9 @@ class Participant(models.Model):
 
     @staticmethod
     def generate_query(query):
-        queries = [Q(**{f"{key}__icontains": query}) for key in ["momo_number", "fullname", "gender"]]
+        queries = [Q(**{f"{key}__icontains": query})
+                   for key in ["momo_number", "fullname", "gender"]]
         return reduce(lambda x, y: x | y, queries)
-
 
     def save(self, *args, **kwargs):
         if self.pk is None and self.fullname is not None:
@@ -197,19 +212,24 @@ class Participant(models.Model):
 
 
 class Audio(models.Model):
-    image = models.ForeignKey(Image, db_index=True, related_name="audios", on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, db_index=True,
+                              related_name="audios", on_delete=models.CASCADE)
     file = models.FileField(upload_to='audios/')
-    submitted_by = models.ForeignKey(User, related_name="audios", on_delete=models.CASCADE)
-    participant = models.ForeignKey(Participant, related_name="audios", on_delete=models.SET_NULL, null=True, blank=True)
+    submitted_by = models.ForeignKey(
+        User, related_name="audios", on_delete=models.CASCADE)
+    participant = models.ForeignKey(
+        Participant, related_name="audios", on_delete=models.SET_NULL, null=True, blank=True)
     device_id = models.CharField(max_length=255, blank=True, null=True)
     validation_count = models.IntegerField(default=0, db_index=True)
     transcription_count = models.IntegerField(default=0)
     year = models.IntegerField(blank=True, default=2023, null=True)
     locale = models.CharField(max_length=255, blank=True, null=True)
-    duration = models.IntegerField(default=-1,blank=True, null=True)
+    api_client = models.CharField(max_length=255, blank=True, null=True)
+    duration = models.IntegerField(default=-1, blank=True, null=True)
     environment = models.CharField(max_length=255, blank=True, null=True)
     is_accepted = models.BooleanField(default=False, db_index=True)
-    validations = models.ManyToManyField(Validation, related_name='audio_validations', blank=True)
+    validations = models.ManyToManyField(
+        Validation, related_name='audio_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -225,33 +245,40 @@ class Audio(models.Model):
             self.year = datetime.now().year
         return super().save(*args, **kwargs)
 
-
     @staticmethod
     def generate_query(query):
-        queries = [Q(**{f"{key}__icontains": query}) for key in ["environment", "locale", "device_id", "submitted_by__email_address", "year", "image__name"]]
+        queries = [Q(**{f"{key}__icontains": query}) for key in ["environment", "locale",
+                                                                 "device_id", "submitted_by__email_address", "year", "image__name"]]
         return reduce(lambda x, y: x | y, queries)
 
     def validate(self, user, status):
-        required_audio_validation_count = AppConfiguration.objects.first().required_audio_validation_count
+        required_audio_validation_count = AppConfiguration.objects.first(
+        ).required_audio_validation_count
 
-        validation = Validation.objects.filter(user=user, audio_validations=self).first()
+        validation = Validation.objects.filter(
+            user=user, audio_validations=self).first()
         if validation is None:
             validation = Validation.objects.create(user=user)
-        validation.is_valid = status=="accepted"
+        validation.is_valid = status == "accepted"
         self.validations.add(validation)
         validation.save()
         self.save()
 
-        is_accepted = self.validation_count >= required_audio_validation_count and self.validations.filter(is_valid=True).count() == self.validation_count
+        is_accepted = self.validation_count >= required_audio_validation_count and self.validations.filter(
+            is_valid=True).count() == self.validation_count
         self.is_accepted = is_accepted
 
         self.save()
 
+
 class Transcription(models.Model):
-    audio = models.ForeignKey(Audio, db_index=True, related_name="transcriptions", on_delete=models.CASCADE)
+    audio = models.ForeignKey(
+        Audio, db_index=True, related_name="transcriptions", on_delete=models.CASCADE)
     text = models.TextField()
-    user = models.ForeignKey(User, db_index=True, related_name="transcriptions", on_delete=models.CASCADE)
-    validations = models.ManyToManyField(Validation, related_name='transcription_validations', blank=True)
+    user = models.ForeignKey(
+        User, db_index=True, related_name="transcriptions", on_delete=models.CASCADE)
+    validations = models.ManyToManyField(
+        Validation, related_name='transcription_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_accepted = models.BooleanField(default=False, db_index=True)
     validation_count = models.IntegerField(default=0, db_index=True)
@@ -261,7 +288,8 @@ class Transcription(models.Model):
 
     @staticmethod
     def generate_query(query):
-        queries = [Q(**{f"{key}__icontains": query}) for key in ["audio__environment", "user__email_address", "audio__locale"]]
+        queries = [Q(**{f"{key}__icontains": query})
+                   for key in ["audio__environment", "user__email_address", "audio__locale"]]
         return reduce(lambda x, y: x | y, queries)
 
     def save(self, *args, **kwargs) -> None:
@@ -270,17 +298,20 @@ class Transcription(models.Model):
         return super().save(*args, **kwargs)
 
     def validate(self, user, status):
-        required_transcription_validation_count = AppConfiguration.objects.first().required_transcription_validation_count
+        required_transcription_validation_count = AppConfiguration.objects.first(
+        ).required_transcription_validation_count
 
-        validation = Validation.objects.filter(user=user, transcription_validations=self).first()
+        validation = Validation.objects.filter(
+            user=user, transcription_validations=self).first()
         if validation is None:
             validation = Validation.objects.create(user=user)
-        validation.is_valid = status=="accepted"
+        validation.is_valid = status == "accepted"
         validation.save()
         self.validations.add(validation)
         self.save()
 
-        is_accepted = self.validation_count >= required_transcription_validation_count and self.validations.filter(is_valid=True).count() == self.validation_count
+        is_accepted = self.validation_count >= required_transcription_validation_count and self.validations.filter(
+            is_valid=True).count() == self.validation_count
         self.is_accepted = is_accepted
 
         self.save()
