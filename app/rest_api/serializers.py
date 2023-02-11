@@ -445,7 +445,7 @@ class AudioUploadSerializer(serializers.Serializer):
         acceptedPrivacyPolicy = serializers.BooleanField(default=True)
         
     api_client = serializers.CharField(max_length=30)
-    file = serializers.FileField()
+    audio_file = serializers.FileField()
     audio_data = _AudioSerializer()
     participant_data = _ParticipantSerializer(required=False)
 
@@ -468,6 +468,9 @@ class AudioUploadSerializer(serializers.Serializer):
 
         if not image_object:
             return False, "Invalid Image ID"
+        
+        if not file:
+            return False, "No file"
 
         try:
             if participant_data:
