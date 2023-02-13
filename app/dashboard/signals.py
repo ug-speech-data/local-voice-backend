@@ -52,12 +52,12 @@ def auto_delete_conf_file_on_change(sender, instance, **kwargs):
         return False
 
     new_demo_video = instance.demo_video
-    if not old_demo_video == new_demo_video:
+    if not old_demo_video == new_demo_video and old_demo_video:
         if os.path.isfile(old_demo_video.path):
             os.remove(old_demo_video.path)
 
     # Android APK
     new_android_apk = instance.android_apk
-    if not old_android_apk == new_android_apk:
+    if not old_android_apk == new_android_apk and old_android_apk:
         if os.path.isfile(old_android_apk.path):
             os.remove(old_android_apk.path)
