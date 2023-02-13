@@ -22,8 +22,9 @@ def export_audio_data(user_id, data, base_url):
     zip_file = zipfile.ZipFile(output_dir, 'w')
 
     columns = [
-        'IMAGE_URL',
-        "AUDIO_URL",
+        'IMAGE_PATH',
+        'IMAGE_SRC_URL',
+        "AUDIO_PATH",
         'ORG_NAME',
         'PROJECT_NAME ',
         'SPEAKER_ID',
@@ -52,6 +53,7 @@ def export_audio_data(user_id, data, base_url):
 
         row = [
             audio.image.file.url,
+            audio.image.source_url,
             audio.file.url,
             "University of Ghana",
             "Waxal",
