@@ -45,7 +45,7 @@ def export_audio_data(user_id, data, base_url):
         audio_filename = audio.file.name
         image_filename = audio.image.file.name
         zip_file.write(settings.MEDIA_ROOT / audio_filename,
-                       arcname="assets/" + audio_filename)
+                       arcname=f"assets/{audio.locale}" + audio_filename)
         zip_file.write(settings.MEDIA_ROOT / image_filename,
                        arcname="assets/" + image_filename)
 

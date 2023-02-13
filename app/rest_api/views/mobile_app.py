@@ -91,6 +91,7 @@ class UploadAudioAPI(generics.GenericAPIView):
         serializer = self.serializer_class(request.FILES, request_data)
         if serializer.is_valid():
             saved, error = serializer.create(request)
+            logger.error(error)
             if saved:
                 return Response({
                     "success": True,
@@ -102,4 +103,5 @@ class UploadAudioAPI(generics.GenericAPIView):
             error_messages = []
             for field, errors in serializer.errors.items():
                 error_messages.append(f"{field}: " + str(errors))
+            logger.error(error_messages)
             return Response({"error_messages": error_messages}, 400)

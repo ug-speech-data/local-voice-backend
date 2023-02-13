@@ -437,7 +437,7 @@ class AudioUploadSerializer(serializers.Serializer):
         age = serializers.IntegerField()
         acceptedPrivacyPolicy = serializers.BooleanField(default=True)
 
-    api_client = serializers.CharField(max_length=30)
+    api_client = serializers.CharField(max_length=30, required=False, default="Kotlin")
     audio_file = serializers.FileField()
     audio_data = _AudioSerializer()
     participant_data = _ParticipantSerializer(required=False)
