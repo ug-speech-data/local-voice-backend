@@ -109,9 +109,8 @@ class Image(models.Model):
         self.save()
 
         is_accepted = self.validation_count >= required_image_validation_count and self.validation_count == self.validations.filter(
-            is_valid=True) and len(categories) > 0
+            is_valid=True).count() and len(categories) > 0
         self.is_accepted = is_accepted
-
         self.save()
 
     def download(self):
