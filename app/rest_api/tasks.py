@@ -36,7 +36,7 @@ def export_audio_data(user_id, data, base_url):
         "YEAR",
     ]
     rows = []
-    audios = Audio.objects.all()
+    audios = Audio.objects.filter()
     for audio in audios:
         if not (audio.file and audio.image and audio.image.file):
             continue
@@ -44,17 +44,19 @@ def export_audio_data(user_id, data, base_url):
         # Copy audio and image files to temp directory
         audio_filename = audio.file.name
         image_filename = audio.image.file.name
+        new_image_filename = image_filename.split("/")[0] + "/" + str(
+            audio.id).zfill(4) + "." + image_filename.split(".")[-1]
         zip_file.write(settings.MEDIA_ROOT / audio_filename,
-                       arcname=f"assets/{audio.locale}" + audio_filename)
+                       arcname=f"assets/{audio.locale}_{audio_filename}")
         zip_file.write(settings.MEDIA_ROOT / image_filename,
-                       arcname="assets/" + image_filename)
+                       arcname=f"assets/{new_image_filename}")
 
         participant = audio.participant
 
         row = [
-            audio.image.file.url,
+            f"assets/{new_image_filename}",
             audio.image.source_url,
-            audio.file.url,
+            f"assets/{audio.locale}_{audio_filename}",
             "University of Ghana",
             "Waxal",
             participant.id if participant else audio.submitted_by.id,
