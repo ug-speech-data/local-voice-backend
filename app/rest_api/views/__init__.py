@@ -1,11 +1,10 @@
-import zipfile
+import time
 from io import BytesIO
 
 import requests
 from django.core import files
 from django.core.files.base import ContentFile
 from django.db.utils import IntegrityError
-from django.http import HttpResponse
 from PIL import Image as PillowImage
 from PIL import UnidentifiedImageError
 from rest_framework import generics, permissions
@@ -24,7 +23,8 @@ class SubmitCrawlerImages(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         source_url = request.data.get("url")
         filename = source_url.split("/")[-1]
-        filename = filename.split("?")[0]
+        extension = filename.split(".")[-1]
+        filename = str(time.time_ns()) + f".{extension}"
 
         response = requests.get(source_url)
         if response.status_code != requests.codes.ok:
