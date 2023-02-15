@@ -7,6 +7,7 @@ from django.utils.timezone import make_aware
 from rest_framework import serializers
 
 from accounts.models import User, Wallet
+from local_voice.utils.constants import TransactionStatus, TransactionDirection, TransactionStatusMessages
 from dashboard.models import (Audio, Category, Image, Notification,
                               Participant, Transcription, Validation)
 from payments.models import Transaction
@@ -437,7 +438,9 @@ class AudioUploadSerializer(serializers.Serializer):
         age = serializers.IntegerField()
         acceptedPrivacyPolicy = serializers.BooleanField(default=True)
 
-    api_client = serializers.CharField(max_length=30, required=False, default="Kotlin")
+    api_client = serializers.CharField(max_length=30,
+                                       required=False,
+                                       default="Kotlin")
     audio_file = serializers.FileField()
     audio_data = _AudioSerializer()
     participant_data = _ParticipantSerializer(required=False)
@@ -481,15 +484,36 @@ class AudioUploadSerializer(serializers.Serializer):
                     api_client=api_client,
                 )
             if image_object and file and audio_data:
-                Audio.objects.create(image=image_object,
-                                     submitted_by=request.user,
-                                     file=file,
-                                     duration=audio_data.get("duration"),
-                                     locale=request.user.locale,
-                                     device_id=audio_data.get("device_id"),
-                                     environment=audio_data.get("environment"),
-                                     participant=participant_object,
-                                     api_client=api_client)
+                audio = Audio.objects.create(
+                    image=image_object,
+                    submitted_by=request.user,
+                    file=file,
+                    duration=audio_data.get("duration"),
+                    locale=request.user.locale,
+                    device_id=audio_data.get("device_id"),
+                    environment=audio_data.get("environment"),
+                    participant=participant_object,
+                    api_client=api_client)
+
+                # Update user's wallet.
+                configuration = AppConfiguration.objects.first()
+                if not participant_object:
+                    # Audio was recording by the user themselves.
+                    amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
+                else:
+                    amount = configuration.audio_aggregators_amount_per_audio if configuration else 0
+
+                transaction = Transaction.objects.create(
+                    amount=amount,
+                    wallet=request.user.wallet,
+                    note=f"Credit for audio with '{audio.id}'",
+                    initiated_by=request.user,
+                    direction=TransactionDirection.IN.value,
+                    status=TransactionStatus.SUCCESS.value,
+                    status_message=TransactionStatusMessages.SUCCESS.value,
+                )
+                transaction.update_wallet_balances()
+
         except Exception as e:
             logger.error(e)
             return False, str(e)

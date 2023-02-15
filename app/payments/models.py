@@ -104,7 +104,7 @@ class Transaction(models.Model):
         if self.direction == TransactionDirection.IN.value:
             self.wallet.credit_wallet(self.amount)
 
-        if self.direction == TransactionDirection.OUT.value:
+        elif self.direction == TransactionDirection.OUT.value:
             self.wallet.increase_payout_amount(self.amount)
 
         self.wallet_balances_updated = True
