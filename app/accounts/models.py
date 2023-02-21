@@ -25,7 +25,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_login_date = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
-    wallet = models.ForeignKey("Wallet", related_name="owner", on_delete=models.SET_NULL, null=True, blank=True)
+    wallet = models.OneToOneField("Wallet", related_name="owner", on_delete=models.SET_NULL, null=True, blank=True)
     locale = models.CharField(max_length=20, default="", null=True, blank=True)
     gender = models.CharField(max_length=20, default="", null=True, blank=True)
     recording_environment = models.CharField(max_length=20, default="", null=True, blank=True)
@@ -70,7 +70,9 @@ class Wallet(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return str(self.owner)
+        if hasattr(self, "owner"):
+            return str(self.owner.get_name())
+        return "None"
 
     def save(self, *args, **kwargs) -> None:
         self.balance = self.accrued_amount - self.total_payout

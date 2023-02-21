@@ -1,26 +1,10 @@
 import logging
 
-from django.contrib.auth.models import Group, Permission
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 
-from accounts.forms import GroupForm, UserForm
-from accounts.models import User
-from dashboard.forms import CategoryForm
-from dashboard.models import (Audio, Category, Image, Notification,
-                              Participant, Transcription)
-from local_voice.utils.functions import (get_errors_from_form,
-                                         relevant_permission_objects)
+from dashboard.models import (Audio, Image, Participant, Transcription)
 from rest_api.permissions import APILevelPermissionCheck
-from rest_api.serializers import (AppConfigurationSerializer, AudioSerializer,
-                                  CategorySerializer,
-                                  GroupPermissionSerializer, GroupSerializer,
-                                  ImageSerializer, NotificationSerializer,
-                                  ParticipantSerializer,
-                                  TranscriptionSerializer, UserSerializer)
-from rest_api.tasks import export_audio_data
-from rest_api.views.mixins import SimpleCrudMixin
-from setup.models import AppConfiguration
 
 logger = logging.getLogger("app")
 
