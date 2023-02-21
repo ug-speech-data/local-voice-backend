@@ -55,8 +55,24 @@ def relevant_permission_objects():
         ]
     models = set(models)
     for item in [
-            "otp", "activitylog", "permission", "mobileappconfiguration",
-            "sysconfig"
+            "otp",
+            "activitylog",
+            "permission",
+            "mobileappconfiguration",
+            "sysconfig",
+            "configuration",
+            "wallet",
+            "category",
+            "audio",
+            "image",
+            "group",
+            "participant",
+            "notification",
+            "transaction",
+            "transcription",
+            "validation",
+            "group",
+            "appconfiguration",
     ]:
         if item in models:
             models.remove(item)
