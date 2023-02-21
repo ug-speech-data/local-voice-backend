@@ -598,6 +598,28 @@ class NotificationAPI(generics.GenericAPIView):
         })
 
 
+class ImagePreviewNavigation(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ImageSerializer
+
+    def get(self, request, *args, **kwargs):
+        current_image_id = request.GET.get("current_image_id", 0)
+        direction = request.GET.get("direction", "next")
+
+        images = Image.objects.all().order_by("id")
+        if "prev" in direction:
+            image = images.filter(id__lt=current_image_id).last()
+        else:
+            image = images.filter(id__gt=current_image_id).first()
+
+        data = self.serializer_class(image, context={
+            "request": request
+        }).data if image else None
+        return Response({
+            "image": data,
+        })
+
+
 class ExportAudioData(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     required_permissions = ["setup.manage_setup"]

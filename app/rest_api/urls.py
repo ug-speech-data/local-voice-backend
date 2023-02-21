@@ -44,6 +44,8 @@ urlpatterns += [
 
     path("export-audio-data/", views.ExportAudioData.as_view()),
     path("notifications/", views.NotificationAPI.as_view()),
+
+    path("image-preview-navigation", views.ImagePreviewNavigation.as_view()),
 ]
 
 
