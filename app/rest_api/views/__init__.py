@@ -22,7 +22,7 @@ class SubmitCrawlerImages(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         source_url = request.data.get("url")
-        filename = source_url.split("/")[-1]
+        filename = source_url.split("/")[-1].split("?")[-1]
         extension = filename.split(".")[-1]
         filename = str(time.time_ns()) + f".{extension}"
 
