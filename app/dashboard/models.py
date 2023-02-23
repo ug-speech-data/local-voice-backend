@@ -269,6 +269,14 @@ class Audio(models.Model):
 
         self.save()
 
+    def get_transcriptions(self):
+        if not hasattr(self, "transcriptions"):
+            return []
+        values = []
+        for t in self.transcriptions.all().values("text"):
+            values.append(t.get("text"))
+        return values
+
 
 class Transcription(models.Model):
     audio = models.ForeignKey(

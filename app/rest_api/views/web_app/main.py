@@ -124,6 +124,7 @@ class GetAudiosToTranscribe(generics.GenericAPIView):
         audio = Audio.objects.filter(
             id__gt=offset,
             is_accepted=True,
+            locale=request.user.locale,
             transcription_count__lt=required_transcription_validation_count)\
                 .exclude(validations__user=request.user) \
             .order_by("id")\

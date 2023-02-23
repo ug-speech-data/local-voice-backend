@@ -29,6 +29,7 @@ def export_audio_data(user_id, data, base_url):
         'PROJECT_NAME ',
         'SPEAKER_ID',
         "LOCALE",
+        "TRANSCRIPTION",
         "GENDER",
         "AGE",
         "DEVICE",
@@ -52,6 +53,7 @@ def export_audio_data(user_id, data, base_url):
                        arcname=f"assets/{new_image_filename}")
 
         participant = audio.participant
+        transcriptions = "\n\n".join(audio.get_transcriptions())
 
         row = [
             f"assets/{new_image_filename}",
@@ -61,6 +63,7 @@ def export_audio_data(user_id, data, base_url):
             "Waxal",
             participant.id if participant else audio.submitted_by.id,
             audio.locale,
+            transcriptions,
             participant.gender if participant else audio.submitted_by.gender,
             participant.age if participant else audio.submitted_by.age,
             audio.device_id,
