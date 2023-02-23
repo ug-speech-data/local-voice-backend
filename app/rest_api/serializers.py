@@ -18,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
     photo_url = serializers.SerializerMethodField()
     short_name = serializers.SerializerMethodField()
     groups = serializers.SerializerMethodField()
-    permissions = serializers.SerializerMethodField()
+    user_permissions = serializers.SerializerMethodField()
     balance = serializers.SerializerMethodField()
     audios_submitted = serializers.SerializerMethodField()
     audios_validated = serializers.SerializerMethodField()
@@ -48,7 +48,7 @@ class UserSerializer(serializers.ModelSerializer):
     def get_short_name(self, obj):
         return obj.email_address.split("@")[0]
 
-    def get_permissions(self, user):
+    def get_user_permissions(self, user):
         permissions = []
         for perm in user.get_all_permissions():
             permissions.append(perm.split(".")[-1])
@@ -62,7 +62,6 @@ class UserSerializer(serializers.ModelSerializer):
             "is_superuser",
             "is_active",
             "wallet",
-            "user_permissions",
         ]
 
 

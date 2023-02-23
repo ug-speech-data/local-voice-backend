@@ -30,8 +30,10 @@ def make_model_key_value(obj):
 
 
 def get_all_user_permissions(user):
-    permissions = user.user_permissions.all()
-    return [permission.codename for permission in permissions]
+    permissions = []
+    for perm in user.get_all_permissions():
+        permissions.append(perm.split(".")[-1])
+    return sorted(permissions)
 
 
 def available_application_permissions():

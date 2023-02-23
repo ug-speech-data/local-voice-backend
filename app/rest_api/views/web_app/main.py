@@ -311,7 +311,6 @@ class AppConfigurationAPI(generics.GenericAPIView):
     Manage app configuration.
     """
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    required_permissions = ["setup.manage_setup"]
     serializer_class = AppConfigurationSerializer
 
     def get(self, request, *args, **kwargs):
