@@ -113,7 +113,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
 
 class GetAudiosToTranscribe(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    required_permissions = ["setup.validate_transcription"]
+    required_permissions = ["setup.transcribe_audio"]
     serializer_class = AudioSerializer
 
     def get(self, request, *args, **kwargs):
@@ -140,7 +140,7 @@ class GetAudiosToTranscribe(generics.GenericAPIView):
 
 class GetTranscriptionToValidate(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    required_permissions = ["setup.transcribe_audio"]
+    required_permissions = ["setup.validate_transcription"]
     serializer_class = TranscriptionSerializer
 
     def get(self, request, *args, **kwargs):
