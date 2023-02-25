@@ -102,12 +102,36 @@ class LoginSerializer(serializers.Serializer):
 
 class MobileAppConfigurationSerializer(serializers.ModelSerializer):
     demo_video_url = serializers.SerializerMethodField()
+    participant_privacy_statement_audio = serializers.SerializerMethodField()
 
     def get_demo_video_url(self, obj):
         request = self.context.get("request")
         if obj.demo_video and request:
             return request.build_absolute_uri(obj.demo_video.url)
         return ""
+
+    def get_participant_privacy_statement_audio(self, obj):
+        request = self.context.get("request")
+        locale = request.user.locale if request and request.user else ""
+        if "ee_gh" in locale and obj.participant_privacy_statement_audio_ewe:
+            return request.build_absolute_uri(
+                obj.participant_privacy_statement_audio_ewe.url)
+
+        if "ak_gh" in locale and obj.participant_privacy_statement_audio_akan:
+            return request.build_absolute_uri(
+                obj.participant_privacy_statement_audio_akan.url)
+
+        if "dga_gh" in locale and obj.participant_privacy_statement_audio_dagaare:
+            return request.build_absolute_uri(
+                obj.participant_privacy_statement_audio_dagaare.url)
+
+        if "dag_gh" in locale and obj.participant_privacy_statement_audio_dagbani:
+            return request.build_absolute_uri(
+                obj.participant_privacy_statement_audio_dagbani.url)
+
+        if "kpo_gh" in locale and obj.participant_privacy_statement_audio_ikposo:
+            return request.build_absolute_uri(
+                obj.participant_privacy_statement_audio_ikposo.url)
 
     class Meta:
         model = AppConfiguration

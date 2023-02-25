@@ -31,6 +31,12 @@ class AppConfiguration(models.Model):
     audio_aggregators_amount_per_audio = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     individual_audio_aggregators_amount_per_audio = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
 
+    participant_privacy_statement_audio_ewe = models.FileField(upload_to="privacy_statement_audios",null=True, blank=True)
+    participant_privacy_statement_audio_akan = models.FileField(upload_to="privacy_statement_audios",null=True, blank=True)
+    participant_privacy_statement_audio_dagaare = models.FileField(upload_to="privacy_statement_audios",null=True, blank=True)
+    participant_privacy_statement_audio_ikposo = models.FileField(upload_to="privacy_statement_audios",null=True, blank=True)
+    participant_privacy_statement_audio_dagbani = models.FileField(upload_to="privacy_statement_audios",null=True, blank=True)
+
 # Just for permissions
 class SetupPerms(models.Model):
 
