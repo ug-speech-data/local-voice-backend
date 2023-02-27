@@ -51,6 +51,7 @@ class GetImagesToValidate(generics.GenericAPIView):
             id__gt=offset,
             is_downloaded=True,
             is_accepted=False,
+            batch_number=request.user.assigned_image_batch,
             validation_count__lt=required_image_validation_count)\
                 .exclude(validations__user=request.user) \
             .order_by("id")\
