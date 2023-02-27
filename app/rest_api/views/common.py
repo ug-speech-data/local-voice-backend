@@ -136,6 +136,7 @@ class MyProfile(generics.GenericAPIView):
         return Response({self.response_data_label: data})
 
     def post(self, request, *args, **kwargs):
+        password = request.data.pop("password", None)
         accepted_privacy_policy = request.data.get("accepted_privacy_policy")
         user = request.user
         try:
@@ -143,7 +144,12 @@ class MyProfile(generics.GenericAPIView):
                 if hasattr(user, key):
                     setattr(user, key, value)
             user.accepted_privacy_policy = accepted_privacy_policy == "true"
+
+            # Change password if password is available
+            if password:
+                user.set_password(password)
             user.save()
+
             return Response({
                 "message":
                 f"{self.model_class.__name__} saved successfully",

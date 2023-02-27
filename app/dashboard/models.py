@@ -58,6 +58,7 @@ class Validation(models.Model):
 
 class Image(models.Model):
     name = models.CharField(max_length=255)
+    main_category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     categories = models.ManyToManyField(
         Category, blank=True, related_name='images')
     source_url = models.URLField(blank=True, null=True, unique=True)
@@ -88,6 +89,11 @@ class Image(models.Model):
     def save(self, *args, **kwargs) -> None:
         if self.pk is not None:
             self.validation_count = self.validations.all().count()
+
+        if self.is_accepted and not self.categories:
+            self.main_category = self.categories.all().first()
+        elif not self.is_accepted:
+            self.main_category = None
         return super().save(*args, **kwargs)
 
     def validate(self, user, status, category_names):
@@ -111,6 +117,11 @@ class Image(models.Model):
         is_accepted = self.validation_count >= required_image_validation_count and self.validation_count == self.validations.filter(
             is_valid=True).count() and len(categories) > 0
         self.is_accepted = is_accepted
+
+        if is_accepted:
+            self.main_category = Category.objects.filter(name=category_names[0]).first()
+        else:
+            self.main_category = None
         self.save()
 
     def download(self):

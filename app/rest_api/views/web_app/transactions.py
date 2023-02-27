@@ -96,7 +96,7 @@ class PayUsers(generics.GenericAPIView):
     required_permissions = ["setup.manage_payment"]
 
     def post(self, request, **kwargs):
-        user_ids = request.data.get("ids")
+        user_ids = request.data.get("ids", [])
         amount = request.data.get("amount")
         users = User.objects.filter(id__in=user_ids)
         for user in users:

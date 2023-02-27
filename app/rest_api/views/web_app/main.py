@@ -9,7 +9,7 @@ from accounts.models import User
 from dashboard.forms import CategoryForm
 from dashboard.models import (Audio, Category, Image, Notification,
                               Participant, Transcription)
-from local_voice.utils.functions import (get_errors_from_form,
+from local_voice.utils.functions import (apply_filters, get_errors_from_form,
                                          relevant_permission_objects)
 from rest_api.permissions import APILevelPermissionCheck
 from rest_api.serializers import (AppConfigurationSerializer, AudioSerializer,
@@ -48,13 +48,18 @@ class GetImagesToValidate(generics.GenericAPIView):
                 "You have exhausted your permitted number of image validations."
             })
 
-        image = Image.objects.filter(
+        images = Image.objects.filter(
             id__gt=offset,
             is_downloaded=True,
             is_accepted=False,
-            batch_number=request.user.assigned_image_batch,
             validation_count__lt=required_image_validation_count)\
-                .exclude(validations__user=request.user).first()
+                .exclude(validations__user=request.user)
+
+        if request.user.assigned_image_batch > -1:  # All images
+            images = images.filter(
+                batch_number=request.user.assigned_image_batch)
+
+        image = images.first()
 
         data = self.serializer_class(image, context={
             "request": request
@@ -518,7 +523,7 @@ class ReShuffleImageIntoBatches(generics.GenericAPIView):
         configuration = AppConfiguration.objects.first()
         number_of_batches = configuration.number_of_batches if configuration else 0
         count = 0
-        for count, image in enumerate(Image.objects.all()):
+        for count, image in enumerate(Image.objects.all().order_by('?')):
             image.batch_number = count % number_of_batches + 1
             image.save()
         logger.info(
@@ -606,6 +611,16 @@ class ImagePreviewNavigation(generics.GenericAPIView):
         direction = request.GET.get("direction", "next")
 
         images = Image.objects.all().order_by("id")
+
+        # Use filters from query param
+        filters = request.GET.get("filters")
+        query = request.GET.get("query") or request.GET.get("q")
+
+        if filters:
+            images = apply_filters(images, filters)
+        if query and hasattr(Image, "generate_query"):
+            images = images.filter(Image.generate_query(query))
+
         if "prev" in direction:
             image = images.filter(id__lt=current_image_id).last()
         else:

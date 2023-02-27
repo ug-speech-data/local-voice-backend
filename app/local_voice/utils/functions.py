@@ -9,6 +9,15 @@ from django.utils.html import strip_tags
 logger = logging.getLogger("app")
 
 
+def apply_filters(objects, filters):
+    filters = filters.split(",")
+    for filter in filters:
+        filter = filter.split(":")
+        if len(filter) == 2:
+            objects = objects.filter(**{filter[0]: filter[1]})
+    return objects
+
+
 def get_errors_from_form(form):
     errors = []
     for field, er in form.errors.items():

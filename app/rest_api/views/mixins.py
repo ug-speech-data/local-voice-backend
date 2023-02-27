@@ -3,18 +3,9 @@ import math
 from rest_framework import generics
 from rest_framework.response import Response
 
-from local_voice.utils.functions import get_errors_from_form
+from local_voice.utils.functions import apply_filters, get_errors_from_form
 
 QUERY_PAGE_SIZE = 10
-
-
-def apply_filters(objects, filters):
-    filters = filters.split(",")
-    for filter in filters:
-        filter = filter.split(":")
-        if len(filter) == 2:
-            objects = objects.filter(**{filter[0]: filter[1]})
-    return objects
 
 
 class SimpleCrudMixin(generics.GenericAPIView):
