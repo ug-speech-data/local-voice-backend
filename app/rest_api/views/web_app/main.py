@@ -38,6 +38,7 @@ class GetImagesToValidate(generics.GenericAPIView):
 
         # Ensure that the user does not validate to many images
         user_validations = Image.objects.filter(
+            validations__is_valid=True,
             validations__user=request.user).count()
         if user_validations >= max_allowed_validation:
             return Response({
