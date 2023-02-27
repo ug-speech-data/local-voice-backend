@@ -53,9 +53,7 @@ class GetImagesToValidate(generics.GenericAPIView):
             is_accepted=False,
             batch_number=request.user.assigned_image_batch,
             validation_count__lt=required_image_validation_count)\
-                .exclude(validations__user=request.user) \
-            .order_by("id")\
-                .first()
+                .exclude(validations__user=request.user).first()
 
         data = self.serializer_class(image, context={
             "request": request
@@ -519,8 +517,7 @@ class ReShuffleImageIntoBatches(generics.GenericAPIView):
         configuration = AppConfiguration.objects.first()
         number_of_batches = configuration.number_of_batches if configuration else 0
         count = 0
-        for count, image in enumerate(
-                Image.objects.filter(is_accepted=True).order_by("id")):
+        for count, image in enumerate(Image.objects.all()):
             image.batch_number = count % number_of_batches + 1
             image.save()
         logger.info(
