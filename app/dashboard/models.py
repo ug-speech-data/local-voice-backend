@@ -90,7 +90,7 @@ class Image(models.Model):
         if self.pk is not None:
             self.validation_count = self.validations.all().count()
 
-        if self.is_accepted and not self.categories:
+        if self.is_accepted and self.categories:
             self.main_category = self.categories.all().first()
         elif not self.is_accepted:
             self.main_category = None
