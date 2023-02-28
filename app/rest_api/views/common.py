@@ -136,11 +136,12 @@ class MyProfile(generics.GenericAPIView):
         return Response({self.response_data_label: data})
 
     def post(self, request, *args, **kwargs):
-        password = request.data.pop("password", None)
-        accepted_privacy_policy = request.data.get("accepted_privacy_policy")
+        request_data = request.data.copy()
+        password = request_data.pop("password", None)
+        accepted_privacy_policy = request_data.get("accepted_privacy_policy")
         user = request.user
         try:
-            for key, value in request.data.items():
+            for key, value in request_data.items():
                 if hasattr(user, key):
                     setattr(user, key, value)
             user.accepted_privacy_policy = accepted_privacy_policy == "true"
