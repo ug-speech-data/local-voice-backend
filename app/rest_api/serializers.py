@@ -210,8 +210,8 @@ class ImageSerializer(serializers.ModelSerializer):
     category = serializers.SerializerMethodField()
 
     def get_category(self, obj):
-        if obj.categories.first():
-            return obj.categories.first().name
+        if obj.main_category:
+            return obj.main_category.name
         return ""
 
     def get_thumbnail(self, obj):
