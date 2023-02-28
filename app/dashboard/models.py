@@ -58,7 +58,7 @@ class Validation(models.Model):
 
 class Image(models.Model):
     name = models.CharField(max_length=255)
-    main_category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    main_category = models.ForeignKey(Category, related_name="main_images", on_delete=models.SET_NULL, null=True, blank=True)
     categories = models.ManyToManyField(
         Category, blank=True, related_name='images')
     source_url = models.URLField(blank=True, null=True, unique=True)
