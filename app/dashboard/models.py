@@ -66,6 +66,7 @@ class Image(models.Model):
     is_accepted = models.BooleanField(default=False, db_index=True)
     is_downloaded = models.BooleanField(default=False)
     validation_count = models.IntegerField(default=0)
+    validated = models.BooleanField(default=False)
     thumbnail = models.ImageField(
         upload_to='thumbnails/', blank=True, null=True)
     validations = models.ManyToManyField(
@@ -89,6 +90,9 @@ class Image(models.Model):
     def save(self, *args, **kwargs) -> None:
         if self.pk is not None:
             self.validation_count = self.validations.all().count()
+
+        if self.validation_count > 0:
+            self.validated = True
 
         if self.is_accepted and self.categories:
             self.main_category = self.categories.all().first()
