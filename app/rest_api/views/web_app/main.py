@@ -524,7 +524,7 @@ class ReShuffleImageIntoBatches(generics.GenericAPIView):
         configuration = AppConfiguration.objects.first()
         number_of_batches = configuration.number_of_batches if configuration else 0
         count = 0
-        for count, image in enumerate(Image.objects.all().order_by('?')):
+        for count, image in enumerate(Image.objects.filter(is_accepted=True).order_by('?')):
             image.batch_number = count % number_of_batches + 1
             image.save()
         logger.info(
