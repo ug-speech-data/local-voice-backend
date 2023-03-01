@@ -182,8 +182,6 @@ class MyPermissions(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        from time import sleep
-        sleep(1)
         response_data = {
             "user_permissions": get_all_user_permissions(request.user)
         }

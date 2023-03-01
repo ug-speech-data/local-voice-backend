@@ -21,7 +21,6 @@ class UserForm(forms.ModelForm):
             'email_address',
             'phone',
             'locale',
-            "age",
             "phone_network",
             'assigned_image_batch',
             "assigned_audio_batch",
