@@ -5,6 +5,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.utils.html import strip_tags
+from django.db.models import Count
 
 logger = logging.getLogger("app")
 
@@ -15,6 +16,10 @@ def apply_filters(objects, filters):
         filter = filter.split(":")
         if len(filter) == 2:
             objects = objects.filter(**{filter[0]: filter[1]})
+        elif len(filter) == 3:
+            key, value, annotation = filter
+            objects = objects.annotate(c=Count(annotation)).filter(
+                c__gt=0).filter(**{key: value})
     return objects
 
 
