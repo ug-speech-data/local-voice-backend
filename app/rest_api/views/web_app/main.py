@@ -660,14 +660,30 @@ class GetDashboardStatistics(generics.GenericAPIView):
         audios = Audio.objects.all()
         images = Image.objects.all()
         transcriptions = Transcription.objects.all()
+        hours_in_seconds = 3600
 
         #disabled: yapf
         audios_submitted = audios.count()
         audios_approved = audios.filter(is_accepted=True).count()
         audios_transcribed = transcriptions.count()
-        audios_hours_submitted = sum([audio.get("duration") for audio in audios.values("duration")])
-        audios_hours_approved = sum([audio.get("duration") for audio in audios.filter(is_accepted=True).values("duration")])
-        audios_hours_transcribed = sum([transcription.audio.duration for transcription in transcriptions])
+
+        audios_hours_submitted = round(
+            sum([audio.get("duration")
+                 for audio in audios.values("duration")]) / hours_in_seconds,
+            2)
+
+        audios_hours_approved = round(
+            sum([
+                audio.get("duration")
+                for audio in audios.filter(is_accepted=True).values("duration")
+            ]) / hours_in_seconds, 2)
+
+        audios_hours_transcribed = round(
+            sum([
+                transcription.audio.duration
+                for transcription in transcriptions
+            ]) / hours_in_seconds, 2)
+
         images_submitted = images.count()
         images_approved = images.filter(is_accepted=True).count()
 
