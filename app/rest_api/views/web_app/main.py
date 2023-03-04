@@ -524,7 +524,8 @@ class ReShuffleImageIntoBatches(generics.GenericAPIView):
         configuration = AppConfiguration.objects.first()
         number_of_batches = configuration.number_of_batches if configuration else 0
         count = 0
-        for count, image in enumerate(Image.objects.filter(is_accepted=True).order_by('?')):
+        for count, image in enumerate(
+                Image.objects.filter(is_accepted=True).order_by('?')):
             image.batch_number = count % number_of_batches + 1
             image.save()
         logger.info(
@@ -649,4 +650,36 @@ class ExportAudioData(generics.GenericAPIView):
         return Response({
             "message":
             "Audio export status. You'll receive a notification when done.",
+        })
+
+
+class GetDashboardStatistics(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        audios = Audio.objects.all()
+        images = Image.objects.all()
+        transcriptions = Transcription.objects.all()
+
+        #disabled: yapf
+        audios_submitted = audios.count()
+        audios_approved = audios.filter(is_accepted=True).count()
+        audios_transcribed = transcriptions.count()
+        audios_hours_submitted = sum([audio.get("duration") for audio in audios.values("duration")])
+        audios_hours_approved = sum([audio.get("duration") for audio in audios.filter(is_accepted=True).values("duration")])
+        audios_hours_transcribed = sum([transcription.audio.duration for transcription in transcriptions])
+        images_submitted = images.count()
+        images_approved = images.filter(is_accepted=True).count()
+
+        return Response({
+            "statistics": {
+                "audios_submitted": audios_submitted,
+                "audios_approved": audios_approved,
+                "audios_transcribed": audios_transcribed,
+                "audios_hours_submitted": audios_hours_submitted,
+                "audios_hours_approved": audios_hours_approved,
+                "audios_hours_transcribed": audios_hours_transcribed,
+                "images_submitted": images_submitted,
+                "images_approved": images_approved,
+            }
         })

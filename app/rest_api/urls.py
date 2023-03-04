@@ -46,6 +46,7 @@ urlpatterns += [
     path("notifications/", views.NotificationAPI.as_view()),
 
     path("image-preview-navigation", views.ImagePreviewNavigation.as_view()),
+    path("dashboard-statistics/", views.GetDashboardStatistics.as_view()),
 ]
 
 
