@@ -3,7 +3,7 @@ import logging
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 
-from dashboard.models import (Audio, Image, Participant, Transcription)
+from dashboard.models import Audio, Image, Participant, Transcription
 from rest_api.permissions import APILevelPermissionCheck
 
 logger = logging.getLogger("app")
