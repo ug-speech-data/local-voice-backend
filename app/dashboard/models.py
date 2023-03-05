@@ -108,6 +108,14 @@ class Image(models.Model):
         image.save(temp_io, "jpeg")
         self.file = File(temp_io,new_filename)
         self.name = new_filename
+
+        # Rename thumbnail
+        new_filename = "2" + f"{self.id}".zfill(9) + ".jpg"
+        image = PillowImage.open(self.thumbnail)
+        temp_io = BytesIO()
+        image = image.convert("RGB")
+        image.save(temp_io, "jpeg")
+        self.thumbnail = File(temp_io,new_filename)
         self.save()
 
     def validate(self, user, status, category_names):

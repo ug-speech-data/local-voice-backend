@@ -118,6 +118,7 @@ def auto_delete_image_file_on_change(sender, instance, **kwargs):
         return False
     try:
         old_file = Image.objects.get(pk=instance.pk).file
+        old_thumbnail = Image.objects.get(pk=instance.pk).thumbnail
     except Image.DoesNotExist:
         return False
 
@@ -126,6 +127,12 @@ def auto_delete_image_file_on_change(sender, instance, **kwargs):
     if old_file != new_file and old_file:
         if os.path.isfile(old_file.path):
             os.remove(old_file.path)
+
+    # Delete old thumbnail file
+    new_thumbnail = instance.thumbnail
+    if old_thumbnail != new_thumbnail and old_thumbnail:
+        if os.path.isfile(old_thumbnail.path):
+            os.remove(old_thumbnail.path)
 
 
 @receiver(models.signals.pre_save, sender=Audio)
