@@ -100,6 +100,16 @@ class Image(models.Model):
             self.main_category = None
         return super().save(*args, **kwargs)
 
+    def format_image_name(self):
+        new_filename = "1" + f"{self.id}".zfill(9) + ".jpg"
+        image = PillowImage.open(self.file)
+        temp_io = BytesIO()
+        image = image.convert("RGB")
+        image.save(temp_io, "jpeg")
+        self.file = File(temp_io,new_filename)
+        self.name = new_filename
+        self.save()
+
     def validate(self, user, status, category_names):
         required_image_validation_count = AppConfiguration.objects.first(
         ).required_image_validation_count

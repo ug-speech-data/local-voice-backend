@@ -110,3 +110,35 @@ def auto_delete_conf_file_on_change(sender, instance, **kwargs):
     if not old_participant_privacy_statement_audio_ikposo == new_participant_privacy_statement_audio_ikposo and old_participant_privacy_statement_audio_ikposo:
         if os.path.isfile(old_participant_privacy_statement_audio_ikposo.path):
             os.remove(old_participant_privacy_statement_audio_ikposo.path)
+
+
+@receiver(models.signals.pre_save, sender=Image)
+def auto_delete_image_file_on_change(sender, instance, **kwargs):
+    if not instance.pk:
+        return False
+    try:
+        old_file = Image.objects.get(pk=instance.pk).file
+    except Image.DoesNotExist:
+        return False
+
+    # Delete old image file
+    new_file = instance.file
+    if old_file != new_file and old_file:
+        if os.path.isfile(old_file.path):
+            os.remove(old_file.path)
+
+
+@receiver(models.signals.pre_save, sender=Audio)
+def auto_delete_audio_file_on_change(sender, instance, **kwargs):
+    if not instance.pk:
+        return False
+    try:
+        old_file = Audio.objects.get(pk=instance.pk).file
+    except Audio.DoesNotExist:
+        return False
+
+    # Delete old audio file
+    new_file = instance.file
+    if old_file != new_file and old_file:
+        if os.path.isfile(old_file.path):
+            os.remove(old_file.path)

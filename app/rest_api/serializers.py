@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+import logging
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
@@ -13,6 +14,7 @@ from dashboard.models import (Audio, Category, Image, Notification,
 from payments.models import Transaction
 from setup.models import AppConfiguration
 
+logger = logging.getLogger("app")
 
 class UserSerializer(serializers.ModelSerializer):
     photo_url = serializers.SerializerMethodField()
