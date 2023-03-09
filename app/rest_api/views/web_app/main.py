@@ -3,7 +3,7 @@ import logging
 from django.contrib.auth.models import Group, Permission
 from rest_framework import generics, permissions
 from rest_framework.response import Response
-
+from django.db import NotSupportedError
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
 from dashboard.forms import CategoryForm
@@ -678,10 +678,17 @@ class GetDashboardStatistics(generics.GenericAPIView):
                 for audio in audios.filter(is_accepted=True).values("duration")
             ]) / hours_in_seconds, 2)
 
+        unique_transcriptions = transcriptions
+        try:
+            if unique_transcriptions.distinct("audio").exists():
+                unique_transcriptions = unique_transcriptions.distinct("audio")
+        except NotSupportedError as e:
+            logger.error(str(e))
+
         audios_hours_transcribed = round(
             sum([
                 transcription.audio.duration
-                for transcription in transcriptions
+                for transcription in unique_transcriptions
             ]) / hours_in_seconds, 2)
 
         images_submitted = images.count()
