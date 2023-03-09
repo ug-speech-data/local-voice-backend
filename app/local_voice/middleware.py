@@ -4,7 +4,6 @@ from importlib import import_module
 from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.core.cache import cache
-
 logger = logging.getLogger("user_activity")
 
 

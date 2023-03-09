@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from accounts.forms import UserForm
 from accounts.models import User
 from local_voice.utils.functions import get_all_user_permissions
-from rest_api.serializers import (LoginSerializer, MobileAppConfigurationSerializer, RegisterSerializer,
+from rest_api.serializers import (LoginSerializer, RegisterSerializer,
                                   UserSerializer)
 from setup.models import AppConfiguration
 
@@ -34,6 +34,8 @@ class UserRegistrationAPI(generics.GenericAPIView):
                 }
                 return Response(response_data, status=status.HTTP_200_OK)
         user = serializer.save()
+        AuthToken.objects.filter(user=request.user).delete()
+
         response_data = {
             "error_message": None,
             "user": UserSerializer(user).data,
@@ -59,6 +61,8 @@ class UserChangePassword(generics.GenericAPIView):
         if user:
             user.set_password(new_password)
             user.save()
+            AuthToken.objects.filter(user=request.user).delete()
+
             response_data = {
                 "error_message": None,
                 "user": UserSerializer(user).data,
@@ -99,6 +103,7 @@ class UserLoginAPI(generics.GenericAPIView):
 
         user = serializer.validated_data
         user.save()
+        AuthToken.objects.filter(user=request.user).delete()
 
         response_data = {
             "error_message": None,
