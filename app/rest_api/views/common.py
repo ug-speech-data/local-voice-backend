@@ -34,7 +34,7 @@ class UserRegistrationAPI(generics.GenericAPIView):
                 }
                 return Response(response_data, status=status.HTTP_200_OK)
         user = serializer.save()
-        AuthToken.objects.filter(user=request.user).delete()
+        AuthToken.objects.filter(user=user).delete()
 
         response_data = {
             "error_message": None,
@@ -61,7 +61,7 @@ class UserChangePassword(generics.GenericAPIView):
         if user:
             user.set_password(new_password)
             user.save()
-            AuthToken.objects.filter(user=request.user).delete()
+            AuthToken.objects.filter(user=user).delete()
 
             response_data = {
                 "error_message": None,
@@ -103,7 +103,7 @@ class UserLoginAPI(generics.GenericAPIView):
 
         user = serializer.validated_data
         user.save()
-        AuthToken.objects.filter(user=request.user).delete()
+        AuthToken.objects.filter(user=user).delete()
 
         response_data = {
             "error_message": None,
