@@ -18,6 +18,7 @@ from setup.models import AppConfiguration
 
 logger = logging.getLogger("app")
 
+
 class UserSerializer(serializers.ModelSerializer):
     photo_url = serializers.SerializerMethodField()
     short_name = serializers.SerializerMethodField()
@@ -110,8 +111,21 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
 
     def get_demo_video_url(self, obj):
         request = self.context.get("request")
-        if obj.demo_video and request:
-            return request.build_absolute_uri(obj.demo_video.url)
+        locale = request.user.locale if request and request.user else ""
+        if "ee_gh" in locale and obj.demo_video_ewe:
+            return request.build_absolute_uri(obj.demo_video_ewe.url)
+
+        if "ak_gh" in locale and obj.demo_video_akan:
+            return request.build_absolute_uri(obj.demo_video_akan.url)
+
+        if "dga_gh" in locale and obj.demo_video_dagaare:
+            return request.build_absolute_uri(obj.demo_video_dagaare.url)
+
+        if "dag_gh" in locale and obj.demo_video_dagbani:
+            return request.build_absolute_uri(obj.demo_video_dagbani.url)
+
+        if "kpo_gh" in locale and obj.demo_video_ikposo:
+            return request.build_absolute_uri(obj.demo_video_ikposo.url)
         return ""
 
     def get_participant_privacy_statement_audio(self, obj):
@@ -136,18 +150,15 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
         if "kpo_gh" in locale and obj.participant_privacy_statement_audio_ikposo:
             return request.build_absolute_uri(
                 obj.participant_privacy_statement_audio_ikposo.url)
+        return ""
 
     class Meta:
         model = AppConfiguration
-        exclude = [
-            "demo_video",
-            "sms_sender_id",
-            "api_key",
-            "send_sms",
-            "required_image_validation_count",
-            "required_transcription_validation_count",
-            "number_of_batches",
-            "enumerators_group",
+        fields = [
+            "demo_video_url",
+            "participant_privacy_statement_audio",
+            "max_background_noise_level",
+            "participant_privacy_statement",
         ]
 
 
@@ -178,15 +189,8 @@ class GroupPermissionSerializer(serializers.ModelSerializer):
 
 
 class AppConfigurationSerializer(serializers.ModelSerializer):
-    demo_video_url = serializers.SerializerMethodField()
     enumerators_group = GroupSerializer(read_only=True)
     validators_group = GroupSerializer(read_only=True)
-
-    def get_demo_video_url(self, obj):
-        request = self.context.get("request")
-        if obj.demo_video:
-            return request.build_absolute_uri(obj.demo_video.url)
-        return ""
 
     class Meta:
         model = AppConfiguration

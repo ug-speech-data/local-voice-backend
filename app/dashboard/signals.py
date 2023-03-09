@@ -44,11 +44,26 @@ def auto_delete_conf_file_on_change(sender, instance, **kwargs):
     if not instance.pk:
         return False
     try:
-        old_demo_video = AppConfiguration.objects.get(
-            pk=instance.pk).demo_video
         old_android_apk = AppConfiguration.objects.get(
             pk=instance.pk).android_apk
 
+        # Demo videos
+        old_demo_video_ewe = AppConfiguration.objects.get(
+            pk=instance.pk).demo_video_ewe
+
+        old_demo_video_akan = AppConfiguration.objects.get(
+            pk=instance.pk).demo_video_akan
+
+        old_demo_video_dagaare = AppConfiguration.objects.get(
+            pk=instance.pk).demo_video_dagaare
+
+        old_demo_video_ikposo = AppConfiguration.objects.get(
+            pk=instance.pk).demo_video_ikposo
+
+        old_demo_video_dagbani = AppConfiguration.objects.get(
+            pk=instance.pk).demo_video_dagbani
+
+        # Privacy statement audios
         old_participant_privacy_statement_audio_ewe = AppConfiguration.objects.get(
             pk=instance.pk).participant_privacy_statement_audio_ewe
 
@@ -67,11 +82,36 @@ def auto_delete_conf_file_on_change(sender, instance, **kwargs):
     except AppConfiguration.DoesNotExist:
         return False
 
-    # Delete old video
-    new_demo_video = instance.demo_video
-    if not old_demo_video == new_demo_video and old_demo_video:
-        if os.path.isfile(old_demo_video.path):
-            os.remove(old_demo_video.path)
+    # Delete old videos
+    # Delete old ewe video
+    new_demo_video_ewe = instance.demo_video_ewe
+    if not old_demo_video_ewe == new_demo_video_ewe and old_demo_video_ewe:
+        if os.path.isfile(old_demo_video_ewe.path):
+            os.remove(old_demo_video_ewe.path)
+
+    # Delete old dagaare video
+    new_demo_video_dagaare = instance.demo_video_dagaare
+    if not old_demo_video_dagaare == new_demo_video_dagaare and old_demo_video_dagaare:
+        if os.path.isfile(old_demo_video_dagaare.path):
+            os.remove(old_demo_video_dagaare.path)
+
+    # Delete old dagbani video
+    new_demo_video_dagbani = instance.demo_video_dagbani
+    if not old_demo_video_dagbani == new_demo_video_dagbani and old_demo_video_dagbani:
+        if os.path.isfile(old_demo_video_dagbani.path):
+            os.remove(old_demo_video_dagbani.path)
+
+    # Delete old akan video
+    new_demo_video_akan = instance.demo_video_akan
+    if not old_demo_video_akan == new_demo_video_akan and old_demo_video_akan:
+        if os.path.isfile(old_demo_video_akan.path):
+            os.remove(old_demo_video_akan.path)
+
+    # Delete old ikposo video
+    new_demo_video_ikposo = instance.demo_video_ikposo
+    if not old_demo_video_ikposo == new_demo_video_ikposo and old_demo_video_ikposo:
+        if os.path.isfile(old_demo_video_ikposo.path):
+            os.remove(old_demo_video_ikposo.path)
 
     # Android APK
     new_android_apk = instance.android_apk

@@ -7,7 +7,11 @@ from django.db import models
 # General system config table - only one row.
 class AppConfiguration(models.Model):
     DEFAULT_API_KEY = settings.ARKESEL_API or ""
-    demo_video = models.FileField(upload_to='demovideo/', null=True, blank=True)
+    demo_video_ewe = models.FileField(upload_to="demovideos",null=True, blank=True)
+    demo_video_akan = models.FileField(upload_to="demovideos",null=True, blank=True)
+    demo_video_dagaare = models.FileField(upload_to="demovideos",null=True, blank=True)
+    demo_video_ikposo = models.FileField(upload_to="demovideos",null=True, blank=True)
+    demo_video_dagbani = models.FileField(upload_to="demovideos",null=True, blank=True)
     sms_sender_id = models.CharField(max_length=11, unique=True, default="LOCALVOICE")
     api_key = models.CharField(max_length=50, unique=True, default=DEFAULT_API_KEY)
     send_sms = models.BooleanField(default=True)

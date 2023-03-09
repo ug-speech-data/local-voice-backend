@@ -7,8 +7,9 @@ from rest_framework.response import Response
 from accounts.forms import UserForm
 from accounts.models import User
 from local_voice.utils.functions import get_all_user_permissions
-from rest_api.serializers import (LoginSerializer, RegisterSerializer,
+from rest_api.serializers import (LoginSerializer, MobileAppConfigurationSerializer, RegisterSerializer,
                                   UserSerializer)
+from setup.models import AppConfiguration
 
 
 class UserRegistrationAPI(generics.GenericAPIView):
