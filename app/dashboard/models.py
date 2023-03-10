@@ -71,9 +71,11 @@ class Image(models.Model):
         upload_to='thumbnails/', blank=True, null=True)
     validations = models.ManyToManyField(
         Validation, related_name='image_validations', blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
     batch_number = models.IntegerField(
         default=-1, db_index=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted = models.BooleanField(default=False)
 
     class Meta:
         db_table = "images"

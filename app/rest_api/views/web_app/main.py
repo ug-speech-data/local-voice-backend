@@ -23,6 +23,8 @@ from rest_api.views.mixins import SimpleCrudMixin
 from setup.models import AppConfiguration
 
 logger = logging.getLogger("app")
+from datetime import datetime
+from django.utils.timezone import make_aware
 
 
 class GetImagesToValidate(generics.GenericAPIView):
@@ -36,10 +38,14 @@ class GetImagesToValidate(generics.GenericAPIView):
         required_image_validation_count = configuration.required_image_validation_count if configuration else 0
         max_allowed_validation = configuration.max_image_for_validation_per_user if configuration else 0
 
+        start_date = make_aware(datetime.fromisoformat("2023-03-09"))
+
         # Ensure that the user does not validate to many images
         user_validations = Image.objects.filter(
             validations__is_valid=True,
             validated=False,
+            deleted=False,
+            created_at__gte=start_date,
             validations__user=request.user).count()
         if user_validations >= max_allowed_validation:
             return Response({
@@ -52,6 +58,8 @@ class GetImagesToValidate(generics.GenericAPIView):
         images = Image.objects.filter(
             id__gt=offset,
             is_downloaded=True,
+            deleted=False,
+            created_at__gte=start_date,
             is_accepted=False,
             validation_count__lt=required_image_validation_count)\
                 .exclude(validations__user=request.user)
@@ -78,7 +86,7 @@ class ValidateImage(generics.GenericAPIView):
         image_id = request.data.get("image_id")
         status = request.data.get("status")
         category_names = request.data.get("categories")
-        image = Image.objects.filter(id=image_id).first()
+        image = Image.objects.filter(id=image_id, deleted=False).first()
         if image:
             image.validate(request.user, status, category_names)
 
@@ -525,7 +533,8 @@ class ReShuffleImageIntoBatches(generics.GenericAPIView):
         number_of_batches = configuration.number_of_batches if configuration else 0
         count = 0
         for count, image in enumerate(
-                Image.objects.filter(is_accepted=True).order_by('?')):
+                Image.objects.filter(is_accepted=True,
+                                     deleted=False).order_by('?')):
             image.batch_number = count % number_of_batches + 1
             image.save()
         logger.info(
@@ -612,7 +621,7 @@ class ImagePreviewNavigation(generics.GenericAPIView):
         current_image_id = request.GET.get("current_image_id", 0)
         direction = request.GET.get("direction", "next")
 
-        images = Image.objects.all().order_by("id")
+        images = Image.objects.all(deleted=False).order_by("id")
 
         # Use filters from query param
         filters = request.GET.get("filters")
@@ -658,7 +667,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         audios = Audio.objects.all()
-        images = Image.objects.all()
+        images = Image.objects.all(deleted=False)
         transcriptions = Transcription.objects.all()
         hours_in_seconds = 3600
 
