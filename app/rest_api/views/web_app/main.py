@@ -389,7 +389,8 @@ class CollectedImagesAPI(SimpleCrudMixin):
 
     def post(self, request, *args, **kwargs):
         image_id = request.data.get("id") or -1
-        image_obj = self.model_class.objects.filter(id=image_id).first()
+        image_obj = self.model_class.objects.filter(id=image_id,
+                                                    deleted=False).first()
 
         if not image_obj:
             return Response({"message": "Invalid image id"}, 400)
