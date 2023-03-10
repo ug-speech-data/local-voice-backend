@@ -90,16 +90,18 @@ class Image(models.Model):
         return reduce(lambda x, y: x | y, queries)
 
     def save(self, *args, **kwargs) -> None:
-        if self.pk is not None:
-            self.validation_count = self.validations.all().count()
+        normal_save = kwargs.pop("normal_save",None)
+        if not normal_save:
+            if self.pk is not None:
+                self.validation_count = self.validations.all().count()
 
-        if self.validation_count > 0:
-            self.validated = True
+            if self.validation_count > 0:
+                self.validated = True
 
-        if self.is_accepted and self.categories:
-            self.main_category = self.categories.all().first()
-        elif not self.is_accepted:
-            self.main_category = None
+            if self.is_accepted and self.categories:
+                self.main_category = self.categories.all().first()
+            elif not self.is_accepted:
+                self.main_category = None
         return super().save(*args, **kwargs)
 
     def format_image_name(self):
@@ -148,6 +150,16 @@ class Image(models.Model):
             self.main_category = None
         self.save()
 
+    def create_image_thumbnail(self, height=200, width=200):
+        thumbnail = PillowImage.open(self.file)
+        thumbnail.thumbnail((height, width), PillowImage.ANTIALIAS)
+        thumb_io = BytesIO()
+        thumbnail = thumbnail.convert('RGB')
+        thumbnail.save(thumb_io, "jpeg", quality=80)
+        self.thumbnail = File(
+            thumb_io, name=self.name.split(".")[0] + ".jpg")
+        self.save(normal_save=True)
+
     def download(self):
         if self.is_downloaded:
             return
@@ -164,7 +176,7 @@ class Image(models.Model):
 
                 # Create thumbnail
                 thumbnail = PillowImage.open(BytesIO(response.content))
-                thumbnail.thumbnail((100, 100), PillowImage.ANTIALIAS)
+                thumbnail.thumbnail((200, 200), PillowImage.ANTIALIAS)
                 thumb_io = BytesIO()
                 thumbnail = thumbnail.convert('RGB')
                 thumbnail.save(thumb_io, "jpeg", quality=50)
