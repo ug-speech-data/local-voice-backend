@@ -622,7 +622,7 @@ class ImagePreviewNavigation(generics.GenericAPIView):
         current_image_id = request.GET.get("current_image_id", 0)
         direction = request.GET.get("direction", "next")
 
-        images = Image.objects.all(deleted=False).order_by("id")
+        images = Image.objects.filter(deleted=False).order_by("id")
 
         # Use filters from query param
         filters = request.GET.get("filters")
@@ -668,7 +668,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         audios = Audio.objects.all()
-        images = Image.objects.all(deleted=False)
+        images = Image.objects.filter(deleted=False)
         transcriptions = Transcription.objects.all()
         hours_in_seconds = 3600
 
