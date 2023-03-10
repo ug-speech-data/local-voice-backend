@@ -530,12 +530,17 @@ class ReShuffleImageIntoBatches(generics.GenericAPIView):
     required_permissions = ["setup.manage_setup"]
 
     def post(self, request, *args, **kwargs):
+        filter_accepted = request.GET.get("is_accepted", False)
         configuration = AppConfiguration.objects.first()
         number_of_batches = configuration.number_of_batches if configuration else 0
         count = 0
-        for count, image in enumerate(
-                Image.objects.filter(is_accepted=True,
-                                     deleted=False).order_by('?')):
+
+        images = Image.objects.filter(deleted=False)
+
+        if filter_accepted:
+            images = images.filter(is_accepted=True)
+
+        for count, image in enumerate(images.order_by('?')):
             image.batch_number = count % number_of_batches + 1
             image.save()
         logger.info(

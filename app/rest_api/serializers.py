@@ -216,6 +216,10 @@ class ImageSerializer(serializers.ModelSerializer):
     width = serializers.SerializerMethodField()
     thumbnail = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+
+    def get_created_at(self, obj):
+        return obj.created_at.strftime("%Y-%m-%d %H:%M:%S")
 
     def get_category(self, obj):
         if obj.main_category:

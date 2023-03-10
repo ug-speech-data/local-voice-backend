@@ -53,8 +53,12 @@ class ImagesBulkAction(generics.GenericAPIView):
 
         if action == "reject":
             images.update(is_accepted=False)
+            return Response({"message": f"Rejected {images.count()} images."})
 
-        return Response({"message": f"Rejected {images.count()} images."})
+        if action == "delete":
+            res, _ = images.delete()
+            return Response({"message": f"Deleted {res} images."})
+        return Response({"message": "Invalid operation"})
 
 
 class AudiosBulkAction(generics.GenericAPIView):
@@ -73,8 +77,12 @@ class AudiosBulkAction(generics.GenericAPIView):
 
         if action == "reject":
             audios.update(is_accepted=False)
+            return Response({"message": f"Rejected {audios.count()} audios."})
 
-        return Response({"message": f"Rejected {audios.count()} audios."})
+        if action == "delete":
+            res, _ = audios.delete()
+            return Response({"message": f"Deleted {res} audios."})
+        return Response({"message": "Invalid operation"})
 
 
 class TranscriptionsBulkAction(generics.GenericAPIView):
