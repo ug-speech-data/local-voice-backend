@@ -20,6 +20,9 @@ class SimpleCrudMixin(generics.GenericAPIView):
         if query and hasattr(self.model_class, "generate_query"):
             objects = objects.filter(self.model_class.generate_query(query))
 
+        if hasattr(self.model_class, "deleted"):
+            objects = objects.filter(deleted=False)
+
         page = request.GET.get("page", "")
         page_size = request.GET.get("page_size", "")
         page_size = int(
