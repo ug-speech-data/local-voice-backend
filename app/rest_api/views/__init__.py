@@ -54,6 +54,6 @@ class SubmitCrawlerImages(generics.GenericAPIView):
                 },
                 status=200)
 
-        except (UnidentifiedImageError, IntegrityError) as e:
+        except Exception as e:
             print(e)
         return Response({"message": "error"}, status=400)
