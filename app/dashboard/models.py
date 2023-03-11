@@ -100,7 +100,8 @@ class Image(models.Model):
         return super().save(*args, **kwargs)
 
     def format_image_name(self):
-        new_filename = "1" + f"{self.id}".zfill(9) + ".jpg"
+        cat_name = self.main_category.name.split()[0].replace(",", "").lower() + "_" if self.main_category else "1"
+        new_filename = cat_name + f"{self.id}".zfill(6) + ".jpg"
         image = PillowImage.open(self.file)
         temp_io = BytesIO()
         image = image.convert("RGB")
