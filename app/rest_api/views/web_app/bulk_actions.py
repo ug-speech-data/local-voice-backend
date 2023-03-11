@@ -46,18 +46,19 @@ class ImagesBulkAction(generics.GenericAPIView):
         action = request.data.get("action")
 
         images = Image.objects.filter(id__in=ids)
+        counts = images.count()
 
         if action == "approve":
             images.update(is_accepted=True)
-            return Response({"message": f"Approved {images.count()} images."})
+            return Response({"message": f"Approved {counts} images."})
 
         if action == "reject":
             images.update(is_accepted=False)
-            return Response({"message": f"Rejected {images.count()} images."})
+            return Response({"message": f"Rejected {counts} images."})
 
         if action == "delete":
-            res, _ = images.delete()
-            return Response({"message": f"Deleted {res} images."})
+            images.delete()
+            return Response({"message": f"Deleted {counts} images."})
         return Response({"message": "Invalid operation"})
 
 
