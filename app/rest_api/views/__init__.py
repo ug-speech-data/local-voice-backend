@@ -32,7 +32,7 @@ class SubmitCrawlerImages(generics.GenericAPIView):
         try:
             image = PillowImage.open(BytesIO(response.content))
             thumbnail = PillowImage.open(BytesIO(response.content))
-            thumbnail.thumbnail((100, 100), PillowImage.ANTIALIAS)
+            thumbnail.thumbnail((200, 200), PillowImage.ANTIALIAS)
             thumb_io = BytesIO()
             thumbnail = thumbnail.convert('RGB')
             thumbnail.save(thumb_io, "jpeg", quality=50)
