@@ -97,11 +97,6 @@ class Image(models.Model):
 
             if self.validation_count > 0:
                 self.validated = True
-
-            if self.is_accepted and self.categories:
-                self.main_category = self.categories.all().first()
-            elif not self.is_accepted:
-                self.main_category = None
         return super().save(*args, **kwargs)
 
     def format_image_name(self):

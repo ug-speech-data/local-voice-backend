@@ -88,6 +88,7 @@ class ValidateImage(generics.GenericAPIView):
         category_names = request.data.get("categories")
         image = Image.objects.filter(id=image_id, deleted=False).first()
         if image:
+            print("category_names", category_names)
             image.validate(request.user, status, category_names)
 
         return Response({"message": "Image validated successfully"})
@@ -398,6 +399,7 @@ class CollectedImagesAPI(SimpleCrudMixin):
         category_names = request.data.pop("categories", None)
         categories = Category.objects.filter(name__in=category_names)
         image_obj.categories.set(categories)
+        image_obj.main_category = Category.objects.filter(name=category_names[0]).first()        
         image_obj.save()
         for key, value in request.data.items():
             if hasattr(image_obj, key):

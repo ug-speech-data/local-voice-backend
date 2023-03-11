@@ -11,7 +11,7 @@ logger = logging.getLogger("app")
 
 
 def apply_filters(objects, filters):
-    filters = filters.split(",")
+    filters = filters.split("$")
     for filter in filters:
         filter = filter.split(":")
         if len(filter) == 2:
