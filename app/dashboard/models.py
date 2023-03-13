@@ -45,7 +45,7 @@ class Category(models.Model):
 
 
 class Validation(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
     is_valid = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -194,7 +194,7 @@ class Participant(models.Model):
     fullname = models.CharField(max_length=255, blank=True, null=True)
     slug = models.SlugField(max_length=255, blank=True, null=True)
     submitted_by = models.ForeignKey(
-        User, related_name="participant", on_delete=models.CASCADE)
+        User, related_name="participant", on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     audio_duration_in_seconds = models.IntegerField(default=0)
@@ -255,10 +255,10 @@ class Participant(models.Model):
 
 class Audio(models.Model):
     image = models.ForeignKey(Image, db_index=True,
-                              related_name="audios", on_delete=models.CASCADE)
+                              related_name="audios", on_delete=models.PROTECT)
     file = models.FileField(upload_to='audios/')
     submitted_by = models.ForeignKey(
-        User, related_name="audios", on_delete=models.CASCADE)
+        User, related_name="audios", on_delete=models.PROTECT)
     participant = models.ForeignKey(
         Participant, related_name="audios", on_delete=models.SET_NULL, null=True, blank=True)
     device_id = models.CharField(max_length=255, blank=True, null=True)
@@ -323,10 +323,10 @@ class Audio(models.Model):
 
 class Transcription(models.Model):
     audio = models.ForeignKey(
-        Audio, db_index=True, related_name="transcriptions", on_delete=models.CASCADE)
+        Audio, db_index=True, related_name="transcriptions", on_delete=models.PROTECT)
     text = models.TextField()
     user = models.ForeignKey(
-        User, db_index=True, related_name="transcriptions", on_delete=models.CASCADE)
+        User, db_index=True, related_name="transcriptions", on_delete=models.PROTECT)
     validations = models.ManyToManyField(
         Validation, related_name='transcription_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
