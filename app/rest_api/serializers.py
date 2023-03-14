@@ -159,6 +159,7 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
             "participant_privacy_statement_audio",
             "max_background_noise_level",
             "participant_privacy_statement",
+            "id",
         ]
 
 
