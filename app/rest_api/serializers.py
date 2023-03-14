@@ -118,10 +118,10 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
         if "ak_gh" in locale and obj.demo_video_akan:
             return request.build_absolute_uri(obj.demo_video_akan.url)
 
-        if "dga_gh" in locale and obj.demo_video_dagaare:
+        if "dag_gh" in locale and obj.demo_video_dagaare:
             return request.build_absolute_uri(obj.demo_video_dagaare.url)
 
-        if "dag_gh" in locale and obj.demo_video_dagbani:
+        if "dga_gh" in locale and obj.demo_video_dagbani:
             return request.build_absolute_uri(obj.demo_video_dagbani.url)
 
         if "kpo_gh" in locale and obj.demo_video_ikposo:
@@ -139,11 +139,11 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(
                 obj.participant_privacy_statement_audio_akan.url)
 
-        if "dga_gh" in locale and obj.participant_privacy_statement_audio_dagaare:
+        if "dag_gh" in locale and obj.participant_privacy_statement_audio_dagaare:
             return request.build_absolute_uri(
                 obj.participant_privacy_statement_audio_dagaare.url)
 
-        if "dag_gh" in locale and obj.participant_privacy_statement_audio_dagbani:
+        if "dga_gh" in locale and obj.participant_privacy_statement_audio_dagbani:
             return request.build_absolute_uri(
                 obj.participant_privacy_statement_audio_dagbani.url)
 
