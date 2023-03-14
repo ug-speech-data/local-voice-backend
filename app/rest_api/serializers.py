@@ -295,6 +295,10 @@ class AudioSerializer(serializers.ModelSerializer):
     submitted_by = serializers.SerializerMethodField()
     audio_url = serializers.SerializerMethodField()
     image_batch_number = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+
+    def get_created_at(self, obj):
+        return obj.created_at.strftime("%Y-%m-%d %H:%M:%S")
 
     def get_image_batch_number(self, obj):
         return obj.image.batch_number
