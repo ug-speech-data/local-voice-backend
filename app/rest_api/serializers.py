@@ -523,7 +523,6 @@ class AudioUploadSerializer(serializers.Serializer):
                     gender=participant_data.get("gender"),
                     submitted_by=request.user,
                     age=participant_data.get("age"),
-                    amount=participant_amount_per_audio,
                     accepted_privacy_policy=participant_data.get(
                         "acceptedPrivacyPolicy", False),
                     api_client=api_client,
@@ -559,7 +558,9 @@ class AudioUploadSerializer(serializers.Serializer):
                 )
                 transaction.update_wallet_balances()
 
-                participant_object.amount = participant_object.audios.all(
+                participant_object.update_amount()
+                
+                .amount = participant_object.audios.all(
                 ).count() * participant_amount_per_audio
                 participant_object.save()
 

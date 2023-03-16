@@ -237,6 +237,11 @@ class Participant(models.Model):
             else:
                 self.transaction.recheck_status()
 
+    def update_amount(self):
+        participant_amount_per_audio = AppConfiguration.objects.first().participant_amount_per_audio
+        self.amount = self.audios.all().count() * participant_amount_per_audio
+        self.save()
+
     @staticmethod
     def generate_query(query):
         queries = [Q(**{f"{key}__icontains": query})
