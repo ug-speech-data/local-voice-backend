@@ -94,38 +94,6 @@ class ValidateImage(generics.GenericAPIView):
         return Response({"message": "Image validated successfully"})
 
 
-class GetAudiosToValidate(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    required_permissions = ["setup.validate_audio"]
-    serializer_class = AudioSerializer
-
-    def get(self, request, *args, **kwargs):
-        configuration = AppConfiguration.objects.first()
-        offset = request.GET.get("offset", -1)
-        required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
-
-        audios = Audio.objects.filter(
-            id__gt=offset,
-            locale=request.user.locale,
-            is_accepted=False,
-            validation_count__lt=required_audio_validation_count)\
-                .exclude(validations__user=request.user, submitted_by=request.user) \
-            .order_by("image", "id")
-
-        # If the user has been assigned a batch of images, they can only validate audios belonging to that batch
-        if request.user.assigned_audio_batch >= 0:
-            audios = audios.filter(
-                image__batch_number=request.user.assigned_audio_batch)
-
-        audio = audios.first()
-        data = self.serializer_class(audio, context={
-            "request": request
-        }).data if audio else None
-        return Response({
-            "audio": data,
-        })
-
-
 class GetAudiosToTranscribe(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
     required_permissions = ["setup.transcribe_audio"]
@@ -179,20 +147,6 @@ class GetTranscriptionToValidate(generics.GenericAPIView):
         return Response({
             "transcription": data,
         })
-
-
-class ValidateAudio(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    required_permissions = ["setup.validate_audio"]
-
-    def post(self, request, *args, **kwargs):
-        audio_id = request.data.get("id")
-        status = request.data.get("status")
-        audio = Audio.objects.filter(id=audio_id).first()
-        if audio:
-            audio.validate(request.user, status)
-        return Response({"message": "Image validated successfully"})
-
 
 class SubmitTranscription(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
@@ -352,11 +306,16 @@ class AppConfigurationAPI(generics.GenericAPIView):
             for key, value in request.data.items():
                 if not value: continue
                 if hasattr(configuration, key):
-                    setattr(configuration, key, value)
+                    if type(getattr(configuration, key)) == bool:
+                        setattr(configuration, key, value == "true")
+                    else:
+                        setattr(configuration, key, value)
             configuration.enumerators_group = enumerators_group
             configuration.validators_group = validators_group
             configuration.save()
         except Exception as e:
+            print(e)
+            logger.error(str(e))
             return Response(
                 {
                     "error_message": str(e),
@@ -399,7 +358,8 @@ class CollectedImagesAPI(SimpleCrudMixin):
         category_names = request.data.pop("categories", None)
         categories = Category.objects.filter(name__in=category_names)
         image_obj.categories.set(categories)
-        image_obj.main_category = Category.objects.filter(name=category_names[0]).first()        
+        image_obj.main_category = Category.objects.filter(
+            name=category_names[0]).first()
         image_obj.save()
         for key, value in request.data.items():
             if hasattr(image_obj, key):

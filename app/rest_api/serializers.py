@@ -155,6 +155,10 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppConfiguration
         fields = [
+            "allow_saving_less_than_required_per_participant",
+            "allow_recording_more_than_required_per_participant",
+            "number_of_audios_per_participant",
+            "max_audio_validation_per_user",
             "demo_video_url",
             "participant_privacy_statement_audio",
             "max_background_noise_level",
@@ -511,9 +515,9 @@ class AudioUploadSerializer(serializers.Serializer):
 
         try:
             if participant_data:
-                participant_object = Participant.objects.create(
+                participant_object, created = Participant.objects.get_or_create(
                     momo_number=participant_data.get("momoNumber"),
-                    network=participant_data.get("network"),
+                    network=participant_data.get("network", ""),
                     fullname=participant_data.get("fullname"),
                     gender=participant_data.get("gender"),
                     submitted_by=request.user,

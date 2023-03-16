@@ -6,8 +6,10 @@ from rest_framework.response import Response
 
 from accounts.forms import UserForm
 from accounts.models import User
+from dashboard.models import Audio
 from local_voice.utils.functions import get_all_user_permissions
-from rest_api.serializers import (LoginSerializer, RegisterSerializer,
+from rest_api.permissions import APILevelPermissionCheck
+from rest_api.serializers import (AudioSerializer, LoginSerializer, RegisterSerializer,
                                   UserSerializer)
 from setup.models import AppConfiguration
 
@@ -192,3 +194,47 @@ class MyPermissions(generics.GenericAPIView):
             "user_permissions": get_all_user_permissions(request.user)
         }
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+class GetAudiosToValidate(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.validate_audio"]
+    serializer_class = AudioSerializer
+
+    def get(self, request, *args, **kwargs):
+        configuration = AppConfiguration.objects.first()
+        offset = request.GET.get("offset", -1)
+        required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
+
+        audios = Audio.objects.filter(
+            id__gt=offset,
+            locale=request.user.locale,
+            is_accepted=False,
+            validation_count__lt=required_audio_validation_count)\
+                .exclude(validations__user=request.user, submitted_by=request.user) \
+            .order_by("image", "id")
+
+        # # If the user has been assigned a batch of images, they can only validate audios belonging to that batch
+        # if request.user.audios >= 0:
+        #     audios = Audio.objects.none()
+
+        audio = audios.first()
+        data = self.serializer_class(audio, context={
+            "request": request
+        }).data if audio else None
+        return Response({
+            "audio": data,
+        })
+
+
+class ValidateAudio(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.validate_audio"]
+
+    def post(self, request, *args, **kwargs):
+        audio_id = request.data.get("id")
+        status = request.data.get("status")
+        audio = Audio.objects.filter(id=audio_id).first()
+        if audio:
+            audio.validate(request.user, status)
+        return Response({"message": "Image validated successfully"})

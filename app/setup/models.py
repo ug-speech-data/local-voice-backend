@@ -27,6 +27,7 @@ class AppConfiguration(models.Model):
     android_apk = models.FileField(upload_to="apks/", null=True, blank=True)
     participant_privacy_statement = models.TextField(default="",null=True, blank=True)
     max_image_for_validation_per_user = models.IntegerField(default=300)
+    max_audio_validation_per_user = models.IntegerField(default=50*120*2)
 
     # Compensation
     participant_amount_per_audio = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
@@ -40,6 +41,11 @@ class AppConfiguration(models.Model):
     participant_privacy_statement_audio_dagaare = models.FileField(upload_to="privacy_statement_audios",null=True, blank=True)
     participant_privacy_statement_audio_ikposo = models.FileField(upload_to="privacy_statement_audios",null=True, blank=True)
     participant_privacy_statement_audio_dagbani = models.FileField(upload_to="privacy_statement_audios",null=True, blank=True)
+
+    allow_saving_less_than_required_per_participant = models.BooleanField(default=False)
+    allow_recording_more_than_required_per_participant = models.BooleanField(default=False)
+    number_of_audios_per_participant = models.IntegerField(default=120)
+
 
 # Just for permissions
 class SetupPerms(models.Model):
@@ -59,5 +65,4 @@ class SetupPerms(models.Model):
             ("manage_payment", "Can manage payments"),
             ("record_self", "Can record oneself"),
             ("record_others", "Can record others"),
-
         ]
