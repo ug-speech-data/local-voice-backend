@@ -9,8 +9,8 @@ from accounts.models import User
 from dashboard.models import Audio
 from local_voice.utils.functions import get_all_user_permissions
 from rest_api.permissions import APILevelPermissionCheck
-from rest_api.serializers import (AudioSerializer, LoginSerializer, RegisterSerializer,
-                                  UserSerializer)
+from rest_api.serializers import (AudioSerializer, LoginSerializer,
+                                  RegisterSerializer, UserSerializer)
 from setup.models import AppConfiguration
 
 
@@ -205,6 +205,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
         configuration = AppConfiguration.objects.first()
         offset = request.GET.get("offset", -1)
         required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
+        max_audio_validation_per_user = configuration.max_audio_validation_per_user if configuration else 0
 
         audios = Audio.objects.filter(
             id__gt=offset,
@@ -214,9 +215,11 @@ class GetAudiosToValidate(generics.GenericAPIView):
                 .exclude(validations__user=request.user, submitted_by=request.user) \
             .order_by("image", "id")
 
-        # # If the user has been assigned a batch of images, they can only validate audios belonging to that batch
-        # if request.user.audios >= 0:
-        #     audios = Audio.objects.none()
+        user_audio_validation_count = Audio.objects.filter(
+            validations__is_valid=True,
+            validations__user=request.user).count()
+        if user_audio_validation_count >= max_audio_validation_per_user:
+            audios = Audio.objects.none()
 
         audio = audios.first()
         data = self.serializer_class(audio, context={

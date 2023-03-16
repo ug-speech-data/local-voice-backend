@@ -39,7 +39,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_audios_validated(self, user):
         from dashboard.models import Audio
-        return Audio.objects.filter(validations__user=user).count()
+        return Audio.objects.filter(validations__user=user,
+                                    validations__is_valid=True).count()
 
     def get_groups(self, obj):
         return obj.groups.values_list("name", flat=True)
