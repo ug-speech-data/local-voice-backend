@@ -559,6 +559,10 @@ class AudioUploadSerializer(serializers.Serializer):
                 )
                 transaction.update_wallet_balances()
 
+                participant_object.amount = participant_object.audios.all(
+                ).count() * participant_amount_per_audio
+                participant_object.save()
+
         except Exception as e:
             logger.error(e)
             return False, str(e)
