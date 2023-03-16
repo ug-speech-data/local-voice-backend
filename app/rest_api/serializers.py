@@ -504,8 +504,6 @@ class AudioUploadSerializer(serializers.Serializer):
 
         image_id = audio_data.get("remoteImageID", -1)
         image_object = Image.objects.filter(id=image_id).first()
-        participant_amount_per_audio = AppConfiguration.objects.first(
-        ).participant_amount_per_audio
         participant_object = None
 
         if not image_object:
@@ -559,11 +557,7 @@ class AudioUploadSerializer(serializers.Serializer):
                 transaction.update_wallet_balances()
 
                 participant_object.update_amount()
-                
-                .amount = participant_object.audios.all(
-                ).count() * participant_amount_per_audio
-                participant_object.save()
-
+   
         except Exception as e:
             logger.error(e)
             return False, str(e)
