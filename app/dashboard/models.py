@@ -278,6 +278,7 @@ class Audio(models.Model):
     validations = models.ManyToManyField(
         Validation, related_name='audio_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    rejected = models.BooleanField(default=False)
 
     class Meta:
         db_table = "audios"

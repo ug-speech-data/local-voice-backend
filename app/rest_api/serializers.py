@@ -545,6 +545,7 @@ class AudioUploadSerializer(serializers.Serializer):
                 else:
                     amount = configuration.audio_aggregators_amount_per_audio if configuration else 0
 
+                # Credit user(enumerators) account.
                 transaction = Transaction.objects.create(
                     amount=amount,
                     wallet=request.user.wallet,
@@ -557,7 +558,7 @@ class AudioUploadSerializer(serializers.Serializer):
                 transaction.update_wallet_balances()
 
                 participant_object.update_amount()
-   
+
         except Exception as e:
             logger.error(e)
             return False, str(e)

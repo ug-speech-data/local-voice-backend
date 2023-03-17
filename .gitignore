@@ -147,3 +147,4 @@ entrypoint.prod.sh
 init-letsencrypt.sh
 deploy.sh
 nginx
+scripts.py
