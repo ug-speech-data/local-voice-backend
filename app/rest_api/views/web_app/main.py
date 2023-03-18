@@ -13,7 +13,7 @@ from local_voice.utils.functions import (apply_filters, get_errors_from_form,
                                          relevant_permission_objects)
 from rest_api.permissions import APILevelPermissionCheck
 from rest_api.serializers import (AppConfigurationSerializer, AudioSerializer,
-                                  CategorySerializer,
+                                  CategorySerializer, EnumeratorSerialiser,
                                   GroupPermissionSerializer, GroupSerializer,
                                   ImageSerializer, NotificationSerializer,
                                   ParticipantSerializer,
@@ -147,6 +147,7 @@ class GetTranscriptionToValidate(generics.GenericAPIView):
         return Response({
             "transcription": data,
         })
+
 
 class SubmitTranscription(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
@@ -683,3 +684,17 @@ class GetDashboardStatistics(generics.GenericAPIView):
                 "images_approved": images_approved,
             }
         })
+
+
+class GetEnumerators(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = EnumeratorSerialiser
+
+    def get(self, request, *args, **kwargs):
+        configuration = AppConfiguration.objects.first()
+        enumerators_group = configuration.enumerators_group if configuration else None
+        users = enumerators_group.user_set.all().order_by(
+            "surname") if enumerators_group else User.objects.none()
+
+        return Response(
+            {"enumerators": self.serializer_class(users, many=True).data})

@@ -47,6 +47,8 @@ urlpatterns += [
 
     path("image-preview-navigation", views.ImagePreviewNavigation.as_view()),
     path("dashboard-statistics/", views.GetDashboardStatistics.as_view()),
+
+    path("get-enumerators/", views.GetEnumerators.as_view()),
 ]
 
 

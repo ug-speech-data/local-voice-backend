@@ -555,3 +555,17 @@ class AudioUploadSerializer(serializers.Serializer):
             logger.error(e)
             return False, str(e)
         return True, "Success"
+
+
+class EnumeratorSerialiser(serializers.ModelSerializer):
+    fullname = serializers.SerializerMethodField()
+
+    def get_fullname(self, obj):
+        return f"{obj.surname} {obj.other_names}"
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "fullname",
+        ]
