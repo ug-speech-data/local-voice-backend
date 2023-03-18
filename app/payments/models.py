@@ -1,4 +1,6 @@
+from functools import reduce
 import logging
+from django.db.models import Q
 
 from django.db import models
 from django.db import transaction as django_db_transaction
@@ -48,6 +50,12 @@ class Transaction(models.Model):
 
     def __str__(self):
         return self.transaction_id
+
+    @staticmethod
+    def generate_query(query):
+        queries = [Q(**{f"{key}__icontains": query}) for key in ["transaction_id", "phone_number",
+                                                                 "network", "fullname", "direction"]]
+        return reduce(lambda x, y: x | y, queries)
 
     def success(self):
         return self.status == TransactionStatus.SUCCESS.value
