@@ -212,7 +212,7 @@ class Participant(models.Model):
             return
 
         transaction = Transaction.objects.filter(participant=self).first()
-        if not transaction:
+        if not transaction  or transaction.status == "failed":
             transaction = Transaction.objects.create()
         transaction.amount = self.amount
         transaction.phone_number = self.momo_number

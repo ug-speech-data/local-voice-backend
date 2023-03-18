@@ -67,6 +67,9 @@ class Transaction(models.Model):
         """
         from payments.tasks import \
             execute_transaction  # Avoid circular imports
+        
+        if self.status == "pending":
+            self.recheck_status()
         return execute_transaction.delay(self.transaction_id, callback_url)
 
     def retry(self):
