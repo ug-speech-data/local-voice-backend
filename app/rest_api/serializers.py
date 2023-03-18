@@ -1,6 +1,8 @@
+import os
 import json
 import logging
 from datetime import datetime
+from django.conf import settings
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
@@ -513,6 +515,13 @@ class AudioUploadSerializer(serializers.Serializer):
         if not file:
             return False, "No file"
 
+        # Check for duplicate files.
+        new_file_path = settings.MEDIA_ROOT / "audios" / file.name
+        if os.path.isfile(new_file_path):
+            for audio in Audio.objects.all():
+                if audio.file.path == str(new_file_path):
+                    logger.info("Audio already exists.")
+                    return True, "Audio already exists."
         try:
             if participant_data:
                 participant_object, created = Participant.objects.get_or_create(

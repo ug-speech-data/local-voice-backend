@@ -86,7 +86,7 @@ class Image(models.Model):
     @staticmethod
     def generate_query(query):
         queries = [Q(**{f"{key}__icontains": query})
-                   for key in ["name", "categories__name"]]
+                   for key in ["name","id", "categories__name"]]
         return reduce(lambda x, y: x | y, queries)
 
     def save(self, *args, **kwargs) -> None:
@@ -296,6 +296,7 @@ class Audio(models.Model):
     @staticmethod
     def generate_query(query):
         queries = [Q(**{f"{key}__icontains": query}) for key in ["environment", "locale",
+                                                                 "id",
                                                                  "device_id", "submitted_by__email_address", "participant__momo_number", "participant__fullname", "image__name"]]
         return reduce(lambda x, y: x | y, queries)
 
