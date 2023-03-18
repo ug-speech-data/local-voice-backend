@@ -10,9 +10,6 @@ from rest_framework import serializers
 from accounts.models import User, Wallet
 from dashboard.models import (Audio, Category, Image, Notification,
                               Participant, Transcription, Validation)
-from local_voice.utils.constants import (TransactionDirection,
-                                         TransactionStatus,
-                                         TransactionStatusMessages)
 from payments.models import Transaction
 from setup.models import AppConfiguration
 
@@ -279,6 +276,10 @@ class ParticipantSerializer(serializers.ModelSerializer):
     transaction = TransactionSerializer(read_only=True)
     submitted_by = serializers.SerializerMethodField()
     audio_count = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+
+    def get_created_at(self, obj):
+        return obj.created_at.strftime("%Y-%m-%d %H:%M:%S")
 
     def get_submitted_by(self, obj):
         if obj.submitted_by:

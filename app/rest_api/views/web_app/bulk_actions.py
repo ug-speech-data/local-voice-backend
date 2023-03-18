@@ -17,6 +17,8 @@ class ParticipantsBulkAction(generics.GenericAPIView):
         ids = request.data.get("ids") or []
         action = request.data.get("action")
 
+        print("ids",ids)
+
         participants = Participant.objects.filter(id__in=ids)
 
         if action == "pay":
