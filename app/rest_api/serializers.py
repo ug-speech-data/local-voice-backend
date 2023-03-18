@@ -547,8 +547,8 @@ class AudioUploadSerializer(serializers.Serializer):
                     amount = configuration.audio_aggregators_amount_per_audio if configuration else 0
 
                 # Credit user(enumerators) account.
-                if self.wallet:
-                    self.wallet.credit_wallet(amount)
+                if audio.submitted_by.wallet:
+                    audio.submitted_by.wallet.credit_wallet(amount)
 
                 participant_object.update_amount()
 

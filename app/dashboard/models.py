@@ -308,8 +308,8 @@ class Audio(models.Model):
         if validation is None:
             validation = Validation.objects.create(user=user)
         validation.is_valid = status == "accepted"
-        self.validations.add(validation)
         validation.save()
+        self.validations.add(validation)
         self.save()
 
         is_accepted = self.validation_count >= required_audio_validation_count and self.validations.filter(
