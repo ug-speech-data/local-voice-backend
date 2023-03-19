@@ -698,3 +698,20 @@ class GetEnumerators(generics.GenericAPIView):
 
         return Response(
             {"enumerators": self.serializer_class(users, many=True).data})
+
+
+class RejectAcceptAudio(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.validate_audio"]
+
+    def post(self, request, *args, **kwargs):
+        audio_id = request.data.get("id")
+        status = request.data.get("status")
+        audio = Audio.objects.filter(id=audio_id).first()
+        if "accept" in status:
+            audio.is_accepted = True
+            audio.rejected = False
+        else:
+            audio.is_accepted = False
+            audio.rejected = True
+        return Response({"message": "Audio validated successfully"})

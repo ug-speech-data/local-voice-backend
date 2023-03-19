@@ -76,10 +76,12 @@ class AudiosBulkAction(generics.GenericAPIView):
 
         if action == "approve":
             audios.update(is_accepted=True)
+            audios.update(rejected=False)
             return Response({"message": f"Approved {audios.count()} audios."})
 
         if action == "reject":
             audios.update(is_accepted=False)
+            audios.update(rejected=True)
             return Response({"message": f"Rejected {audios.count()} audios."})
 
         if action == "delete":
