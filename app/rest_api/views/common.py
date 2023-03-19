@@ -12,6 +12,7 @@ from rest_api.permissions import APILevelPermissionCheck
 from rest_api.serializers import (AudioSerializer, LoginSerializer,
                                   RegisterSerializer, UserSerializer)
 from setup.models import AppConfiguration
+from django.db.models import Q
 
 
 class UserRegistrationAPI(generics.GenericAPIView):
@@ -212,7 +213,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
             locale=request.user.locale,
             is_accepted=False,
             validation_count__lt=required_audio_validation_count)\
-                .exclude(validations__user=request.user, submitted_by=request.user) \
+                .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user)) \
             .order_by("image", "id")
 
         user_audio_validation_count = Audio.objects.filter(
