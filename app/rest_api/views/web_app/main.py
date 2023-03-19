@@ -253,6 +253,7 @@ class UsersAPI(SimpleCrudMixin):
     response_data_label_plural = "users"
 
     def post(self, request, *args, **kwargs):
+        is_active = request.data.get("is_active", None)
         obj_id = request.data.get("id")
         new_password = request.data.get("password")
         group_names = request.data.get("groups")
@@ -260,6 +261,10 @@ class UsersAPI(SimpleCrudMixin):
         obj = None
         if obj_id:
             obj = self.model_class.objects.filter(id=obj_id).first()
+            if is_active != None:
+                obj.is_active = is_active
+                obj.save()
+
         form = self.form_class(request.data, instance=obj)
         if form.is_valid():
             user = form.save()

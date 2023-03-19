@@ -27,6 +27,32 @@ class UserSerializer(serializers.ModelSerializer):
     audios_submitted = serializers.SerializerMethodField()
     audios_validated = serializers.SerializerMethodField()
 
+    audios_rejected = serializers.SerializerMethodField()
+    audios_pending = serializers.SerializerMethodField()
+    audios_accepted = serializers.SerializerMethodField()
+    estimated_deduction_amount = serializers.SerializerMethodField()
+
+    def get_audios_rejected(self, user):
+        from dashboard.models import Audio
+        return Audio.objects.filter(submitted_by=user,
+                                    rejected=True,
+                                    is_accepted=False).count()
+
+    def get_audios_pending(self, user):
+        from dashboard.models import Audio
+        return Audio.objects.filter(submitted_by=user,
+                                    rejected=False,
+                                    is_accepted=False).count()
+
+    def get_audios_accepted(self, user):
+        return Audio.objects.filter(submitted_by=user,
+                                    rejected=False,
+                                    is_accepted=True).count()
+
+    def get_estimated_deduction_amount(self, user):
+        DEDUCTION_PER_REJECTED = 0.20
+        return self.get_audios_rejected(user) * DEDUCTION_PER_REJECTED
+
     def get_balance(self, user):
         if user.wallet:
             return str(user.wallet.balance)
@@ -65,7 +91,6 @@ class UserSerializer(serializers.ModelSerializer):
             "password",
             "is_staff",
             "is_superuser",
-            "is_active",
             "wallet",
         ]
 
