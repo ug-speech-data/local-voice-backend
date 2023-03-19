@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, logout
+from django.db.models import Q
 from knox.models import AuthToken
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
@@ -12,7 +13,6 @@ from rest_api.permissions import APILevelPermissionCheck
 from rest_api.serializers import (AudioSerializer, LoginSerializer,
                                   RegisterSerializer, UserSerializer)
 from setup.models import AppConfiguration
-from django.db.models import Q
 
 
 class UserRegistrationAPI(generics.GenericAPIView):
@@ -210,11 +210,13 @@ class GetAudiosToValidate(generics.GenericAPIView):
 
         audios = Audio.objects.filter(
             id__gt=offset,
-            locale=request.user.locale,
-            is_accepted=False,
+           is_accepted=False,
             validation_count__lt=required_audio_validation_count)\
                 .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user)) \
             .order_by("image", "id")
+
+        if not request.user.is_superuser:
+            audios = audios.filter(locale=request.user.locale)
 
         user_audio_validation_count = Audio.objects.filter(
             validations__is_valid=True,

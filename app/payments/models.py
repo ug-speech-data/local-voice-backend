@@ -1,9 +1,9 @@
-from functools import reduce
 import logging
-from django.db.models import Q
+from functools import reduce
 
 from django.db import models
 from django.db import transaction as django_db_transaction
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 

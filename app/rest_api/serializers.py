@@ -1,9 +1,9 @@
-import os
 import json
 import logging
+import os
 from datetime import datetime
-from django.conf import settings
 
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
 from django.utils.timezone import make_aware

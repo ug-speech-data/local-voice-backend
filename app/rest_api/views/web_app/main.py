@@ -1,9 +1,11 @@
 import logging
 
 from django.contrib.auth.models import Group, Permission
+from django.db import NotSupportedError
+from django.db.models import Q
 from rest_framework import generics, permissions
 from rest_framework.response import Response
-from django.db import NotSupportedError
+
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
 from dashboard.forms import CategoryForm
@@ -24,6 +26,7 @@ from setup.models import AppConfiguration
 
 logger = logging.getLogger("app")
 from datetime import datetime
+
 from django.utils.timezone import make_aware
 
 
@@ -264,6 +267,16 @@ class UsersAPI(SimpleCrudMixin):
                 user.set_password(new_password)
             user.groups.set(groups)
             user.save()
+
+            # Super users
+            group = Group.objects.filter(
+                Q(name__icontains="super user")
+                | Q(name__icontains="super admins")
+                | Q(name__icontains="super admin")).first()
+            if group:
+                User.objects.update(is_superuser=False)
+                group.user_set.update(is_superuser=True)
+
             return Response({
                 "message":
                 f"{self.model_class.__name__} saved successfully",
@@ -698,20 +711,3 @@ class GetEnumerators(generics.GenericAPIView):
 
         return Response(
             {"enumerators": self.serializer_class(users, many=True).data})
-
-
-class RejectAcceptAudio(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    required_permissions = ["setup.validate_audio"]
-
-    def post(self, request, *args, **kwargs):
-        audio_id = request.data.get("id")
-        status = request.data.get("status")
-        audio = Audio.objects.filter(id=audio_id).first()
-        if "accept" in status:
-            audio.is_accepted = True
-            audio.rejected = False
-        else:
-            audio.is_accepted = False
-            audio.rejected = True
-        return Response({"message": "Audio validated successfully"})
