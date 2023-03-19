@@ -317,6 +317,10 @@ class Audio(models.Model):
             is_valid=True).count() == self.validation_count
         self.is_accepted = is_accepted
 
+        rejected = self.validation_count >= required_audio_validation_count and self.validations.filter(
+            is_valid=False).count() == self.validation_count
+        self.rejected = rejected
+
         self.save()
 
     def get_transcriptions(self):

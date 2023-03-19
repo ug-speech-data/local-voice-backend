@@ -16,9 +16,12 @@ def apply_filters(objects, filters):
         filter = filter.split(":")
         if len(filter) == 2:
             objects = objects.filter(**{filter[0]: filter[1]})
+
+        # Special case for validation conflict
         elif len(filter) == 3:
             key, value, annotation = filter
             objects = objects.annotate(c=Count(annotation)).filter(
+                rejected=False, is_accepted=False,
                 c__gt=1).filter(**{key: value})
     return objects
 
