@@ -66,7 +66,7 @@ class ImagesBulkAction(generics.GenericAPIView):
 
 class AudiosBulkAction(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    required_permissions = ["setup.manage_payment"]
+    required_permissions = ["setup.validate_audio"]
 
     def post(self, request, *args, **kwargs):
         ids = request.data.get("ids") or []
