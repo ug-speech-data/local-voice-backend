@@ -36,17 +36,20 @@ class UserSerializer(serializers.ModelSerializer):
         from dashboard.models import Audio
         return Audio.objects.filter(submitted_by=user,
                                     rejected=True,
+                                    deleted=False,
                                     is_accepted=False).count()
 
     def get_audios_pending(self, user):
         from dashboard.models import Audio
         return Audio.objects.filter(submitted_by=user,
                                     rejected=False,
+                                    deleted=False,
                                     is_accepted=False).count()
 
     def get_audios_accepted(self, user):
         return Audio.objects.filter(submitted_by=user,
                                     rejected=False,
+                                    deleted=False,
                                     is_accepted=True).count()
 
     def get_estimated_deduction_amount(self, user):
@@ -60,11 +63,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_audios_submitted(self, user):
         from dashboard.models import Audio
-        return Audio.objects.filter(submitted_by=user).count()
+        return Audio.objects.filter(deleted=False, submitted_by=user).count()
 
     def get_audios_validated(self, user):
         from dashboard.models import Audio
         return Audio.objects.filter(validations__user=user,
+                                    deleted=False,
                                     validations__is_valid=True).count()
 
     def get_groups(self, obj):
@@ -543,7 +547,7 @@ class AudioUploadSerializer(serializers.Serializer):
         # Check for duplicate files.
         new_file_path = settings.MEDIA_ROOT / "audios" / file.name
         if os.path.isfile(new_file_path):
-            for audio in Audio.objects.all():
+            for audio in Audio.objects.filter(deleted=False):
                 if audio.file.path == str(new_file_path):
                     logger.info("Audio already exists.")
                     return True, "Audio already exists."
