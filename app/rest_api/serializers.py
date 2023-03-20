@@ -314,7 +314,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
         return ""
 
     def get_audio_count(self, obj):
-        return obj.audios.count()
+        return obj.audios.filter(deleted=False).count()
 
     class Meta:
         model = Participant

@@ -210,6 +210,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
 
         audios = Audio.objects.filter(
             id__gt=offset,
+            deleted=False,
            is_accepted=False,
             validation_count__lt=required_audio_validation_count)\
                 .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user)) \
@@ -220,6 +221,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
 
         user_audio_validation_count = Audio.objects.filter(
             validations__is_valid=True,
+            deleted=False,
             validations__user=request.user).count()
         if user_audio_validation_count >= max_audio_validation_per_user:
             audios = Audio.objects.none()
@@ -240,7 +242,10 @@ class ValidateAudio(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         audio_id = request.data.get("id")
         status = request.data.get("status")
-        audio = Audio.objects.filter(id=audio_id).first()
+        audio = Audio.objects.filter(
+            id=audio_id,
+            deleted=False,
+        ).first()
         if audio:
             audio.validate(request.user, status)
         return Response({"message": "Image validated successfully"})

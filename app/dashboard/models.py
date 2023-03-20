@@ -239,7 +239,7 @@ class Participant(models.Model):
 
     def update_amount(self):
         participant_amount_per_audio = AppConfiguration.objects.first().participant_amount_per_audio
-        self.amount = self.audios.all().count() * participant_amount_per_audio
+        self.amount = self.audios.filter(deleted=False).count() * participant_amount_per_audio
         self.save()
 
     @staticmethod
@@ -279,6 +279,7 @@ class Audio(models.Model):
         Validation, related_name='audio_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     rejected = models.BooleanField(default=False)
+    deleted = models.BooleanField(default=False)
 
     class Meta:
         db_table = "audios"

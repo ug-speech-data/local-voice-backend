@@ -110,6 +110,7 @@ class GetAudiosToTranscribe(generics.GenericAPIView):
         audio = Audio.objects.filter(
             id__gt=offset,
             is_accepted=True,
+            deleted=False,
             locale=request.user.locale,
             transcription_count__lt=required_transcription_validation_count)\
                 .exclude(validations__user=request.user) \
@@ -412,24 +413,24 @@ class CollectedAudiosAPI(SimpleCrudMixin):
 
     def post(self, request, *args, **kwargs):
         object_id = request.data.pop("id") or -1
-        image_obj = self.model_class.objects.filter(id=object_id).first()
+        audio_obj = self.model_class.objects.filter(id=object_id, deleted=False).first()
 
-        if not image_obj:
+        if not audio_obj:
             return Response({"message": "Invalid image id"}, 400)
 
         for key, value in request.data.items():
-            if hasattr(image_obj, key):
-                setattr(image_obj, key, value)
+            if hasattr(audio_obj, key):
+                setattr(audio_obj, key, value)
 
-        if not image_obj.is_accepted:
-            image_obj.validations.clear()
-        image_obj.save()
+        if not audio_obj.is_accepted:
+            audio_obj.validations.clear()
+        audio_obj.save()
 
         return Response({
             "message":
             "Audio update successfully",
             self.response_data_label:
-            self.serializer_class(image_obj, context={
+            self.serializer_class(audio_obj, context={
                 "request": request
             }).data
         })
@@ -653,7 +654,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        audios = Audio.objects.all()
+        audios = Audio.objects.filter(deleted=False)
         images = Image.objects.filter(deleted=False)
         transcriptions = Transcription.objects.all()
         hours_in_seconds = 3600
