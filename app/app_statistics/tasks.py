@@ -15,12 +15,11 @@ from .models import Statistics
 logger = logging.getLogger("app")
 
 
-schedule, created = IntervalSchedule.objects.get_or_create(
+try:
+    schedule, created = IntervalSchedule.objects.get_or_create(
     every=1,
     period=IntervalSchedule.MINUTES,
-)
-
-try:
+    )
     PeriodicTask.objects.filter(name='Update Statistics').delete()
     res = PeriodicTask.objects.get_or_create(
         interval=schedule,                  # we created this above.
