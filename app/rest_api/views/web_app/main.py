@@ -1,10 +1,10 @@
 import logging
 
 from django.contrib.auth.models import Group, Permission
-from django.db import NotSupportedError
 from django.db.models import Q
 from rest_framework import generics, permissions
 from rest_framework.response import Response
+from app_statistics.models import Statistics
 
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
@@ -413,7 +413,8 @@ class CollectedAudiosAPI(SimpleCrudMixin):
 
     def post(self, request, *args, **kwargs):
         object_id = request.data.pop("id") or -1
-        audio_obj = self.model_class.objects.filter(id=object_id, deleted=False).first()
+        audio_obj = self.model_class.objects.filter(id=object_id,
+                                                    deleted=False).first()
 
         if not audio_obj:
             return Response({"message": "Invalid image id"}, 400)
@@ -653,57 +654,62 @@ class ExportAudioData(generics.GenericAPIView):
 class GetDashboardStatistics(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    def language_statistics_in_hours(self, lang):
+        stats = Statistics.objects.first()
+        #yapf: disable
+        return {
+            f"{lang}_audios_submitted_in_hours": getattr(stats, f"{lang}_audios_submitted_in_hours"),
+            f"{lang}_audios_single_validation_in_hours": getattr(stats, f"{lang}_audios_single_validation_in_hours"),
+            f"{lang}_audios_double_validation_in_hours": getattr(stats, f"{lang}_audios_double_validation_in_hours"),
+            f"{lang}_audios_validation_conflict_in_hours": getattr(stats, f"{lang}_audios_validation_conflict_in_hours"),
+            f"{lang}_audios_approved_in_hours": getattr(stats, f"{lang}_audios_approved_in_hours"),
+            f"{lang}_audios_transcribed_in_hours": getattr(stats, f"{lang}_audios_transcribed_in_hours"),
+        }
+
+    def language_statistics(self,lang):
+        stats = Statistics.objects.first()
+        #yapf: disable
+        return {
+            f"{lang}_audios_submitted": getattr(stats, f"{lang}_audios_submitted"),
+            f"{lang}_audios_single_validation": getattr(stats, f"{lang}_audios_single_validation"),
+            f"{lang}_audios_double_validation": getattr(stats, f"{lang}_audios_double_validation"),
+            f"{lang}_audios_validation_conflict": getattr(stats, f"{lang}_audios_validation_conflict"),
+            f"{lang}_audios_approved": getattr(stats, f"{lang}_audios_approved"),
+            f"{lang}_audios_transcribed": getattr(stats, f"{lang}_audios_transcribed"),
+        }
+
     def get(self, request, *args, **kwargs):
-        audios = Audio.objects.filter(deleted=False)
-        images = Image.objects.filter(deleted=False)
-        transcriptions = Transcription.objects.all()
-        hours_in_seconds = 3600
-
-        #disabled: yapf
-        audios_submitted = audios.count()
-        audios_approved = audios.filter(is_accepted=True).count()
-        audios_transcribed = transcriptions.count()
-
-        audios_hours_submitted = round(
-            sum([audio.get("duration")
-                 for audio in audios.values("duration")]) / hours_in_seconds,
-            2)
-
-        audios_hours_approved = round(
-            sum([
-                audio.get("duration")
-                for audio in audios.filter(is_accepted=True).values("duration")
-            ]) / hours_in_seconds, 2)
-
-        unique_transcriptions = transcriptions
-        try:
-            if unique_transcriptions.distinct("audio").exists():
-                unique_transcriptions = unique_transcriptions.distinct("audio")
-        except NotSupportedError as e:
-            logger.error(str(e))
-
-        audios_hours_transcribed = round(
-            sum([
-                transcription.audio.duration
-                for transcription in unique_transcriptions
-            ]) / hours_in_seconds, 2)
-
-        images_submitted = images.count()
-        images_approved = images.filter(is_accepted=True).count()
-
+        stats = Statistics.objects.first()
         return Response({
+            "updated_at":stats.updated_at.strftime("%Y-%m-%d %H:%M:%S"),
+
             "statistics": {
-                "audios_submitted": audios_submitted,
-                "audios_approved": audios_approved,
-                "audios_transcribed": audios_transcribed,
-                "audios_hours_submitted": audios_hours_submitted,
-                "audios_hours_approved": audios_hours_approved,
-                "audios_hours_transcribed": audios_hours_transcribed,
-                "images_submitted": images_submitted,
-                "images_approved": images_approved,
+                "audios_submitted": stats.audios_submitted,
+                "audios_approved": stats.audios_approved,
+                "audios_transcribed": stats.audios_transcribed,
+                "audios_hours_submitted": stats.audios_hours_submitted,
+                "audios_hours_approved": stats.audios_hours_approved,
+                "audios_hours_transcribed": stats.audios_hours_transcribed,
+                "images_submitted": stats.images_submitted,
+                "images_approved": stats.images_approved,
+            },
+
+            "language_statistics": {
+                "ewe": self.language_statistics("ewe"),
+                "akan": self.language_statistics("akan"),
+                "dagbani": self.language_statistics("dagbani"),
+                "dagaare": self.language_statistics("dagaare"),
+                "ikposo": self.language_statistics("ikposo"),
+            },
+
+            "language_statistics_in_hours": {
+                "ewe": self.language_statistics_in_hours("ewe"),
+                "akan": self.language_statistics_in_hours("akan"),
+                "dagbani": self.language_statistics_in_hours("dagbani"),
+                "dagaare": self.language_statistics_in_hours("dagaare"),
+                "ikposo": self.language_statistics_in_hours("ikposo"),
             }
         })
-
 
 class GetEnumerators(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]

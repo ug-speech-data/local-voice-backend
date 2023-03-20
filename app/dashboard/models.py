@@ -344,6 +344,7 @@ class Transcription(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_accepted = models.BooleanField(default=False, db_index=True)
     validation_count = models.IntegerField(default=0, db_index=True)
+    deleted = models.BooleanField(default=False)
 
     class Meta:
         db_table = "transcriptions"

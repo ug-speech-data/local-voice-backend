@@ -67,6 +67,8 @@ INSTALLED_APPS = [
     'dashboard.apps.DashboardConfig',
     'setup.apps.SetupConfig',
     'payments.apps.PaymentsConfig',
+    'app_statistics.apps.AppStatisticsConfig',
+    "django_celery_beat",
 ]
 
 # Allow CORS
@@ -190,6 +192,7 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_IMPORTS = [
     "payments.tasks",
+    "app_statistics.tasks",
 ]
 
 REDIS_HOST = os.environ.get(
