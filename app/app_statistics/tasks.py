@@ -31,7 +31,7 @@ except ProgrammingError:
 
 def language_statistics_in_hours(lang,locale):
     hours_in_seconds = 3600
-    decimal_places = 4
+    decimal_places = 2
     audios = Audio.objects.filter(deleted=False, locale=locale)
     transcriptions = Transcription.objects.filter(deleted=False, audio__locale=locale)
 
