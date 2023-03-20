@@ -1,13 +1,15 @@
-from .models import Statistics
 import logging
+
 from celery import shared_task
-
-from django.db.models import Q
-from django.db.models import Count
 from django.db import NotSupportedError
+from django.db.models import Count
+from django.db.utils import ProgrammingError
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
-from dashboard.models import Audio, Transcription, Image
-from django_celery_beat.models import PeriodicTask, IntervalSchedule
+from dashboard.models import Audio, Image, Transcription
+
+from .models import Statistics
+
 # yapf: disable
 
 logger = logging.getLogger("app")
@@ -18,12 +20,15 @@ schedule, created = IntervalSchedule.objects.get_or_create(
     period=IntervalSchedule.MINUTES,
 )
 
-PeriodicTask.objects.filter(name='Update Statistics').delete()
-res = PeriodicTask.objects.get_or_create(
-    interval=schedule,                  # we created this above.
-    name='Update Statistics',          # simply describes this periodic task.
-    task='app_statistics.tasks.update_statistics',  # name of task.
-)
+try:
+    PeriodicTask.objects.filter(name='Update Statistics').delete()
+    res = PeriodicTask.objects.get_or_create(
+        interval=schedule,                  # we created this above.
+        name='Update Statistics',          # simply describes this periodic task.
+        task='app_statistics.tasks.update_statistics',  # name of task.
+    )
+except ProgrammingError:
+    pass
 
 def language_statistics_in_hours(lang,locale):
     hours_in_seconds = 3600
