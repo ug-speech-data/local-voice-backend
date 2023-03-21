@@ -248,6 +248,7 @@ class ValidateAudio(generics.GenericAPIView):
             is_accepted=False,
             rejected=False,
             deleted=False,
+            validation_count__lt=2,
         ).first()
         if audio:
             audio.validate(request.user, status)
