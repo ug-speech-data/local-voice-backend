@@ -212,6 +212,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
             id__gt=offset,
             deleted=False,
            is_accepted=False,
+           rejected=False,
             validation_count__lt=required_audio_validation_count)\
                 .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user)) \
             .order_by("image", "id")
