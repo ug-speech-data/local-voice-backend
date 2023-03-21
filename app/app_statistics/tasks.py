@@ -6,7 +6,9 @@ from django.db.models import Count
 from django.db.utils import ProgrammingError
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
-from dashboard.models import Audio, Image, Transcription
+from dashboard.models import Audio, Image, Transcription, Participant
+from local_voice.utils.constants import ParticipantType
+from setup.models import AppConfiguration
 
 from .models import Statistics
 
@@ -22,12 +24,35 @@ try:
     )
     PeriodicTask.objects.filter(name='Update Statistics').delete()
     res = PeriodicTask.objects.get_or_create(
-        interval=schedule,                  # we created this above.
-        name='Update Statistics',          # simply describes this periodic task.
-        task='app_statistics.tasks.update_statistics',  # name of task.
+        interval=schedule,
+        name='Update Statistics',
+        task='app_statistics.tasks.update_statistics',
+    )
+
+    name = "delete_audios_with_zero_duration"
+    PeriodicTask.objects.filter(name=name).delete()
+    res = PeriodicTask.objects.get_or_create(
+        interval=schedule,
+        name=name,
+        task='app_statistics.tasks.delete_audios_with_zero_duration',
     )
 except ProgrammingError:
     pass
+
+@shared_task()
+def delete_audios_with_zero_duration():
+    configuration = AppConfiguration.objects.first()
+    audios = Audio.objects.filter(duration=0)
+    deleted = audios.delete()
+
+    # Update payment
+    if deleted:
+        for part in Participant.objects.filter(paid=False):
+            if part.type == ParticipantType.INDEPENDENT.value:
+                amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
+            elif part.type == ParticipantType.ASSISTED.value:
+                amount = configuration.participant_amount_per_audio if configuration else 0
+            part.update_amount(amount)
 
 def language_statistics_in_hours(lang,locale):
     hours_in_seconds = 3600

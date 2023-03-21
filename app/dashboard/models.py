@@ -11,7 +11,7 @@ from PIL import Image as PillowImage
 from PIL import UnidentifiedImageError
 
 from accounts.models import User
-from local_voice.utils.constants import TransactionDirection
+from local_voice.utils.constants import ParticipantType, TransactionDirection
 from payments.models import Transaction
 from setup.models import AppConfiguration
 
@@ -186,6 +186,10 @@ class Image(models.Model):
 
 
 class Participant(models.Model):
+    PARTICIPANT_TYPES = [
+        (ParticipantType.INDEPENDENT.value,ParticipantType.INDEPENDENT.value),
+        (ParticipantType.ASSISTED.value,ParticipantType.ASSISTED.value),
+    ]
     momo_number = models.CharField(
         max_length=255, db_index=True, blank=True, null=True)
     network = models.CharField(max_length=10, blank=True, null=True)
@@ -203,6 +207,7 @@ class Participant(models.Model):
         Transaction, related_name="participant", on_delete=models.SET_NULL, blank=True, null=True)
     accepted_privacy_policy = models.BooleanField(default=False)
     api_client = models.CharField(max_length=255, blank=True, null=True)
+    type = models.CharField(max_length=100, choices=PARTICIPANT_TYPES, default=ParticipantType.ASSISTED.value)
 
     class Meta:
         db_table = "participants"
@@ -237,8 +242,7 @@ class Participant(models.Model):
             else:
                 self.transaction.recheck_status()
 
-    def update_amount(self):
-        participant_amount_per_audio = AppConfiguration.objects.first().participant_amount_per_audio
+    def update_amount(self, participant_amount_per_audio):
         self.amount = self.audios.filter(deleted=False).count() * participant_amount_per_audio
         self.save()
 

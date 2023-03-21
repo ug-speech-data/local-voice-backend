@@ -24,3 +24,7 @@ class TransactionStatus(Enum):
     SUCCESS = "success"
     FAILED = "failed"
 
+
+class ParticipantType(Enum):
+    ASSISTED = "ASSISTED"
+    INDEPENDENT = "INDEPENDENT"

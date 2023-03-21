@@ -12,6 +12,7 @@ from rest_framework import serializers
 from accounts.models import User, Wallet
 from dashboard.models import (Audio, Category, Image, Notification,
                               Participant, Transcription, Validation)
+from local_voice.utils.constants import ParticipantType
 from payments.models import Transaction
 from setup.models import AppConfiguration
 
@@ -523,6 +524,8 @@ class AudioUploadSerializer(serializers.Serializer):
     participant_data = _ParticipantSerializer(required=False)
 
     def create(self, request):
+        configuration = AppConfiguration.objects.first()
+
         file = request.FILES.get("audio_file")
         api_client = request.data.get("api_client")
         audio_data = request.data.get("audio_data")
@@ -559,11 +562,32 @@ class AudioUploadSerializer(serializers.Serializer):
                     fullname=participant_data.get("fullname"),
                     gender=participant_data.get("gender"),
                     submitted_by=request.user,
+                    paid=False,
+                    transaction=None,
                     age=participant_data.get("age"),
                     accepted_privacy_policy=participant_data.get(
                         "acceptedPrivacyPolicy", False),
                     api_client=api_client,
                 )
+                amount = configuration.participant_amount_per_audio
+
+            else:
+                participant_object, created = Participant.objects.get_or_create(
+                    momo_number=request.user.phone,
+                    network=request.user.phone_network,
+                    fullname=request.user.fullname,
+                    gender=request.user.gender,
+                    submitted_by=request.user,
+                    paid=False,
+                    transaction=None,
+                    age=request.user.age,
+                    type=ParticipantType.INDEPENDENT.value,
+                    accepted_privacy_policy=request.user.
+                    accepted_privacy_policy,
+                    api_client=api_client,
+                )
+                amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
+
             if image_object and file and audio_data:
                 audio = Audio.objects.create(
                     image=image_object,
@@ -576,19 +600,7 @@ class AudioUploadSerializer(serializers.Serializer):
                     participant=participant_object,
                     api_client=api_client)
 
-                # Update user's wallet.
-                configuration = AppConfiguration.objects.first()
-                if not participant_object:
-                    # Audio was recording by the user themselves.
-                    amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
-                else:
-                    amount = configuration.audio_aggregators_amount_per_audio if configuration else 0
-
-                # Credit user(enumerators) account.
-                if audio.submitted_by.wallet:
-                    audio.submitted_by.wallet.credit_wallet(amount)
-
-                participant_object.update_amount()
+                participant_object.update_amount(amount)
 
         except Exception as e:
             logger.error(e)
