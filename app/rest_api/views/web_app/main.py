@@ -419,12 +419,14 @@ class CollectedAudiosAPI(SimpleCrudMixin):
         if not audio_obj:
             return Response({"message": "Invalid image id"}, 400)
 
-        for key, value in request.data.items():
-            if hasattr(audio_obj, key):
-                setattr(audio_obj, key, value)
+        status = request.data.get("status")
+        if status == "accept":
+            audio_obj.rejected = False
+            audio_obj.is_accepted = True
+        else:
+            audio_obj.rejected = True
+            audio_obj.is_accepted = False
 
-        if not audio_obj.is_accepted:
-            audio_obj.validations.clear()
         audio_obj.save()
 
         return Response({
@@ -716,10 +718,7 @@ class GetEnumerators(generics.GenericAPIView):
     serializer_class = EnumeratorSerialiser
 
     def get(self, request, *args, **kwargs):
-        configuration = AppConfiguration.objects.first()
-        enumerators_group = configuration.enumerators_group if configuration else None
-        users = enumerators_group.user_set.all().order_by(
-            "surname") if enumerators_group else User.objects.none()
-
+        perms = Permission.objects.filter(Q(codename="record_self") | Q(codename="record_others"))
+        users = User.objects.filter(Q(groups__permissions__in=perms) | Q(user_permissions__in=perms)).distinct()
         return Response(
             {"enumerators": self.serializer_class(users, many=True).data})

@@ -11,7 +11,7 @@ QUERY_PAGE_SIZE = 10
 class SimpleCrudMixin(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
-        filters = request.GET.get("filters")
+        filters = request.GET.getlist("filters")
         query = request.GET.get("query") or request.GET.get("q")
 
         objects = self.model_class.objects.all().order_by("-id")
