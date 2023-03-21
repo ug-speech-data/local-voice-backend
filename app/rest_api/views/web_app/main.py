@@ -720,5 +720,6 @@ class GetEnumerators(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         perms = Permission.objects.filter(Q(codename="record_self") | Q(codename="record_others"))
         users = User.objects.filter(Q(groups__permissions__in=perms) | Q(user_permissions__in=perms)).distinct()
+        users = users.order_by("surname")
         return Response(
             {"enumerators": self.serializer_class(users, many=True).data})
