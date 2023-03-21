@@ -249,7 +249,7 @@ class Participant(models.Model):
     @staticmethod
     def generate_query(query):
         queries = [Q(**{f"{key}__icontains": query})
-                   for key in ["momo_number", "fullname", "gender"]]
+                   for key in ["momo_number", "fullname", "gender", "type"]]
         return reduce(lambda x, y: x | y, queries)
 
     def save(self, *args, **kwargs):
