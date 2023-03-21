@@ -244,6 +244,8 @@ class ValidateAudio(generics.GenericAPIView):
         status = request.data.get("status")
         audio = Audio.objects.filter(
             id=audio_id,
+            is_accepted=False,
+            rejected=False,
             deleted=False,
         ).first()
         if audio:
