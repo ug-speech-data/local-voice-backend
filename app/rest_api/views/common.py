@@ -13,6 +13,9 @@ from rest_api.permissions import APILevelPermissionCheck
 from rest_api.serializers import (AudioSerializer, LoginSerializer,
                                   RegisterSerializer, UserSerializer)
 from setup.models import AppConfiguration
+import logging
+
+logger = logging.getLogger("app")
 
 
 class UserRegistrationAPI(generics.GenericAPIView):
@@ -147,6 +150,7 @@ class MyProfile(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         request_data = request.data.copy()
         password = request_data.pop("password", None)
+        old_password = request_data.pop("old_password", None)
         accepted_privacy_policy = request_data.get("accepted_privacy_policy")
         user = request.user
         try:
@@ -154,10 +158,14 @@ class MyProfile(generics.GenericAPIView):
                 if hasattr(user, key):
                     setattr(user, key, value)
             user.accepted_privacy_policy = accepted_privacy_policy == "true"
+            user.save()
 
             # Change password if password is available
             if password:
-                user.set_password(password)
+                if user.check_password(old_password):
+                    user.set_password(password)
+                else:
+                    return Response({"message": f"Invalid old password."})
             user.save()
 
             return Response({
@@ -167,8 +175,9 @@ class MyProfile(generics.GenericAPIView):
                 self.serializer_class(user).data,
             })
         except Exception as e:
-            return Response(
-                {
+            logger.error(str(e))
+
+            return Response({
                     "message":
                     f"{self.model_class.__name__} could not be saved",
                     "error_message": str(e),

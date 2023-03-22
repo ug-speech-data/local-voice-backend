@@ -24,11 +24,11 @@ from rest_api.tasks import export_audio_data
 from rest_api.views.mixins import SimpleCrudMixin
 from setup.models import AppConfiguration
 
-logger = logging.getLogger("app")
 from datetime import datetime
 
 from django.utils.timezone import make_aware
 
+logger = logging.getLogger("app")
 
 class GetImagesToValidate(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
