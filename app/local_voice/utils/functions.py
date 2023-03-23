@@ -72,7 +72,6 @@ def relevant_permission_objects():
             for _, model in apps.all_models[app].items()
         ]
     models = set(models)
-    print("models",models)
     for item in [
             "otp",
             "activitylog",
