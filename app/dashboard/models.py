@@ -263,13 +263,10 @@ class Participant(models.Model):
 
 
 class Audio(models.Model):
-    image = models.ForeignKey(Image, db_index=True,
-                              related_name="audios", on_delete=models.PROTECT)
+    image = models.ForeignKey(Image, db_index=True,related_name="audios", on_delete=models.PROTECT)
     file = models.FileField(upload_to='audios/')
-    submitted_by = models.ForeignKey(
-        User, related_name="audios", on_delete=models.PROTECT)
-    participant = models.ForeignKey(
-        Participant, related_name="audios", on_delete=models.SET_NULL, null=True, blank=True)
+    submitted_by = models.ForeignKey(User, related_name="audios", on_delete=models.PROTECT)
+    participant = models.ForeignKey(Participant, related_name="audios", on_delete=models.SET_NULL, null=True, blank=True)
     device_id = models.CharField(max_length=255, blank=True, null=True)
     validation_count = models.IntegerField(default=0, db_index=True)
     transcription_count = models.IntegerField(default=0)
@@ -279,11 +276,11 @@ class Audio(models.Model):
     duration = models.IntegerField(default=-1, blank=True, null=True)
     environment = models.CharField(max_length=255, blank=True, null=True)
     is_accepted = models.BooleanField(default=False, db_index=True)
-    validations = models.ManyToManyField(
-        Validation, related_name='audio_validations', blank=True)
+    validations = models.ManyToManyField(Validation, related_name='audio_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     rejected = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
+    conflict_resolved_by = models.ForeignKey(User, related_name="resolutions", on_delete=models.PROTECT, default=None, null=True, blank=True)
 
     class Meta:
         db_table = "audios"

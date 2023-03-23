@@ -426,6 +426,8 @@ class CollectedAudiosAPI(SimpleCrudMixin):
             audio_obj.rejected = True
             audio_obj.is_accepted = False
 
+        audio_obj.conflict_resolved_by = request.user
+
         audio_obj.save()
 
         return Response({
