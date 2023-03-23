@@ -30,6 +30,7 @@ from django.utils.timezone import make_aware
 
 logger = logging.getLogger("app")
 
+
 class GetImagesToValidate(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
     required_permissions = ["setup.validate_image"]
@@ -402,9 +403,9 @@ class CollectedImagesAPI(SimpleCrudMixin):
 
 class CollectedAudiosAPI(SimpleCrudMixin):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    add_permissions = ["dashboard.add_audio", "setup.manage_setup"]
-    change_permissions = ["dashboard.change_audio", "setup.manage_setup"]
-    delete_permissions = ["dashboard.delete_audio", "setup.manage_setup"]
+    add_permissions = ["dashboard.add_audio"]
+    change_permissions = ["dashboard.change_audio"]
+    delete_permissions = ["dashboard.delete_audio"]
 
     serializer_class = AudioSerializer
     model_class = Audio
