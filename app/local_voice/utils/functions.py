@@ -72,6 +72,7 @@ def relevant_permission_objects():
             for _, model in apps.all_models[app].items()
         ]
     models = set(models)
+    print("models",models)
     for item in [
             "otp",
             "activitylog",
@@ -88,6 +89,14 @@ def relevant_permission_objects():
             "notification",
             "transaction",
             "transcription",
+            "intervalschedule",
+            "periodictasks",
+            "solarschedule",
+            "statistics",
+            "crontabschedule",
+            "clockedschedule",
+            "periodictask",
+            "activitylog",
             "validation",
             "group",
             "appconfiguration",

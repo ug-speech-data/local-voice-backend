@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from accounts.forms import UserForm
 from accounts.models import User
 from dashboard.models import Audio
+from local_voice.utils.constants import ValidationStatus
 from local_voice.utils.functions import get_all_user_permissions
 from rest_api.permissions import APILevelPermissionCheck
 from rest_api.serializers import (AudioSerializer, LoginSerializer,
@@ -177,7 +178,8 @@ class MyProfile(generics.GenericAPIView):
         except Exception as e:
             logger.error(str(e))
 
-            return Response({
+            return Response(
+                {
                     "message":
                     f"{self.model_class.__name__} could not be saved",
                     "error_message": str(e),
@@ -222,9 +224,10 @@ class GetAudiosToValidate(generics.GenericAPIView):
             deleted=False,
            is_accepted=False,
            rejected=False,
+           audio_status = ValidationStatus.PENDING.value,
             validation_count__lt=required_audio_validation_count)\
                 .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user)) \
-            .order_by("image", "id")
+            .order_by("-validation_count", "image", "id")
 
         if not request.user.is_superuser:
             audios = audios.filter(locale=request.user.locale)
@@ -237,6 +240,9 @@ class GetAudiosToValidate(generics.GenericAPIView):
             audios = Audio.objects.none()
 
         audio = audios.first()
+        audio.audio_status = ValidationStatus.IN_REVIEW.value
+        audio.save()
+
         data = self.serializer_class(audio, context={
             "request": request
         }).data if audio else None
@@ -254,11 +260,10 @@ class ValidateAudio(generics.GenericAPIView):
         status = request.data.get("status")
         audio = Audio.objects.filter(
             id=audio_id,
-            is_accepted=False,
-            rejected=False,
-            deleted=False,
             validation_count__lt=2,
-        ).first()
+        ).exclude(
+            Q(audio_status=ValidationStatus.ACCEPTED.value)
+            | Q(audio_status=ValidationStatus.REJECTED.value)).first()
         if audio:
             audio.validate(request.user, status)
         return Response({"message": "Image validated successfully"})

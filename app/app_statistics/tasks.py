@@ -1,4 +1,5 @@
 import logging
+import datetime
 
 from celery import shared_task
 from django.db import NotSupportedError
@@ -7,7 +8,7 @@ from django.db.utils import ProgrammingError
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
 from dashboard.models import Audio, Image, Transcription, Participant
-from local_voice.utils.constants import ParticipantType
+from local_voice.utils.constants import ParticipantType, ValidationStatus
 from setup.models import AppConfiguration
 
 from .models import Statistics
@@ -18,11 +19,11 @@ logger = logging.getLogger("app")
 
 
 try:
+    PeriodicTask.objects.all().delete()
     schedule, created = IntervalSchedule.objects.get_or_create(
     every=1,
     period=IntervalSchedule.MINUTES,
     )
-    PeriodicTask.objects.filter(name='Update Statistics').delete()
     res = PeriodicTask.objects.get_or_create(
         interval=schedule,
         name='Update Statistics',
@@ -30,12 +31,18 @@ try:
     )
 
     name = "delete_audios_with_zero_duration"
-    PeriodicTask.objects.filter(name=name).delete()
     res = PeriodicTask.objects.get_or_create(
         interval=schedule,
         name=name,
         task='app_statistics.tasks.delete_audios_with_zero_duration',
     )
+
+    name = "release_audios_in_review_for_more_than_ten_minutes"
+    schedule, created = IntervalSchedule.objects.get_or_create(every=11,period=IntervalSchedule.MINUTES)
+    res = PeriodicTask.objects.get_or_create(
+        interval=schedule,
+        name=name,
+        task="app_statistics.tasks.release_audios_in_review_for_more_than_ten_minutes")
 except ProgrammingError:
     pass
 
@@ -174,3 +181,11 @@ def update_statistics():
         setattr(stats,f"{lang}_audios_approved_in_hours",language_stat_in_hours.get(f"{lang}_audios_approved_in_hours"))
         setattr(stats,f"{lang}_audios_transcribed_in_hours",language_stat_in_hours.get(f"{lang}_audios_transcribed_in_hours"))
     stats.save()
+
+
+@shared_task()
+def release_audios_in_review_for_more_than_ten_minutes():
+    updated_time = datetime.datetime.now() - datetime.timedelta(minutes=10)
+    orphan_objects = Audio.objects.filter(updated_at__lte=updated_time, audio_status=ValidationStatus.IN_REVIEW.value)
+    res = orphan_objects.update(audio_status=ValidationStatus.PENDING.value)
+    return f"Made {res} audios available"

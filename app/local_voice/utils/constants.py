@@ -28,3 +28,10 @@ class TransactionStatus(Enum):
 class ParticipantType(Enum):
     ASSISTED = "ASSISTED"
     INDEPENDENT = "INDEPENDENT"
+
+
+class ValidationStatus(Enum):
+    IN_REVIEW = "in_review"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    PENDING = "pending"

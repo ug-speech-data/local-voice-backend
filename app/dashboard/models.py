@@ -11,7 +11,7 @@ from PIL import Image as PillowImage
 from PIL import UnidentifiedImageError
 
 from accounts.models import User
-from local_voice.utils.constants import ParticipantType, TransactionDirection
+from local_voice.utils.constants import ParticipantType, TransactionDirection, ValidationStatus
 from payments.models import Transaction
 from setup.models import AppConfiguration
 
@@ -263,24 +263,33 @@ class Participant(models.Model):
 
 
 class Audio(models.Model):
+    AUDIO_STATUS_CHOICES = [
+        (ValidationStatus.IN_REVIEW.value,ValidationStatus.IN_REVIEW.value),
+        (ValidationStatus.ACCEPTED.value,ValidationStatus.ACCEPTED.value),
+        (ValidationStatus.REJECTED.value,ValidationStatus.REJECTED.value),
+        (ValidationStatus.PENDING.value,ValidationStatus.PENDING.value),
+    ]
+
     image = models.ForeignKey(Image, db_index=True,related_name="audios", on_delete=models.PROTECT)
     file = models.FileField(upload_to='audios/')
-    submitted_by = models.ForeignKey(User, related_name="audios", on_delete=models.PROTECT)
+    submitted_by = models.ForeignKey(User, related_name="audios", on_delete=models.PROTECT,db_index=True)
     participant = models.ForeignKey(Participant, related_name="audios", on_delete=models.SET_NULL, null=True, blank=True)
     device_id = models.CharField(max_length=255, blank=True, null=True)
     validation_count = models.IntegerField(default=0, db_index=True)
     transcription_count = models.IntegerField(default=0)
     year = models.IntegerField(blank=True, default=2023, null=True)
-    locale = models.CharField(max_length=255, blank=True, null=True)
+    locale = models.CharField(max_length=255, blank=True, null=True, db_index=True)
     api_client = models.CharField(max_length=255, blank=True, null=True)
     duration = models.IntegerField(default=-1, blank=True, null=True)
     environment = models.CharField(max_length=255, blank=True, null=True)
     is_accepted = models.BooleanField(default=False, db_index=True)
     validations = models.ManyToManyField(Validation, related_name='audio_validations', blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    rejected = models.BooleanField(default=False)
+    rejected = models.BooleanField(default=False, db_index=True)
     deleted = models.BooleanField(default=False)
-    conflict_resolved_by = models.ForeignKey(User, related_name="resolutions", on_delete=models.PROTECT, default=None, null=True, blank=True)
+    audio_status = models.TextField(choices=AUDIO_STATUS_CHOICES, default=ValidationStatus.PENDING.value, db_index=True)
+    conflict_resolved_by = models.ForeignKey(User, related_name="resolutions", on_delete=models.PROTECT, default=None, null=True, blank=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
         db_table = "audios"
@@ -319,10 +328,17 @@ class Audio(models.Model):
             is_valid=True).count() == self.validation_count
         self.is_accepted = is_accepted
 
+        # self.is_accepted and self.rejected will be removed in the future
         rejected = self.validation_count >= required_audio_validation_count and self.validations.filter(
             is_valid=False).count() == self.validation_count
         self.rejected = rejected
 
+        if is_accepted:
+            self.audio_status = ValidationStatus.ACCEPTED.value
+        elif rejected:
+            self.audio_status = ValidationStatus.REJECTED.value
+        else:
+            self.audio_status = ValidationStatus.PENDING.value
         self.save()
 
     def get_transcriptions(self):
