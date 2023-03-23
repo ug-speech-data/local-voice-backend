@@ -91,6 +91,7 @@ class ActivityLog(models.Model):
     username = models.CharField(max_length=100)
     action = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
+    duration_in_mills = models.IntegerField(default=0)
 
     def __str__(self) -> str:
-        return "%s %s" % (self.username, self.action)
+        return "%s %s [%sms]" % (self.username, self.action, self.duration_in_mills)

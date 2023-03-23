@@ -1,9 +1,12 @@
 import logging
 from importlib import import_module
+import time
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.core.cache import cache
+
+from accounts.models import ActivityLog
 
 logger = logging.getLogger("user_activity")
 
@@ -49,4 +52,32 @@ class AddPermissionToResponse(object):
         #     if settings.DEBUG and request.user.user_permissions.count() == 0:
         #         for perm in Permission.objects.all():
         #             request.user.user_permissions.add(perm)
+        return response
+
+
+class LogUserVisits(object):
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        """
+        Log the different pages visited by user.
+        """
+        start = time.time_ns()
+        response = self.get_response(request)
+
+        path = request.path
+        ignore = ["assets", "uploads", "static", "admin", "media"]
+        if not any(x in path.split("/") for x in ignore):
+            if not settings.DEBUG:
+                username = request.user.email_address if request.user.is_authenticated else "Anonymous"
+                action = "%s %s" % (request.method, path)
+
+                end = time.time_ns()
+                duration_in_mills = (end - start) // 1_000_000
+
+                ActivityLog.objects.create(username=username,
+                                           action=action,
+                                           duration_in_mills=duration_in_mills)
         return response

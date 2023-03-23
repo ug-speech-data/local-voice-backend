@@ -3,10 +3,11 @@ import os
 from django.contrib import admin
 from django.contrib.auth.models import Permission
 
-from accounts.models import User, Wallet
+from accounts.models import User, Wallet, ActivityLog
 
 admin.site.register(User)
 admin.site.register(Wallet)
+admin.site.register(ActivityLog)
 
 # Create default admin user
 SUPER_ADMIN_USERNAME = os.environ.get("SUPER_ADMIN_USERNAME",
