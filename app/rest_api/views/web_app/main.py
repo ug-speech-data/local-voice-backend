@@ -403,9 +403,7 @@ class CollectedImagesAPI(SimpleCrudMixin):
 
 class CollectedAudiosAPI(SimpleCrudMixin):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    add_permissions = ["dashboard.add_audio"]
-    change_permissions = ["dashboard.change_audio"]
-    delete_permissions = ["dashboard.delete_audio"]
+    required_permissions = ["setup.manage_collected_data"]
 
     serializer_class = AudioSerializer
     model_class = Audio
@@ -442,8 +440,7 @@ class CollectedAudiosAPI(SimpleCrudMixin):
 
 class CollectedTranscriptionsAPI(SimpleCrudMixin):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    change_permissions = ["dashboard.change_transcription"]
-    delete_permissions = ["dashboard.delete_transcription"]
+    required_permissions = ["setup.manage_collected_data"]
 
     serializer_class = TranscriptionSerializer
     model_class = Transcription
@@ -477,8 +474,7 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
 
 class CollectedParticipantsAPI(SimpleCrudMixin):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    change_permissions = ["dashboard.change_participant"]
-    delete_permissions = ["dashboard.delete_participant"]
+    required_permissions = ["setup.manage_collected_data"]
 
     serializer_class = ParticipantSerializer
     model_class = Participant
