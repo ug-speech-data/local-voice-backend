@@ -38,7 +38,7 @@ try:
     )
 
     name = "release_audios_in_review_for_more_than_ten_minutes"
-    schedule, created = IntervalSchedule.objects.get_or_create(every=11,period=IntervalSchedule.MINUTES)
+    schedule, created = IntervalSchedule.objects.get_or_create(every=6,period=IntervalSchedule.MINUTES)
     res = PeriodicTask.objects.get_or_create(
         interval=schedule,
         name=name,
@@ -185,7 +185,7 @@ def update_statistics():
 
 @shared_task()
 def release_audios_in_review_for_more_than_ten_minutes():
-    updated_time = datetime.datetime.now() - datetime.timedelta(minutes=10)
+    updated_time = datetime.datetime.now() - datetime.timedelta(minutes=5)
     orphan_objects = Audio.objects.filter(updated_at__lte=updated_time, audio_status=ValidationStatus.IN_REVIEW.value)
     res = orphan_objects.update(audio_status=ValidationStatus.PENDING.value)
     return f"Made {res} audios available"
