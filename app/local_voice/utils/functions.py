@@ -80,10 +80,8 @@ def relevant_permission_objects():
             "sysconfig",
             "configuration",
             "wallet",
-            "category",
             "audio",
             "image",
-            "group",
             "participant",
             "notification",
             "transaction",
@@ -97,7 +95,6 @@ def relevant_permission_objects():
             "periodictask",
             "activitylog",
             "validation",
-            "group",
             "appconfiguration",
     ]:
         if item in models:
