@@ -109,7 +109,6 @@ class GetAudiosToTranscribe(generics.GenericAPIView):
         offset = request.GET.get("offset", -1)
 
         audio = Audio.objects.filter(
-            id__gt=offset,
             is_accepted=True,
             deleted=False,
             locale=request.user.locale,
