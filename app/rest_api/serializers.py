@@ -32,6 +32,18 @@ class UserSerializer(serializers.ModelSerializer):
     audios_pending = serializers.SerializerMethodField()
     audios_accepted = serializers.SerializerMethodField()
     estimated_deduction_amount = serializers.SerializerMethodField()
+    created_by = serializers.SerializerMethodField()
+    updated_by = serializers.SerializerMethodField()
+
+    def get_updated_by(self, user):
+        if user.updated_by:
+            return user.updated_by.fullname
+        return None
+
+    def get_created_by(self, user):
+        if user.created_by:
+            return user.created_by.fullname
+        return None
 
     def get_audios_rejected(self, user):
         from dashboard.models import Audio

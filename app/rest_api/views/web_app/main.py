@@ -261,11 +261,14 @@ class UsersAPI(SimpleCrudMixin):
         group_names = request.data.get("groups")
         groups = Group.objects.filter(name__in=group_names)
         obj = None
+        created_by = None
         if obj_id:
             obj = self.model_class.objects.filter(id=obj_id).first()
             if is_active != None:
                 obj.is_active = is_active
                 obj.save()
+        else:
+            created_by = request.user
 
         form = self.form_class(request.data, instance=obj)
         if form.is_valid():
@@ -273,6 +276,9 @@ class UsersAPI(SimpleCrudMixin):
             if new_password and len(new_password) > 0:
                 user.set_password(new_password)
             user.groups.set(groups)
+            user.updated_by = request.user
+            if created_by:
+                user.created_by = created_by
             user.save()
 
             # Super users

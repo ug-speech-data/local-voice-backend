@@ -32,6 +32,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     assigned_image_batch = models.IntegerField(default=-1, blank=True, null=True)
     assigned_audio_batch = models.IntegerField(default=-1, blank=True, null=True)
     accepted_privacy_policy = models.BooleanField(default=False)
+    created_by = models.ForeignKey("User", related_name="created_users", on_delete=models.PROTECT, null=True, blank=True)
+    updated_by = models.ForeignKey("User", related_name="updated_users", on_delete=models.PROTECT, null=True, blank=True)
 
     # Django stuff for authentication
     USERNAME_FIELD = "email_address"
