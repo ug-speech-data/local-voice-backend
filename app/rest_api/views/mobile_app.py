@@ -5,8 +5,9 @@ from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from dashboard.models import Image
-from rest_api.serializers import (AudioUploadSerializer, ImageSerializer,
+from dashboard.models import Audio, Image
+from rest_api.serializers import (AudioSerializer, AudioUploadSerializer,
+                                  ImageSerializer,
                                   MobileAppConfigurationSerializer,
                                   ParticipantSerializer)
 from setup.models import AppConfiguration
@@ -75,6 +76,20 @@ class GetAssignedImagesAPI(generics.GenericAPIView):
         return Response({"images": data})
 
 
+class GetUploadedAudios(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AudioSerializer
+
+    def get(self, request, *args, **kwargs):
+        audios = Audio.objects.filter(submitted_by=request.user)
+        data = self.serializer_class(audios,
+                                     many=True,
+                                     context={
+                                         "request": request
+                                     }).data
+        return Response({"audios": data})
+
+
 class UploadAudioAPI(generics.GenericAPIView):
     """Upload audio file with the meta data.
     """
@@ -94,15 +109,21 @@ class UploadAudioAPI(generics.GenericAPIView):
 
         serializer = self.serializer_class(request.FILES, request_data)
         if serializer.is_valid():
-            saved, error = serializer.create(request)
-            logger.error(error)
+            saved, response = serializer.create(request)
             if saved:
                 return Response({
-                    "success": True,
-                    "message": "Audio uploaded successfully"
+                    "audio":
+                    AudioSerializer(response, context={
+                        "request": request
+                    }).data,
+                    "success":
+                    True,
+                    "message":
+                    "Audio uploaded successfully"
                 })
             else:
-                return Response({"success": False, "message": error}, 400)
+                logger.error(response)
+                return Response({"success": False, "message": response}, 400)
         else:
             error_messages = []
             for field, errors in serializer.errors.items():

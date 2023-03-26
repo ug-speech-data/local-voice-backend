@@ -49,6 +49,7 @@ urlpatterns += [
     path("dashboard-statistics/", views.GetDashboardStatistics.as_view()),
 
     path("get-enumerators/", views.GetEnumerators.as_view()),
+    path("get-uploaded-audios/", views.GetUploadedAudios.as_view()),
 ]
 
 

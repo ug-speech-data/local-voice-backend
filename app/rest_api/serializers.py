@@ -537,6 +537,7 @@ class AudioUploadSerializer(serializers.Serializer):
 
     def create(self, request):
         configuration = AppConfiguration.objects.first()
+        audio = None
 
         file = request.FILES.get("audio_file")
         api_client = request.data.get("api_client")
@@ -565,7 +566,7 @@ class AudioUploadSerializer(serializers.Serializer):
             for audio in Audio.objects.filter(deleted=False):
                 if audio.file.path == str(new_file_path):
                     logger.info("Audio already exists.")
-                    return True, "Audio already exists."
+                    return True, audio
         try:
             if participant_data:
                 participant_object, created = Participant.objects.get_or_create(
@@ -617,7 +618,7 @@ class AudioUploadSerializer(serializers.Serializer):
         except Exception as e:
             logger.error(e)
             return False, str(e)
-        return True, "Success"
+        return True, audio
 
 
 class EnumeratorSerialiser(serializers.ModelSerializer):
