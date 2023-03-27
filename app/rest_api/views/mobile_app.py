@@ -62,7 +62,7 @@ class GetAssignedImagesAPI(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         batch_number = request.user.assigned_image_batch
-        images = Image.objects.filter(is_accepted=True)
+        images = Image.objects.filter(is_accepted=True).order_by("?")
         if batch_number > 0:
             images = images.filter(batch_number=batch_number)
         elif batch_number != -2:
