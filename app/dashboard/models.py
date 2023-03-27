@@ -243,7 +243,7 @@ class Participant(models.Model):
                 self.transaction.recheck_status()
 
     def update_amount(self, participant_amount_per_audio):
-        self.amount = self.audios.filter(deleted=False).count() * participant_amount_per_audio
+        self.amount = self.audios.filter(deleted=False).values("image").distinct().count() * participant_amount_per_audio
         self.save()
 
     @staticmethod
