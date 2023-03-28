@@ -115,7 +115,8 @@ def convert_files_to_mp3():
         try:
             audio.file_mp3 = File(open(output_file, "rb"),
                                   output_file.split("/")[-1])
-            os.remove(output_file)
+            if os.path.isfile(output_file):
+                os.remove(output_file)
             audio.save()
         except Exception as e:
             logger.error(str(e))
