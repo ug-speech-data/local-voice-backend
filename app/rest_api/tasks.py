@@ -8,6 +8,7 @@ import pandas as pd
 from celery import shared_task
 from django.conf import settings
 from django.core.files import File
+from accounts.models import User
 
 from dashboard.models import Audio, Notification
 
@@ -120,3 +121,56 @@ def convert_files_to_mp3():
             audio.save()
         except Exception as e:
             logger.error(str(e))
+
+
+def get_audios_rejected(user):
+    from dashboard.models import Audio
+    return Audio.objects.filter(submitted_by=user,
+                                rejected=True,
+                                deleted=False,
+                                is_accepted=False).count()
+
+
+def get_audios_pending(user):
+    from dashboard.models import Audio
+    return Audio.objects.filter(submitted_by=user,
+                                rejected=False,
+                                deleted=False,
+                                is_accepted=False).count()
+
+
+def get_audios_accepted(user):
+    return Audio.objects.filter(submitted_by=user,
+                                rejected=False,
+                                deleted=False,
+                                is_accepted=True).count()
+
+
+def get_estimated_deduction_amount(user):
+    DEDUCTION_PER_REJECTED = 0.20
+    return get_audios_rejected(user) * DEDUCTION_PER_REJECTED
+
+
+def get_audios_submitted(user):
+    from dashboard.models import Audio
+    return Audio.objects.filter(deleted=False, submitted_by=user).count()
+
+
+def get_audios_validated(user):
+    from dashboard.models import Audio
+    return Audio.objects.filter(validations__user=user,
+                                deleted=False,
+                                validations__is_valid=True).count()
+
+
+@shared_task()
+def update_user_stats():
+    users = User.objects.all()
+    for user in users:
+        user.audios_rejected = get_audios_rejected(user)
+        user.audios_pending = get_audios_pending(user)
+        user.audios_accepted = get_audios_accepted(user)
+        user.audios_submitted = get_audios_submitted(user)
+        user.audios_validated = get_audios_validated(user)
+        user.estimated_deduction_amount = get_estimated_deduction_amount(user)
+        user.save()

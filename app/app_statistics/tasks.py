@@ -54,6 +54,14 @@ try:
         interval=schedule,
         name=name,
         task=f"rest_api.tasks.{name}")
+
+
+    name = "update_user_stats"
+    schedule, created = IntervalSchedule.objects.get_or_create(every=30,period=IntervalSchedule.MINUTES)
+    res = PeriodicTask.objects.get_or_create(
+        interval=schedule,
+        name=name,
+        task=f"rest_api.tasks.{name}")
 except ProgrammingError:
     pass
 

@@ -25,13 +25,6 @@ class UserSerializer(serializers.ModelSerializer):
     groups = serializers.SerializerMethodField()
     user_permissions = serializers.SerializerMethodField()
     balance = serializers.SerializerMethodField()
-    audios_submitted = serializers.SerializerMethodField()
-    audios_validated = serializers.SerializerMethodField()
-
-    audios_rejected = serializers.SerializerMethodField()
-    audios_pending = serializers.SerializerMethodField()
-    audios_accepted = serializers.SerializerMethodField()
-    estimated_deduction_amount = serializers.SerializerMethodField()
     created_by = serializers.SerializerMethodField()
     updated_by = serializers.SerializerMethodField()
 
@@ -45,44 +38,10 @@ class UserSerializer(serializers.ModelSerializer):
             return user.created_by.fullname
         return None
 
-    def get_audios_rejected(self, user):
-        from dashboard.models import Audio
-        return Audio.objects.filter(submitted_by=user,
-                                    rejected=True,
-                                    deleted=False,
-                                    is_accepted=False).count()
-
-    def get_audios_pending(self, user):
-        from dashboard.models import Audio
-        return Audio.objects.filter(submitted_by=user,
-                                    rejected=False,
-                                    deleted=False,
-                                    is_accepted=False).count()
-
-    def get_audios_accepted(self, user):
-        return Audio.objects.filter(submitted_by=user,
-                                    rejected=False,
-                                    deleted=False,
-                                    is_accepted=True).count()
-
-    def get_estimated_deduction_amount(self, user):
-        DEDUCTION_PER_REJECTED = 0.20
-        return self.get_audios_rejected(user) * DEDUCTION_PER_REJECTED
-
     def get_balance(self, user):
         if user.wallet:
             return str(user.wallet.balance)
         return 0
-
-    def get_audios_submitted(self, user):
-        from dashboard.models import Audio
-        return Audio.objects.filter(deleted=False, submitted_by=user).count()
-
-    def get_audios_validated(self, user):
-        from dashboard.models import Audio
-        return Audio.objects.filter(validations__user=user,
-                                    deleted=False,
-                                    validations__is_valid=True).count()
 
     def get_groups(self, obj):
         return obj.groups.values_list("name", flat=True)
