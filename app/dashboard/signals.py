@@ -179,13 +179,27 @@ def auto_delete_image_file_on_change(sender, instance, **kwargs):
 def auto_delete_audio_file_on_change(sender, instance, **kwargs):
     if not instance.pk:
         return False
+    old_file_wav = None
+    old_file_mp3 = None
+
     try:
-        old_file = Audio.objects.get(pk=instance.pk).file
+        old_file_wav = Audio.objects.get(pk=instance.pk).file
     except Audio.DoesNotExist:
-        return False
+        pass
+
+    try:
+        old_file_mp3 = Audio.objects.get(pk=instance.pk).file_mp3
+    except Audio.DoesNotExist:
+        pass
 
     # Delete old audio file
-    new_file = instance.file
-    if old_file != new_file and old_file:
-        if os.path.isfile(old_file.path):
-            os.remove(old_file.path)
+    new_file_wav = instance.file
+    new_file_mp3 = instance.file_mp3
+
+    if old_file_mp3 != new_file_mp3 and old_file_mp3:
+        if os.path.isfile(old_file_mp3.path):
+            os.remove(old_file_mp3.path)
+
+    if old_file_wav != new_file_wav and old_file_wav:
+        if os.path.isfile(old_file_wav.path):
+            os.remove(old_file_wav.path)

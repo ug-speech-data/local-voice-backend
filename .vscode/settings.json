@@ -3,4 +3,5 @@
         "waxal"
     ],
     "python.analysis.typeCheckingMode": "basic",
+    "python.formatting.provider": "yapf",
 }

@@ -21,7 +21,7 @@ logger = logging.getLogger("app")
 try:
     PeriodicTask.objects.all().delete()
     schedule, created = IntervalSchedule.objects.get_or_create(
-    every=1,
+    every=10,
     period=IntervalSchedule.MINUTES,
     )
     res = PeriodicTask.objects.get_or_create(
@@ -31,10 +31,14 @@ try:
     )
 
     name = "delete_audios_with_zero_duration"
+    schedule, created = IntervalSchedule.objects.get_or_create(
+            every=1,
+            period=IntervalSchedule.HOURS,
+    )
     res = PeriodicTask.objects.get_or_create(
         interval=schedule,
         name=name,
-        task='app_statistics.tasks.delete_audios_with_zero_duration',
+        task=f'app_statistics.tasks.{name}',
     )
 
     name = "release_audios_in_review_for_more_than_ten_minutes"
@@ -42,7 +46,14 @@ try:
     res = PeriodicTask.objects.get_or_create(
         interval=schedule,
         name=name,
-        task="app_statistics.tasks.release_audios_in_review_for_more_than_ten_minutes")
+        task=f"app_statistics.tasks.{name}")
+
+    name = "convert_files_to_mp3"
+    schedule, created = IntervalSchedule.objects.get_or_create(every=30,period=IntervalSchedule.MINUTES)
+    res = PeriodicTask.objects.get_or_create(
+        interval=schedule,
+        name=name,
+        task=f"rest_api.tasks.{name}")
 except ProgrammingError:
     pass
 
@@ -52,8 +63,8 @@ def delete_audios_with_zero_duration():
     audios = Audio.objects.filter(duration=0)
     deleted = audios.delete()
 
-    # Update payment
     if deleted:
+        # Update payment
         for part in Participant.objects.filter(paid=False):
             if part.type == ParticipantType.INDEPENDENT.value:
                 amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0

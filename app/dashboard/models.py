@@ -272,6 +272,7 @@ class Audio(models.Model):
 
     image = models.ForeignKey(Image, db_index=True,related_name="audios", on_delete=models.PROTECT)
     file = models.FileField(upload_to='audios/')
+    file_mp3 = models.FileField(upload_to='audios/', null=True, blank=True)
     submitted_by = models.ForeignKey(User, related_name="audios", on_delete=models.PROTECT,db_index=True)
     participant = models.ForeignKey(Participant, related_name="audios", on_delete=models.SET_NULL, null=True, blank=True)
     device_id = models.CharField(max_length=255, blank=True, null=True)

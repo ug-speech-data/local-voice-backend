@@ -1,12 +1,17 @@
 import os
+import logging
 import zipfile
 from datetime import datetime
+import ffmpeg
 
 import pandas as pd
 from celery import shared_task
 from django.conf import settings
+from django.core.files import File
 
 from dashboard.models import Audio, Notification
+
+logger = logging.getLogger("app")
 
 
 @shared_task()
@@ -43,7 +48,8 @@ def export_audio_data(user_id, data, base_url):
             continue
 
         # Copy audio and image files to temp directory
-        audio_filename = audio.file.name
+        audio_filename = audio.file_mp3.name if audio.file_mp3 else audio.file.name
+
         image_filename = audio.image.file.name
         new_image_filename = image_filename.split("/")[0] + "/" + str(
             audio.id).zfill(4) + "." + image_filename.split(".")[-1]
@@ -87,3 +93,29 @@ def export_audio_data(user_id, data, base_url):
         title="Data Exported",
         type="success",
         user_id=user_id)
+
+
+@shared_task()
+def convert_files_to_mp3():
+    audios = Audio.objects.filter(file_mp3=None).order_by("validation_count")
+    for audio in audios:
+        input_file = audio.file.path
+        if not input_file: continue
+        output_file = input_file.split(".wav")[0] + ".mp3"
+        if not output_file: continue
+        try:
+            stream = ffmpeg.input(input_file)
+            stream = ffmpeg.output(stream, output_file)
+            res = ffmpeg.run(stream, quiet=True, overwrite_output=True)
+        except Exception as e:
+            logger.error(str(e))
+            continue
+
+        # Update audio object
+        try:
+            audio.file_mp3 = File(open(output_file, "rb"),
+                                  output_file.split("/")[-1])
+            os.remove(output_file)
+            audio.save()
+        except Exception as e:
+            logger.error(str(e))
