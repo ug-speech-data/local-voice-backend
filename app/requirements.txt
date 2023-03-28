@@ -12,3 +12,4 @@ pandas>=1.5.2
 openpyxl>=3.0.10
 django-celery-beat==2.5.0
 ffmpeg-python>=0.2.0
+gevent>=22.10.2
