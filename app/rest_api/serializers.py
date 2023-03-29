@@ -306,6 +306,7 @@ class AudioSerializer(serializers.ModelSerializer):
     audio_url = serializers.SerializerMethodField()
     image_batch_number = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
+    participant_phone = serializers.SerializerMethodField()
 
     def get_created_at(self, obj):
         return obj.created_at.strftime("%Y-%m-%d %H:%M:%S")
@@ -351,6 +352,9 @@ class AudioSerializer(serializers.ModelSerializer):
                                     context={
                                         "request": request
                                     }).data
+
+    def get_participant_phone(self, obj):
+        return obj.participant.momo_number if obj.participant else self.submitted_by.phone
 
     class Meta:
         model = Audio
