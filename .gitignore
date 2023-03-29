@@ -148,3 +148,4 @@ init-letsencrypt.sh
 deploy.sh
 nginx
 scripts.py
+app_volume
