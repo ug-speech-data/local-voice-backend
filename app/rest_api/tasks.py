@@ -3,6 +3,7 @@ import logging
 import zipfile
 from datetime import datetime
 import ffmpeg
+from django.db.models import Q
 
 import pandas as pd
 from celery import shared_task
@@ -98,7 +99,8 @@ def export_audio_data(user_id, data, base_url):
 
 @shared_task()
 def convert_files_to_mp3():
-    audios = Audio.objects.filter(file_mp3=None).order_by("validation_count")
+    audios = Audio.objects.filter(Q(file_mp3=None) | Q(
+        file_mp3="")).order_by("validation_count")
     for audio in audios:
         input_file = audio.file.path
         if not input_file: continue
