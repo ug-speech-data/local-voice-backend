@@ -202,9 +202,7 @@ def get_audios_submitted(user):
 
 def get_audios_validated(user):
     from dashboard.models import Audio
-    return Audio.objects.filter(validations__user=user,
-                                deleted=False,
-                                validations__is_valid=True).count()
+    return Audio.objects.filter(validations__user=user).count()
 
 
 @shared_task()
