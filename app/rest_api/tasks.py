@@ -136,6 +136,37 @@ def convert_files_to_mp3(audio_status=None):
             logger.error(str(e))
 
 
+@shared_task()
+def convert_audio_file_to_mp3(audio_id):
+    audio = Audio.objects.filter(id=audio_id).first()
+    if audio and audio.file_mp3 and os.path.isfile(audio.file_mp3.path):
+        return
+
+    input_file = audio.file.path
+    if not input_file: return
+    output_file = input_file.split(".wav")[0] + ".mp3"
+    if not output_file: return
+    try:
+        stream = ffmpeg.input(input_file)
+        stream = ffmpeg.output(stream, output_file)
+        res = ffmpeg.run(stream, quiet=True, overwrite_output=True)
+    except Exception as e:
+        logger.error(str(e))
+        return
+
+    # Update audio object
+    try:
+        audio = Audio.objects.filter(id=audio_id).first()
+        if not audio: return
+        audio.file_mp3 = File(open(output_file, "rb"),
+                              output_file.split("/")[-1])
+        if os.path.isfile(output_file):
+            os.remove(output_file)
+        audio.save()
+    except Exception as e:
+        logger.error(str(e))
+
+
 def get_audios_rejected(user):
     from dashboard.models import Audio
     return Audio.objects.filter(submitted_by=user,

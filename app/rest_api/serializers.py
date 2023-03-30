@@ -10,6 +10,7 @@ from django.utils.timezone import make_aware
 from rest_framework import serializers
 
 from accounts.models import User, Wallet
+from rest_api.tasks import convert_audio_file_to_mp3
 from dashboard.models import (Audio, Category, Image, Notification,
                               Participant, Transcription, Validation)
 from local_voice.utils.constants import ParticipantType
@@ -577,6 +578,10 @@ class AudioUploadSerializer(serializers.Serializer):
                     environment=audio_data.get("environment"),
                     participant=participant_object,
                     api_client=api_client)
+
+                # Convert audio to mp3
+                if not audio.file_mp3:
+                    convert_audio_file_to_mp3.delay(audio.id)
 
                 participant_object.update_amount(amount)
 
