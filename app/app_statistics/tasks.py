@@ -49,7 +49,7 @@ try:
         task=f"app_statistics.tasks.{name}")
 
     name = "convert_files_to_mp3"
-    schedule, created = IntervalSchedule.objects.get_or_create(every=30,period=IntervalSchedule.MINUTES)
+    schedule, created = IntervalSchedule.objects.get_or_create(every=10,period=IntervalSchedule.MINUTES)
     res = PeriodicTask.objects.get_or_create(
         interval=schedule,
         name=name,
