@@ -354,7 +354,7 @@ class AudioSerializer(serializers.ModelSerializer):
                                     }).data
 
     def get_participant_phone(self, obj):
-        return self.submitted_by.phone
+        return obj.submitted_by.phone
 
     class Meta:
         model = Audio
