@@ -18,51 +18,51 @@ from .models import Statistics
 logger = logging.getLogger("app")
 
 
-try:
-    PeriodicTask.objects.all().delete()
-    schedule, created = IntervalSchedule.objects.get_or_create(
-    every=10,
-    period=IntervalSchedule.MINUTES,
-    )
-    res = PeriodicTask.objects.get_or_create(
-        interval=schedule,
-        name='Update Statistics',
-        task='app_statistics.tasks.update_statistics',
-    )
+# try:
+#     PeriodicTask.objects.all().delete()
+#     schedule, created = IntervalSchedule.objects.get_or_create(
+#     every=10,
+#     period=IntervalSchedule.MINUTES,
+#     )
+#     res = PeriodicTask.objects.get_or_create(
+#         interval=schedule,
+#         name='Update Statistics',
+#         task='app_statistics.tasks.update_statistics',
+#     )
 
-    name = "delete_audios_with_zero_duration"
-    schedule, created = IntervalSchedule.objects.get_or_create(
-            every=1,
-            period=IntervalSchedule.HOURS,
-    )
-    res = PeriodicTask.objects.get_or_create(
-        interval=schedule,
-        name=name,
-        task=f'app_statistics.tasks.{name}',
-    )
+#     name = "delete_audios_with_zero_duration"
+#     schedule, created = IntervalSchedule.objects.get_or_create(
+#             every=1,
+#             period=IntervalSchedule.HOURS,
+#     )
+#     res = PeriodicTask.objects.get_or_create(
+#         interval=schedule,
+#         name=name,
+#         task=f'app_statistics.tasks.{name}',
+#     )
 
-    name = "release_audios_in_review_for_more_than_ten_minutes"
-    schedule, created = IntervalSchedule.objects.get_or_create(every=6,period=IntervalSchedule.MINUTES)
-    res = PeriodicTask.objects.get_or_create(
-        interval=schedule,
-        name=name,
-        task=f"app_statistics.tasks.{name}")
+#     name = "release_audios_in_review_for_more_than_ten_minutes"
+#     schedule, created = IntervalSchedule.objects.get_or_create(every=6,period=IntervalSchedule.MINUTES)
+#     res = PeriodicTask.objects.get_or_create(
+#         interval=schedule,
+#         name=name,
+#         task=f"app_statistics.tasks.{name}")
 
-    name = "convert_files_to_mp3"
-    schedule, created = IntervalSchedule.objects.get_or_create(every=10,period=IntervalSchedule.MINUTES)
-    res = PeriodicTask.objects.get_or_create(
-        interval=schedule,
-        name=name,
-        task=f"rest_api.tasks.{name}")
+#     name = "convert_files_to_mp3"
+#     schedule, created = IntervalSchedule.objects.get_or_create(every=10,period=IntervalSchedule.MINUTES)
+#     res = PeriodicTask.objects.get_or_create(
+#         interval=schedule,
+#         name=name,
+#         task=f"rest_api.tasks.{name}")
 
-    name = "update_user_stats"
-    schedule, created = IntervalSchedule.objects.get_or_create(every=30,period=IntervalSchedule.MINUTES)
-    res = PeriodicTask.objects.get_or_create(
-        interval=schedule,
-        name=name,
-        task=f"rest_api.tasks.{name}")
-except ProgrammingError:
-    pass
+#     name = "update_user_stats"
+#     schedule, created = IntervalSchedule.objects.get_or_create(every=30,period=IntervalSchedule.MINUTES)
+#     res = PeriodicTask.objects.get_or_create(
+#         interval=schedule,
+#         name=name,
+#         task=f"rest_api.tasks.{name}")
+# except ProgrammingError:
+#     pass
 
 @shared_task()
 def delete_audios_with_zero_duration():
