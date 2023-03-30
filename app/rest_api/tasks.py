@@ -104,8 +104,13 @@ def convert_files_to_mp3(audio_status=None):
 
     if audio_status:
         audios = audios.filter(audio_status=audio_status)
+    audios = audios.values("id")
 
-    for audio in audios:
+    for item in audios:
+        audio = Audio.objects.filter(id=item["id"]).first()
+        if audio and audio.file_mp3 and os.path.isfile(audio.file_mp3.path):
+            continue
+
         input_file = audio.file.path
         if not input_file: continue
         output_file = input_file.split(".wav")[0] + ".mp3"
@@ -120,6 +125,8 @@ def convert_files_to_mp3(audio_status=None):
 
         # Update audio object
         try:
+            audio = Audio.objects.filter(id=item["id"]).first()
+            if not audio: continue
             audio.file_mp3 = File(open(output_file, "rb"),
                                   output_file.split("/")[-1])
             if os.path.isfile(output_file):
