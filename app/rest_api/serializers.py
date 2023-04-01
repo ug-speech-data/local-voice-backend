@@ -568,10 +568,15 @@ class AudioUploadSerializer(serializers.Serializer):
                 amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
 
             if image_object and file and audio_data:
+                file_mp3 = None
+                if (len(file.name.split(".mp3")) > 1):
+                    file_mp3 = file
+
                 audio = Audio.objects.create(
                     image=image_object,
                     submitted_by=request.user,
                     file=file,
+                    file_mp3=file_mp3,
                     duration=audio_data.get("duration"),
                     locale=request.user.locale,
                     device_id=audio_data.get("device_id"),
@@ -579,11 +584,11 @@ class AudioUploadSerializer(serializers.Serializer):
                     participant=participant_object,
                     api_client=api_client)
 
+                participant_object.update_amount(amount)
+
                 # Convert audio to mp3
                 if not audio.file_mp3:
                     convert_audio_file_to_mp3.delay(audio.id)
-
-                participant_object.update_amount(amount)
 
         except Exception as e:
             logger.error(e)

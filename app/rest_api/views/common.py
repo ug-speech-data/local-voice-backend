@@ -109,6 +109,20 @@ class UserLoginAPI(generics.GenericAPIView):
                 return Response(response_data, status=status.HTTP_200_OK)
 
         user = serializer.validated_data
+        device_id = request.data.get("device_id", "").upper()
+        device_ids = user.device_ids.split(",") if user.device_ids else []
+
+        # if device_ids and device_id and device_id not in device_ids:
+        #     return Response({
+        #         "error_message":
+        #         "Sorry, you cannot log in on a different device. Kindly login on your previous device.",
+        #         "user": None,
+        #         "token": None,
+        #     })
+        # else:
+        device_ids.append(device_id)
+        device_ids = set(device_ids)
+        user.device_ids = ",".join(device_ids)
         user.save()
         AuthToken.objects.filter(user=user).delete()
 

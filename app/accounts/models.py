@@ -40,6 +40,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     audios_pending = models.IntegerField(default=0)
     audios_accepted = models.IntegerField(default=0)
     estimated_deduction_amount = models.DecimalField(default=0, decimal_places=2, max_digits=20)
+    device_ids = models.CharField(max_length=200, null=True, blank=True)
 
     # Django stuff for authentication
     USERNAME_FIELD = "email_address"
