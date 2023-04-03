@@ -256,6 +256,7 @@ class UsersAPI(SimpleCrudMixin):
     def post(self, request, *args, **kwargs):
         is_active = request.data.get("is_active", None)
         obj_id = request.data.get("id")
+        lead_email_address = request.data.get("lead_email_address")
         new_password = request.data.get("password")
         group_names = request.data.get("groups")
         groups = Group.objects.filter(name__in=group_names)
@@ -269,6 +270,15 @@ class UsersAPI(SimpleCrudMixin):
         else:
             created_by = request.user
 
+        lead = User.objects.filter(email_address=lead_email_address).first()
+        if not lead:
+            return Response({
+                "message":
+                "Lead not found.",
+                "error_message":
+                f"Lead with email address {lead_email_address} not found.",
+            })
+
         form = self.form_class(request.data, instance=obj)
         if form.is_valid():
             user = form.save()
@@ -276,6 +286,7 @@ class UsersAPI(SimpleCrudMixin):
                 user.set_password(new_password)
             user.groups.set(groups)
             user.updated_by = request.user
+            user.lead = lead
             if created_by:
                 user.created_by = created_by
             user.save()

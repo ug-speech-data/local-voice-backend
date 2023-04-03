@@ -208,6 +208,7 @@ class Participant(models.Model):
     accepted_privacy_policy = models.BooleanField(default=False)
     api_client = models.CharField(max_length=255, blank=True, null=True)
     type = models.CharField(max_length=100, choices=PARTICIPANT_TYPES, default=ParticipantType.ASSISTED.value)
+    flatten = models.BooleanField(default=False)
 
     class Meta:
         db_table = "participants"
@@ -243,8 +244,9 @@ class Participant(models.Model):
                 self.transaction.recheck_status()
 
     def update_amount(self, participant_amount_per_audio):
-        self.amount = self.audios.filter(deleted=False).values("image").distinct().count() * participant_amount_per_audio
-        self.save()
+        if not self.flatten:
+            self.amount = self.audios.filter(deleted=False).values("image").distinct().count() * participant_amount_per_audio
+            self.save()
 
     @staticmethod
     def generate_query(query):

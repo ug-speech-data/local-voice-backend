@@ -28,6 +28,10 @@ class UserSerializer(serializers.ModelSerializer):
     balance = serializers.SerializerMethodField()
     created_by = serializers.SerializerMethodField()
     updated_by = serializers.SerializerMethodField()
+    lead_email_address = serializers.SerializerMethodField()
+
+    def get_lead_email_address(self, user):
+        return user.lead.email_address if user.lead else ""
 
     def get_updated_by(self, user):
         if user.updated_by:
