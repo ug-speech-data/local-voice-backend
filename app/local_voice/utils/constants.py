@@ -35,3 +35,10 @@ class ValidationStatus(Enum):
     ACCEPTED = "accepted"
     REJECTED = "rejected"
     PENDING = "pending"
+
+
+class TranscriptionStatus(Enum):
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    PENDING = "pending"
+    CONFLICT = "conflict"

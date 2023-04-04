@@ -11,7 +11,7 @@ from PIL import Image as PillowImage
 from PIL import UnidentifiedImageError
 
 from accounts.models import User
-from local_voice.utils.constants import ParticipantType, TransactionDirection, ValidationStatus
+from local_voice.utils.constants import ParticipantType, TransactionDirection, ValidationStatus, TranscriptionStatus
 from payments.models import Transaction
 from setup.models import AppConfiguration
 
@@ -354,17 +354,21 @@ class Audio(models.Model):
 
 
 class Transcription(models.Model):
-    audio = models.ForeignKey(
-        Audio, db_index=True, related_name="transcriptions", on_delete=models.PROTECT)
+    TRANSCRIPTION_STATUS_CHOICES = [
+        (TranscriptionStatus.ACCEPTED.value,TranscriptionStatus.ACCEPTED.value),
+        (TranscriptionStatus.REJECTED.value,TranscriptionStatus.REJECTED.value),
+        (TranscriptionStatus.PENDING.value,TranscriptionStatus.PENDING.value),
+        (TranscriptionStatus.CONFLICT.value,TranscriptionStatus.CONFLICT.value),
+    ]
+    audio = models.ForeignKey(Audio, db_index=True, related_name="transcriptions", on_delete=models.PROTECT)
     text = models.TextField()
-    user = models.ForeignKey(
-        User, db_index=True, related_name="transcriptions", on_delete=models.PROTECT)
-    validations = models.ManyToManyField(
-        Validation, related_name='transcription_validations', blank=True)
+    user = models.ForeignKey(User, db_index=True, related_name="transcriptions", on_delete=models.PROTECT)
+    validations = models.ManyToManyField(Validation, related_name='transcription_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_accepted = models.BooleanField(default=False, db_index=True)
     validation_count = models.IntegerField(default=0, db_index=True)
     deleted = models.BooleanField(default=False)
+    transcription_status = models.CharField(max_length=100, choices=TRANSCRIPTION_STATUS_CHOICES, default=ValidationStatus.PENDING.value, db_index=True)
 
     class Meta:
         db_table = "transcriptions"

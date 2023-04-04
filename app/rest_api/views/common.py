@@ -231,7 +231,6 @@ class GetAudiosToValidate(generics.GenericAPIView):
         configuration = AppConfiguration.objects.first()
         offset = request.GET.get("offset", -1)
         required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
-        max_audio_validation_per_user = configuration.max_audio_validation_per_user if configuration else 0
 
         audios = Audio.objects.filter(
             id__gt=offset,
@@ -246,16 +245,10 @@ class GetAudiosToValidate(generics.GenericAPIView):
         if not request.user.is_superuser:
             audios = audios.filter(locale=request.user.locale)
 
-        user_audio_validation_count = Audio.objects.filter(
-            validations__is_valid=True,
-            deleted=False,
-            validations__user=request.user).count()
-        if user_audio_validation_count >= max_audio_validation_per_user:
-            audios = Audio.objects.none()
-
         audio = audios.first()
-        audio.audio_status = ValidationStatus.IN_REVIEW.value
-        audio.save()
+        if audio:
+            audio.audio_status = ValidationStatus.IN_REVIEW.value
+            audio.save()
 
         data = self.serializer_class(audio, context={
             "request": request

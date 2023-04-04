@@ -92,7 +92,6 @@ class ValidateImage(generics.GenericAPIView):
         category_names = request.data.get("categories")
         image = Image.objects.filter(id=image_id, deleted=False).first()
         if image:
-            print("category_names", category_names)
             image.validate(request.user, status, category_names)
 
         return Response({"message": "Image validated successfully"})
@@ -113,8 +112,8 @@ class GetAudiosToTranscribe(generics.GenericAPIView):
             deleted=False,
             locale=request.user.locale,
             transcription_count__lt=required_transcription_validation_count)\
-                .exclude(validations__user=request.user) \
-            .order_by("id")\
+            .exclude(transcriptions__user=request.user)\
+            .order_by("?")\
                 .first()
 
         data = self.serializer_class(audio, context={
@@ -132,7 +131,7 @@ class GetTranscriptionToValidate(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         configuration = AppConfiguration.objects.first()
-        required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else None
+        required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 2
         offset = request.GET.get("offset", -1)
 
 
@@ -159,12 +158,25 @@ class SubmitTranscription(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         audio_id = request.data.get("id")
-        text = request.data.get("text")
-        transcription, _ = Transcription.objects.get_or_create(
-            audio_id=audio_id, user=request.user)
-        transcription.text = text
-        transcription.save()
-        return Response({"message": "Image validated successfully"})
+        configuration = AppConfiguration.objects.first()
+        required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 2
+
+        audio = Audio.objects.filter(
+            id=audio_id,
+            transcription_count__lt=required_transcription_validation_count)\
+            .exclude(transcriptions__user=request.user)\
+                .first()
+        if audio:
+            text = request.data.get("text")
+            transcription, _ = Transcription.objects.get_or_create(
+                audio=audio, user=request.user)
+            transcription.text = text
+            transcription.save()
+        else:
+            logger.info("Audio is not available for transciption.")
+            return Response(
+                {"message": "Audio no longer available for transcription."})
+        return Response({"message": "Transcription saved."})
 
 
 class ValidateTranscription(generics.GenericAPIView):
