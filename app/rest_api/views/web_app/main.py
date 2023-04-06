@@ -303,15 +303,6 @@ class UsersAPI(SimpleCrudMixin):
                 user.created_by = created_by
             user.save()
 
-            # Super users
-            group = Group.objects.filter(
-                Q(name__icontains="super user")
-                | Q(name__icontains="super admins")
-                | Q(name__icontains="super admin")).first()
-            if group:
-                User.objects.update(is_superuser=False)
-                group.user_set.update(is_superuser=True)
-
             return Response({
                 "message":
                 f"{self.model_class.__name__} saved successfully",

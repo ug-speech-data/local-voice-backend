@@ -54,6 +54,7 @@ class TransactionHistory(SimpleCrudMixin):
 
 
 class TransactionStatusCheck(generics.GenericAPIView):
+    required_permissions = ["setup.manage_payment"]
 
     def post(self, request, *args, **kwargs):
         ids = request.data.get("ids")
@@ -150,6 +151,7 @@ class PayUsersBalance(generics.GenericAPIView):
 
 
 class GetPayHubBalance(generics.GenericAPIView):
+    required_permissions = ["setup.manage_payment"]
 
     def get(self, request, *args, **kwargs):
         balance = "--"

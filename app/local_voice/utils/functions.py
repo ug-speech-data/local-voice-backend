@@ -102,5 +102,6 @@ def relevant_permission_objects():
 
     permissions = Permission.objects.filter(
         content_type__app_label__in=apps_list,
-        content_type__model__in=models).order_by("name")
+        content_type__model__in=models).exclude(codename="manage_payment")\
+    .order_by("name")
     return permissions

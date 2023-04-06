@@ -17,8 +17,6 @@ class ParticipantsBulkAction(generics.GenericAPIView):
         ids = request.data.get("ids") or []
         action = request.data.get("action")
 
-        print("ids",ids)
-
         participants = Participant.objects.filter(id__in=ids)
 
         if action == "pay":
@@ -41,7 +39,7 @@ class ParticipantsBulkAction(generics.GenericAPIView):
 
 class ImagesBulkAction(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    required_permissions = ["setup.manage_payment"]
+    required_permissions = []
 
     def post(self, request, *args, **kwargs):
         ids = request.data.get("ids") or []
@@ -92,7 +90,7 @@ class AudiosBulkAction(generics.GenericAPIView):
 
 class TranscriptionsBulkAction(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    required_permissions = ["setup.manage_payment"]
+    required_permissions = []
 
     def post(self, request, *args, **kwargs):
         ids = request.data.get("ids") or []
