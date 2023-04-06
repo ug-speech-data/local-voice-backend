@@ -741,6 +741,6 @@ class GetEnumerators(generics.GenericAPIView):
     serializer_class = EnumeratorSerialiser
 
     def get(self, request, *args, **kwargs):
-        users = User.objects.filter(Q(lead=request.user)|Q(lead=None)).exclude(audios=None).order_by("surname")
+        users = User.objects.filter(Q(lead=request.user)).order_by("surname")
         return Response(
             {"enumerators": self.serializer_class(users, many=True).data})
