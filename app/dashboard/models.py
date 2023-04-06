@@ -293,6 +293,7 @@ class Audio(models.Model):
     conflict_resolved_by = models.ForeignKey(User, related_name="resolutions", on_delete=models.PROTECT, default=None, null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
+    checked_in_for_transcription = models.BooleanField(default=False, db_index=True)
 
     class Meta:
         db_table = "audios"
