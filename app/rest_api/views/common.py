@@ -233,14 +233,13 @@ class GetAudiosToValidate(generics.GenericAPIView):
         required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
 
         audios = Audio.objects.filter(
-            id__gt=offset,
             deleted=False,
            is_accepted=False,
            rejected=False,
            audio_status = ValidationStatus.PENDING.value,
             validation_count__lt=required_audio_validation_count)\
-                .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user)) \
-            .order_by("-validation_count", "image", "id")
+                .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user) | Q(id=offset)) \
+            .order_by("-validation_count", "image", "?")
 
         if not request.user.is_superuser:
             audios = audios.filter(locale=request.user.locale)
