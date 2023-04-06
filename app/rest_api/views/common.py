@@ -272,4 +272,4 @@ class ValidateAudio(generics.GenericAPIView):
             | Q(audio_status=ValidationStatus.REJECTED.value)).first()
         if audio:
             audio.validate(request.user, status)
-        return Response({"message": "Image validated successfully"})
+        return Response({"message": "Validation recorded."})
