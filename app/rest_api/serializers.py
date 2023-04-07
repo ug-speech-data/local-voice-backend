@@ -300,11 +300,11 @@ class ParticipantSerializer(serializers.ModelSerializer):
         return obj.audios.filter(deleted=False).count()
 
     def get_audios_validated(self, obj):
-        audios = self.get_audio_count(obj) or 1
+        audios = min(self.get_audio_count(obj), 1)
         return round(
-            obj.audios.annotate(c=Count("validations")).filter(
-                Q(rejected=True) | Q(c__gt=1)
-                | Q(is_accepted=True)).count() / audios * 100, 2)
+            obj.audios.filter(deleted=False).filter(
+                Q(rejected=True) | Q(is_accepted=True)).count() / audios * 100,
+            2)
 
     class Meta:
         model = Participant
