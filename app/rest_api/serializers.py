@@ -2,7 +2,8 @@ import json
 import logging
 import os
 from datetime import datetime
-
+from django.db.models import Count
+from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
@@ -284,6 +285,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
     transaction = TransactionSerializer(read_only=True)
     submitted_by = serializers.SerializerMethodField()
     audio_count = serializers.SerializerMethodField()
+    audios_validated = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
 
     def get_created_at(self, obj):
@@ -296,6 +298,13 @@ class ParticipantSerializer(serializers.ModelSerializer):
 
     def get_audio_count(self, obj):
         return obj.audios.filter(deleted=False).count()
+
+    def get_audios_validated(self, obj):
+        audios = self.get_audio_count(obj) or 1
+        return round(
+            obj.audios.annotate(c=Count("validations")).filter(
+                Q(rejected=True) | Q(c__gt=1)
+                | Q(is_accepted=True)).count() / audios * 100, 2)
 
     class Meta:
         model = Participant
