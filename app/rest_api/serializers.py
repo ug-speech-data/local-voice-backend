@@ -330,10 +330,14 @@ class AudioSerializer(serializers.ModelSerializer):
 
     def get_audio_url(self, obj):
         request = self.context.get("request")
-        if obj.file_mp3 and os.path.isfile(obj.file_mp3.path):
-            return request.build_absolute_uri(obj.file_mp3.url)
-        else:
+        # if obj.file_mp3 and os.path.isfile(obj.file_mp3.path):
+        #     return request.build_absolute_uri(obj.file_mp3.url)
+        # else:
+        #     return request.build_absolute_uri(obj.file.url)
+        if obj.file:
             return request.build_absolute_uri(obj.file.url)
+        elif obj.file_mp3:
+            return request.build_absolute_uri(obj.file_mp3.url)
         return ""
 
     def get_submitted_by(self, obj):
