@@ -300,7 +300,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
         return obj.audios.filter(deleted=False).count()
 
     def get_audios_validated(self, obj):
-        audios = min(self.get_audio_count(obj), 1)
+        audios = max(self.get_audio_count(obj), 1)
         return round(
             obj.audios.filter(deleted=False).filter(
                 Q(rejected=True) | Q(is_accepted=True)).count() / audios * 100,
