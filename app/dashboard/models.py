@@ -306,6 +306,10 @@ class Audio(models.Model):
             self.validation_count = self.validations.all().count()
             self.transcription_count = self.transcriptions.filter().count()
             self.year = datetime.now().year
+        if self.is_accepted:
+            self.audio_status = ValidationStatus.ACCEPTED.value
+        elif self.rejected:
+            self.audio_status = ValidationStatus.REJECTED.value
         return super().save(*args, **kwargs)
 
     @staticmethod

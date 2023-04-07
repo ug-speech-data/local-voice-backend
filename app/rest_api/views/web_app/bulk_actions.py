@@ -2,6 +2,7 @@ import logging
 
 from rest_framework import generics, permissions
 from rest_framework.response import Response
+from local_voice.utils.constants import ValidationStatus
 
 from dashboard.models import Audio, Image, Participant, Transcription
 from rest_api.permissions import APILevelPermissionCheck
@@ -73,13 +74,19 @@ class AudiosBulkAction(generics.GenericAPIView):
         audios = Audio.objects.filter(id__in=ids)
 
         if action == "approve":
+            # Will remove the boolean fields
             audios.update(is_accepted=True)
             audios.update(rejected=False)
+
+            audios.update(audio_status=ValidationStatus.ACCEPTED.value)
             return Response({"message": f"Approved {audios.count()} audios."})
 
         if action == "reject":
+            # Will remove the boolean fields
             audios.update(is_accepted=False)
             audios.update(rejected=True)
+
+            audios.update(audio_status=ValidationStatus.REJECTED.value)
             return Response({"message": f"Rejected {audios.count()} audios."})
 
         if action == "delete":
