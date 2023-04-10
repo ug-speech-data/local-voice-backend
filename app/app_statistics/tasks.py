@@ -188,6 +188,7 @@ def validate_audio_transcriptions():
                 audio.save()
                 break
             transcritions.add(text)
-        audio.transcription_status = TranscriptionStatus.ACCEPTED.value
-        audio.save()
-        
+        else:
+            audio.transcription_status = TranscriptionStatus.ACCEPTED.value
+            audio.save()
+            
