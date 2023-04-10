@@ -342,6 +342,53 @@ class ParticipantSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class AudioTranscriptionSerializer(serializers.ModelSerializer):
+    transcriptions = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
+    thumbnail = serializers.SerializerMethodField()
+    audio_url = serializers.SerializerMethodField()
+
+    def get_transcriptions(self, audio):
+        transcriptions = []
+        for transcription in audio.transcriptions.all().values("text"):
+            transcriptions.append(transcription.get("text"))
+        return transcriptions
+
+    def get_audio_url(self, obj):
+        request = self.context.get("request")
+        # if obj.file_mp3 and os.path.isfile(obj.file_mp3.path):
+        #     return request.build_absolute_uri(obj.file_mp3.url)
+        # else:
+        #     return request.build_absolute_uri(obj.file.url)
+        if obj.file:
+            return request.build_absolute_uri(obj.file.url)
+        elif obj.file_mp3:
+            return request.build_absolute_uri(obj.file_mp3.url)
+        return ""
+
+    def get_thumbnail(self, obj):
+        request = self.context.get("request")
+        if obj.image.thumbnail:
+            return request.build_absolute_uri(obj.image.thumbnail.url)
+        return self.get_image_url(obj)
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.image.file:
+            return request.build_absolute_uri(obj.image.file.url)
+        return ""
+
+    class Meta:
+        model = Audio
+        fields = [
+            "transcriptions",
+            "locale",
+            "audio_url",
+            "image_url",
+            "thumbnail",
+        ]
+
+
 class AudioSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
     validations = serializers.SerializerMethodField()

@@ -19,6 +19,7 @@ from rest_api.serializers import (AppConfigurationSerializer, AudioSerializer,
                                   GroupPermissionSerializer, GroupSerializer,
                                   ImageSerializer, NotificationSerializer,
                                   ParticipantSerializer, LimitedUserSerializer,
+                                  AudioTranscriptionSerializer,
                                   TranscriptionSerializer, UserSerializer)
 from rest_api.tasks import export_audio_data
 from rest_api.views.mixins import SimpleCrudMixin
@@ -462,10 +463,13 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
     required_permissions = ["setup.manage_collected_data"]
 
-    serializer_class = TranscriptionSerializer
-    model_class = Transcription
-    response_data_label = "transcription"
-    response_data_label_plural = "transcriptions"
+    serializer_class = AudioTranscriptionSerializer
+    model_class = Audio
+    response_data_label = "audios"
+    response_data_label_plural = "audios"
+
+    def modify_response_data(self, objects):
+        return objects.filter(transcription_count__gt=0)
 
     def post(self, request, *args, **kwargs):
         object_id = request.data.pop("id") or -1
