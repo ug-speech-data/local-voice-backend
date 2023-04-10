@@ -402,6 +402,11 @@ class Transcription(models.Model):
         return reduce(lambda x, y: x | y, queries)
 
     def save(self, *args, **kwargs) -> None:
+        self.text = " ".join(self.text.replace("\r", "").replace("\n", "").split())
+        
+        if self.corrected_text:
+            self.corrected_text = " ".join(self.corrected_text.replace("\r", "").replace("\n", "").split())
+
         if self.pk is not None:
             self.validation_count = self.validations.all().count()
         return super().save(*args, **kwargs)
