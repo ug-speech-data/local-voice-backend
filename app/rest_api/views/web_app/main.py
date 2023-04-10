@@ -485,16 +485,18 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
     def post(self, request, *args, **kwargs):
         object_id = request.data.get("id") or -1
         corrected_text = request.data.get("text")
+        transcription_status = request.data.get("transcription_status")
         audio = self.model_class.objects.filter(id=object_id).first()
 
         if not audio:
             return Response({"message": "Invalid id"}, 400)
 
         ## Update
-        transcriptions = audio.transcriptions.all()
-        transcriptions.update(corrected_text=corrected_text)
+        if transcription_status:
+            transcriptions = audio.transcriptions.all()
+            transcriptions.update(corrected_text=corrected_text)
 
-        audio.transcription_status = TranscriptionStatus.ACCEPTED.value
+        audio.transcription_status = transcription_status
         audio.save()
 
         return Response({

@@ -149,7 +149,7 @@ def convert_audio_file_to_mp3(audio_id):
     try:
         stream = ffmpeg.input(input_file)
         stream = ffmpeg.output(stream, output_file)
-        res = ffmpeg.run(stream, quiet=True, overwrite_output=True)
+        res = ffmpeg.run(stream, overwrite_output=True)
     except Exception as e:
         logger.error(str(e))
         return
