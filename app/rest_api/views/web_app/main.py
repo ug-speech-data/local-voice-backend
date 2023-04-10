@@ -492,9 +492,11 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
             return Response({"message": "Invalid id"}, 400)
 
         ## Update
-        if transcription_status:
+        if transcription_status and corrected_text:
+            corrected_text = " ".join(corrected_text.replace("\r", "").replace("\n", "").split())
             transcriptions = audio.transcriptions.all()
-            transcriptions.update(corrected_text=corrected_text)
+            transcriptions.update(corrected_text=corrected_text,
+                                  conflict_resolved_by=request.user)
 
         audio.transcription_status = transcription_status
         audio.save()

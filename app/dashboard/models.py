@@ -387,6 +387,7 @@ class Transcription(models.Model):
     is_accepted = models.BooleanField(default=False, db_index=True)
     validation_count = models.IntegerField(default=0, db_index=True)
     deleted = models.BooleanField(default=False)
+    conflict_resolved_by = models.ForeignKey(User, related_name="transcription_resolutions", on_delete=models.PROTECT, default=None, null=True, blank=True, db_index=True)
     transcription_status = models.CharField(max_length=100, choices=TRANSCRIPTION_STATUS_CHOICES, default=ValidationStatus.PENDING.value, db_index=True)
 
     class Meta:
@@ -403,7 +404,7 @@ class Transcription(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         self.text = " ".join(self.text.replace("\r", "").replace("\n", "").split())
-        
+
         if self.corrected_text:
             self.corrected_text = " ".join(self.corrected_text.replace("\r", "").replace("\n", "").split())
 
