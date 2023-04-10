@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group, Permission
 from django.db.models import Q
 from rest_framework import generics, permissions
 from rest_framework.response import Response
+from django.db.models import Count
 
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
@@ -469,7 +470,8 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
     response_data_label_plural = "audios"
 
     def modify_response_data(self, objects):
-        return objects.filter(transcription_count__gt=0)
+        return objects.annotate(t_count=Count("transcriptions")).filter(
+            t_count__gt=0)
 
     def post(self, request, *args, **kwargs):
         object_id = request.data.pop("id") or -1
