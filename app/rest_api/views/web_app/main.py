@@ -8,6 +8,8 @@ from django.db.models import Count
 
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
+from local_voice.utils.constants import TranscriptionStatus
+from local_voice.utils.constants import ValidationStatus
 from app_statistics.models import Statistics
 from dashboard.forms import CategoryForm
 from dashboard.models import (Audio, Category, Image, Notification,
@@ -106,16 +108,21 @@ class GetAudiosToTranscribe(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         configuration = AppConfiguration.objects.first()
-        required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 0
+        required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 2
         offset = request.GET.get("offset", -1)
 
-        audio = Audio.objects.filter(
+        audio = Audio.objects.annotate(t_count=Count("transcriptions")).filter(
             checked_in_for_transcription=True,
-            locale=request.user.locale,
-            transcription_count__lt=required_transcription_validation_count)\
-            .exclude(transcriptions__user=request.user)\
-            .order_by("?")\
+            transcription_status=ValidationStatus.PENDING.value,
+            locale=request.user.locale)\
+            .filter(t_count__lt=required_transcription_validation_count)\
+            .exclude(Q(transcriptions__user=request.user) | Q(id=offset))\
+            .order_by("-t_count", "?")\
                 .first()
+
+        if audio:
+            audio.transcription_status = ValidationStatus.IN_REVIEW.value
+            audio.save()
 
         data = self.serializer_class(audio, context={
             "request": request
@@ -173,6 +180,8 @@ class SubmitTranscription(generics.GenericAPIView):
                 audio=audio, user=request.user)
             transcription.text = text
             transcription.save()
+            audio.transcription_status = TranscriptionStatus.PENDING.value
+            audio.save()
         else:
             logger.info("Audio is not available for transciption.")
             return Response(
@@ -474,25 +483,25 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
             t_count__gt=0)
 
     def post(self, request, *args, **kwargs):
-        object_id = request.data.pop("id") or -1
-        selected_obj = self.model_class.objects.filter(id=object_id).first()
+        object_id = request.data.get("id") or -1
+        corrected_text = request.data.get("text")
+        audio = self.model_class.objects.filter(id=object_id).first()
 
-        if not selected_obj:
+        if not audio:
             return Response({"message": "Invalid id"}, 400)
 
-        for key, value in request.data.items():
-            if hasattr(selected_obj, key):
-                setattr(selected_obj, key, value)
+        ## Update
+        transcriptions = audio.transcriptions.all()
+        transcriptions.update(corrected_text=corrected_text)
 
-        if not selected_obj.is_accepted:
-            selected_obj.validations.clear()
-        selected_obj.save()
+        audio.transcription_status = TranscriptionStatus.ACCEPTED.value
+        audio.save()
 
         return Response({
             "message":
             "Transcription update successfully",
             self.response_data_label:
-            self.serializer_class(selected_obj, context={
+            self.serializer_class(audio, context={
                 "request": request
             }).data
         })

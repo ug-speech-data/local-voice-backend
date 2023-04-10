@@ -42,3 +42,4 @@ class TranscriptionStatus(Enum):
     REJECTED = "rejected"
     PENDING = "pending"
     CONFLICT = "conflict"
+    IN_REVIEW = "in_review"

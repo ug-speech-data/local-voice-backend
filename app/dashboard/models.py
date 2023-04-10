@@ -1,6 +1,7 @@
 from datetime import datetime
 from functools import reduce
 from io import BytesIO
+import os
 
 import requests
 from django.core.files import File
@@ -290,6 +291,7 @@ class Audio(models.Model):
     rejected = models.BooleanField(default=False, db_index=True)
     deleted = models.BooleanField(default=False)
     audio_status = models.TextField(choices=AUDIO_STATUS_CHOICES, default=ValidationStatus.PENDING.value, db_index=True)
+    transcription_status = models.TextField(choices=AUDIO_STATUS_CHOICES, default=ValidationStatus.PENDING.value, db_index=True)
     conflict_resolved_by = models.ForeignKey(User, related_name="resolutions", on_delete=models.PROTECT, default=None, null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
@@ -300,6 +302,17 @@ class Audio(models.Model):
 
     def __str__(self):
         return f'{self.image.name} - {self.submitted_by}'
+
+    def get_audio_url(self, request):
+        if self.file_mp3 and os.path.isfile(self.file_mp3.path):
+            return request.build_absolute_uri(self.file_mp3.url)
+        else:
+            return request.build_absolute_uri(self.file.url)
+        if self.file:
+            return request.build_absolute_uri(self.file.url)
+        elif self.file_mp3:
+            return request.build_absolute_uri(self.file_mp3.url)
+        return ""
 
     def save(self, *args, **kwargs) -> None:
         if self.pk is not None:
@@ -367,6 +380,7 @@ class Transcription(models.Model):
     ]
     audio = models.ForeignKey(Audio, db_index=True, related_name="transcriptions", on_delete=models.PROTECT)
     text = models.TextField()
+    corrected_text = models.TextField(null=True, blank=True)
     user = models.ForeignKey(User, db_index=True, related_name="transcriptions", on_delete=models.PROTECT)
     validations = models.ManyToManyField(Validation, related_name='transcription_validations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -377,6 +391,9 @@ class Transcription(models.Model):
 
     class Meta:
         db_table = "transcriptions"
+
+    def get_text(self):
+        return self.corrected_text or self.text
 
     @staticmethod
     def generate_query(query):

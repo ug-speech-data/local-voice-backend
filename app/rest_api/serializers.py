@@ -350,21 +350,13 @@ class AudioTranscriptionSerializer(serializers.ModelSerializer):
 
     def get_transcriptions(self, audio):
         transcriptions = []
-        for transcription in audio.transcriptions.all().values("text"):
-            transcriptions.append(transcription.get("text"))
+        for transcription in audio.transcriptions.all():
+            transcriptions.append(transcription.get_text())
         return transcriptions
 
     def get_audio_url(self, obj):
         request = self.context.get("request")
-        # if obj.file_mp3 and os.path.isfile(obj.file_mp3.path):
-        #     return request.build_absolute_uri(obj.file_mp3.url)
-        # else:
-        #     return request.build_absolute_uri(obj.file.url)
-        if obj.file:
-            return request.build_absolute_uri(obj.file.url)
-        elif obj.file_mp3:
-            return request.build_absolute_uri(obj.file_mp3.url)
-        return ""
+        return obj.get_audio_url(request)
 
     def get_thumbnail(self, obj):
         request = self.context.get("request")
@@ -385,7 +377,9 @@ class AudioTranscriptionSerializer(serializers.ModelSerializer):
             "locale",
             "audio_url",
             "image_url",
+            "transcription_status",
             "thumbnail",
+            "id",
         ]
 
 
@@ -408,15 +402,7 @@ class AudioSerializer(serializers.ModelSerializer):
 
     def get_audio_url(self, obj):
         request = self.context.get("request")
-        # if obj.file_mp3 and os.path.isfile(obj.file_mp3.path):
-        #     return request.build_absolute_uri(obj.file_mp3.url)
-        # else:
-        #     return request.build_absolute_uri(obj.file.url)
-        if obj.file:
-            return request.build_absolute_uri(obj.file.url)
-        elif obj.file_mp3:
-            return request.build_absolute_uri(obj.file_mp3.url)
-        return ""
+        return obj.get_audio_url(request)
 
     def get_submitted_by(self, obj):
         if obj.submitted_by:

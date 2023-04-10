@@ -4,8 +4,7 @@ import datetime
 from celery import shared_task
 from django.db import NotSupportedError
 from django.db.models import Count
-from django.db.utils import ProgrammingError
-from django_celery_beat.models import IntervalSchedule, PeriodicTask
+from local_voice.utils.constants import TranscriptionStatus
 
 from dashboard.models import Audio, Image, Transcription, Participant
 from local_voice.utils.constants import ParticipantType, ValidationStatus
@@ -16,53 +15,6 @@ from .models import Statistics
 # yapf: disable
 
 logger = logging.getLogger("app")
-
-
-# try:
-#     PeriodicTask.objects.all().delete()
-#     schedule, created = IntervalSchedule.objects.get_or_create(
-#     every=10,
-#     period=IntervalSchedule.MINUTES,
-#     )
-#     res = PeriodicTask.objects.get_or_create(
-#         interval=schedule,
-#         name='Update Statistics',
-#         task='app_statistics.tasks.update_statistics',
-#     )
-
-#     name = "delete_audios_with_zero_duration"
-#     schedule, created = IntervalSchedule.objects.get_or_create(
-#             every=1,
-#             period=IntervalSchedule.HOURS,
-#     )
-#     res = PeriodicTask.objects.get_or_create(
-#         interval=schedule,
-#         name=name,
-#         task=f'app_statistics.tasks.{name}',
-#     )
-
-#     name = "release_audios_in_review_for_more_than_ten_minutes"
-#     schedule, created = IntervalSchedule.objects.get_or_create(every=6,period=IntervalSchedule.MINUTES)
-#     res = PeriodicTask.objects.get_or_create(
-#         interval=schedule,
-#         name=name,
-#         task=f"app_statistics.tasks.{name}")
-
-#     name = "convert_files_to_mp3"
-#     schedule, created = IntervalSchedule.objects.get_or_create(every=10,period=IntervalSchedule.MINUTES)
-#     res = PeriodicTask.objects.get_or_create(
-#         interval=schedule,
-#         name=name,
-#         task=f"rest_api.tasks.{name}")
-
-#     name = "update_user_stats"
-#     schedule, created = IntervalSchedule.objects.get_or_create(every=30,period=IntervalSchedule.MINUTES)
-#     res = PeriodicTask.objects.get_or_create(
-#         interval=schedule,
-#         name=name,
-#         task=f"rest_api.tasks.{name}")
-# except ProgrammingError:
-#     pass
 
 @shared_task()
 def delete_audios_with_zero_duration():
@@ -207,3 +159,35 @@ def release_audios_in_review_for_more_than_ten_minutes():
     orphan_objects = Audio.objects.filter(updated_at__lte=updated_time, audio_status=ValidationStatus.IN_REVIEW.value)
     res = orphan_objects.update(audio_status=ValidationStatus.PENDING.value)
     return f"Made {res} audios available"
+
+@shared_task()
+def release_audios_in_transcription_review():
+    updated_time = datetime.datetime.now() - datetime.timedelta(minutes=20)
+    audios = Audio.objects.filter(updated_at__lte = updated_time,
+                          transcription_status=TranscriptionStatus.IN_REVIEW.value)
+    res = audios.update(transcription_status=TranscriptionStatus.PENDING.value)
+    return f"Made {res} audios available"
+
+@shared_task()
+def validate_audio_transcriptions():
+    configuration = AppConfiguration.objects.first()
+    required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 1
+
+    audios = Audio.objects.annotate(t_count=Count("transcriptions")).filter(
+            checked_in_for_transcription=True,
+            transcription_status=TranscriptionStatus.PENDING.value)\
+            .filter(t_count__gte=required_transcription_validation_count)
+
+    for audio in audios:
+        transcritions = set()
+        for transcription in audio.transcriptions.all():
+            text = transcription.text.lower()
+            text = " ".join(text.split())
+            if transcritions and not text in transcritions:
+                audio.transcription_status = TranscriptionStatus.CONFLICT.value
+                audio.save()
+                break
+            transcritions.add(text)
+        audio.transcription_status = TranscriptionStatus.ACCEPTED.value
+        audio.save()
+        
