@@ -18,7 +18,7 @@ from rest_api.serializers import (AppConfigurationSerializer, AudioSerializer,
                                   CategorySerializer, EnumeratorSerialiser,
                                   GroupPermissionSerializer, GroupSerializer,
                                   ImageSerializer, NotificationSerializer,
-                                  ParticipantSerializer,
+                                  ParticipantSerializer, LimitedUserSerializer,
                                   TranscriptionSerializer, UserSerializer)
 from rest_api.tasks import export_audio_data
 from rest_api.views.mixins import SimpleCrudMixin
@@ -282,7 +282,7 @@ class UsersAPI(SimpleCrudMixin):
             created_by = request.user
 
         lead = User.objects.filter(email_address=lead_email_address).first()
-        if not lead:
+        if not lead and lead_email_address:
             return Response({
                 "message":
                 "Lead not found.",
@@ -734,3 +734,36 @@ class GetEnumerators(generics.GenericAPIView):
         users = User.objects.filter(Q(lead=request.user)).order_by("surname")
         return Response(
             {"enumerators": self.serializer_class(users, many=True).data})
+
+
+class LimitedUsersAPIView(SimpleCrudMixin):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.approve_sample_audio_recorders"]
+
+    serializer_class = LimitedUserSerializer
+    model_class = User
+    response_data_label = "user"
+    response_data_label_plural = "users"
+
+    def modify_response_data(self, objects):
+        return objects.filter(restricted_audio_count__gt=0)
+
+    def post(self, request, *args, **kwargs):
+        """Remove limitation"""
+        object_id = request.data.get("user_id") or -1
+        user = self.model_class.objects.filter(id=object_id).first()
+
+        if not user:
+            return Response({"message": "Invalid id"}, 400)
+
+        user.restricted_audio_count = -1 # Negative number if used as unrestricted when filtering image.
+        user.save()
+
+        return Response({
+            "message":
+            "User updated successfully",
+            self.response_data_label:
+            self.serializer_class(user, context={
+                "request": request
+            }).data
+        })

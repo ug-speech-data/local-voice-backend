@@ -65,4 +65,5 @@ class SetupPerms(models.Model):
             ("manage_payment", "Can manage payments"),
             ("record_self", "Can record oneself"),
             ("record_others", "Can record others"),
+            ("approve_sample_audio_recorders", "Can approve sample audio recorders"),
         ]

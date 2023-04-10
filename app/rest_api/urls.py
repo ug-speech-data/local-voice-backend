@@ -50,6 +50,7 @@ urlpatterns += [
 
     path("get-enumerators/", views.GetEnumerators.as_view()),
     path("get-uploaded-audios/", views.GetUploadedAudios.as_view()),
+    path("limited-users/", views.LimitedUsersAPIView.as_view()),
 ]
 
 

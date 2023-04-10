@@ -14,14 +14,20 @@ class SimpleCrudMixin(generics.GenericAPIView):
         filters = request.GET.getlist("filters")
         query = request.GET.get("query") or request.GET.get("q")
 
-        objects = self.model_class.objects.all().order_by("-id")
+        objects = self.model_class.objects.all().order_by(
+            "-id")  # type: ignore
         if filters:
             objects = apply_filters(objects, filters)
-        if query and hasattr(self.model_class, "generate_query"):
-            objects = objects.filter(self.model_class.generate_query(query))
+        if query and hasattr(self.model_class,
+                             "generate_query"):  # type: ignore
+            objects = objects.filter(
+                self.model_class.generate_query(query))  # type: ignore
 
-        if hasattr(self.model_class, "deleted"):
+        if hasattr(self.model_class, "deleted"):  # type: ignore
             objects = objects.filter(deleted=False)
+
+        if hasattr(self, "modify_response_data"):
+            objects = self.modify_response_data(objects)
 
         page = request.GET.get("page", "")
         page_size = request.GET.get("page_size", "")
@@ -41,7 +47,7 @@ class SimpleCrudMixin(generics.GenericAPIView):
         #yapf: disable
         response_data = {
             self.response_data_label_plural:
-            self.serializer_class(paginated_objects,context={"request": request},many=True).data,
+            self.serializer_class(paginated_objects, context={"request": request},many=True).data,
             "page": page,
             "page_size": page_size,
             "total": objects.count(),

@@ -63,10 +63,14 @@ class GetAssignedImagesAPI(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         batch_number = request.user.assigned_image_batch
         images = Image.objects.filter(is_accepted=True).order_by("?")
+        restricted_audio_count = request.user.restricted_audio_count
         if batch_number > 0:
             images = images.filter(batch_number=batch_number)
         elif batch_number != -2:
             images = Image.objects.none()
+
+        if restricted_audio_count > 0 and restricted_audio_count < 125:
+            images = images[:restricted_audio_count]
 
         data = self.serializer_class(images,
                                      many=True,
