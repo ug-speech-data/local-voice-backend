@@ -304,15 +304,10 @@ class Audio(models.Model):
         return f'{self.image.name} - {self.submitted_by}'
 
     def get_audio_url(self, request):
-        # if self.file_mp3 and os.path.isfile(self.file_mp3.path):
-        #     return request.build_absolute_uri(self.file_mp3.url)
-        # else:
-        #     return request.build_absolute_uri(self.file.url)
-        if self.file:
-            return request.build_absolute_uri(self.file.url)
-        elif self.file_mp3:
+        if self.file_mp3 and os.path.isfile(self.file_mp3.path):
             return request.build_absolute_uri(self.file_mp3.url)
-        return ""
+        else:
+            return request.build_absolute_uri(self.file.url)
 
     def save(self, *args, **kwargs) -> None:
         if self.pk is not None:
