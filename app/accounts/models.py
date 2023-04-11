@@ -34,16 +34,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     accepted_privacy_policy = models.BooleanField(default=False)
     created_by = models.ForeignKey("User", related_name="created_users", on_delete=models.PROTECT, null=True, blank=True)
     updated_by = models.ForeignKey("User", related_name="updated_users", on_delete=models.PROTECT, null=True, blank=True)
-    audios_submitted = models.IntegerField(default=0)
-    audios_validated = models.IntegerField(default=0)
-    audios_rejected = models.IntegerField(default=0)
-    audios_pending = models.IntegerField(default=0)
-    audios_accepted = models.IntegerField(default=0)
     estimated_deduction_amount = models.DecimalField(default=0, decimal_places=2, max_digits=20)
     device_ids = models.CharField(max_length=200, null=True, blank=True)
     lead = models.ForeignKey("User", on_delete=models.SET_NULL, null=True, blank=True)
     restricted_audio_count = models.IntegerField(default=10)
     reference_code = models.IntegerField(null=True, blank=True)
+    audios_submitted = models.IntegerField(default=0)
+    audios_validated = models.IntegerField(default=0)
+    audios_rejected = models.IntegerField(default=0)
+    audios_pending = models.IntegerField(default=0)
+    audios_accepted = models.IntegerField(default=0)
+    conflicts_resolved = models.IntegerField(default=0)
 
     # Django stuff for authentication
     USERNAME_FIELD = "email_address"

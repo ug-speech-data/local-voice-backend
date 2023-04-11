@@ -21,6 +21,30 @@ from setup.models import AppConfiguration
 logger = logging.getLogger("app")
 
 
+class ConflictResolutionLeaderBoardSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "surname",
+            "other_names",
+            "conflicts_resolved",
+        ]
+
+
+class ValidationLeaderBoardSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "surname",
+            "other_names",
+            "audios_validated",
+        ]
+
+
 class UserSerializer(serializers.ModelSerializer):
     photo_url = serializers.SerializerMethodField()
     short_name = serializers.SerializerMethodField()
@@ -624,7 +648,8 @@ class AudioUploadSerializer(serializers.Serializer):
                         fullname=participant_data.get("fullname"),
                         gender=participant_data.get("gender"),
                         submitted_by=request.user,
-                        age=participant_data.get("age")).order_by("-paid").first()
+                        age=participant_data.get("age")).order_by(
+                            "-paid").first()
                     amount = configuration.participant_amount_per_audio
                 else:
                     participant_object = Participant.objects.filter(

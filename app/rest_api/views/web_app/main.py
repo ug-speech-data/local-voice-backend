@@ -17,13 +17,23 @@ from dashboard.models import (Audio, Category, Image, Notification,
 from local_voice.utils.functions import (apply_filters, get_errors_from_form,
                                          relevant_permission_objects)
 from rest_api.permissions import APILevelPermissionCheck
-from rest_api.serializers import (AppConfigurationSerializer, AudioSerializer,
-                                  CategorySerializer, EnumeratorSerialiser,
-                                  GroupPermissionSerializer, GroupSerializer,
-                                  ImageSerializer, NotificationSerializer,
-                                  ParticipantSerializer, LimitedUserSerializer,
-                                  AudioTranscriptionSerializer,
-                                  TranscriptionSerializer, UserSerializer)
+from rest_api.serializers import (
+    AppConfigurationSerializer,
+    AudioSerializer,
+    CategorySerializer,
+    EnumeratorSerialiser,
+    GroupPermissionSerializer,
+    GroupSerializer,
+    ImageSerializer,
+    NotificationSerializer,
+    ParticipantSerializer,
+    LimitedUserSerializer,
+    AudioTranscriptionSerializer,
+    ConflictResolutionLeaderBoardSerializer,
+    ValidationLeaderBoardSerializer,
+    TranscriptionSerializer,
+    UserSerializer,
+)
 from rest_api.tasks import export_audio_data
 from rest_api.views.mixins import SimpleCrudMixin
 from setup.models import AppConfiguration
@@ -719,9 +729,11 @@ class GetDashboardStatistics(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         stats = Statistics.objects.first()
+        conflict_resolution_users = User.objects.filter(conflicts_resolved__gt=0)[:15]
+        validation_users = User.objects.filter().order_by("-audios_validated")[:15]
+
         return Response({
             "updated_at":stats.updated_at.strftime("%Y-%m-%d %H:%M:%S"),
-
             "statistics": {
                 "audios_submitted": stats.audios_submitted,
                 "audios_approved": stats.audios_approved,
@@ -747,7 +759,9 @@ class GetDashboardStatistics(generics.GenericAPIView):
                 "dagbani": self.language_statistics_in_hours("dagbani"),
                 "dagaare": self.language_statistics_in_hours("dagaare"),
                 "ikposo": self.language_statistics_in_hours("ikposo"),
-            }
+            },
+            "conflict_resolution_leaders": ConflictResolutionLeaderBoardSerializer(conflict_resolution_users, many=True).data,
+            "validation_leaders": ValidationLeaderBoardSerializer(validation_users, many=True).data,
         })
 
 class GetEnumerators(generics.GenericAPIView):

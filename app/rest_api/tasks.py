@@ -182,6 +182,11 @@ def get_audios_validated(user):
     return Audio.objects.filter(validations__user=user).count()
 
 
+def get_conflicts_resolved(user):
+    from dashboard.models import Audio
+    return Audio.objects.filter(conflict_resolved_by=user).count()
+
+
 @shared_task()
 def update_user_stats():
     users = User.objects.all()
@@ -191,5 +196,6 @@ def update_user_stats():
         user.audios_accepted = get_audios_accepted(user)
         user.audios_submitted = get_audios_submitted(user)
         user.audios_validated = get_audios_validated(user)
+        user.conflicts_resolved = get_conflicts_resolved(user)
         user.estimated_deduction_amount = get_estimated_deduction_amount(user)
         user.save()
