@@ -149,7 +149,7 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
 
     def get_demo_video_url(self, obj):
         request = self.context.get("request")
-        locale = request.user.locale if request and request.user else ""
+        locale = request.user.locale if request and request.user.is_authenticated else ""
         if "ee_gh" in locale and obj.demo_video_ewe:
             return request.build_absolute_uri(obj.demo_video_ewe.url)
 
@@ -587,6 +587,7 @@ class AudioUploadSerializer(serializers.Serializer):
         audio = None
 
         file = request.FILES.get("audio_file")
+        re_upload = request.data.get("re_upload", False)
         api_client = request.data.get("api_client")
         audio_data = request.data.get("audio_data")
         if audio_data and type(audio_data) == str:
@@ -615,7 +616,24 @@ class AudioUploadSerializer(serializers.Serializer):
                     logger.info("Audio already exists.")
                     return True, audio
         try:
-            if participant_data:
+            if re_upload:
+                if participant_data:
+                    participant_object = Participant.objects.filter(
+                        momo_number=participant_data.get("momoNumber"),
+                        network=participant_data.get("network", ""),
+                        fullname=participant_data.get("fullname"),
+                        gender=participant_data.get("gender"),
+                        submitted_by=request.user,
+                        age=participant_data.get("age")).first()
+                    amount = configuration.participant_amount_per_audio
+                else:
+                    participant_object = Participant.objects.filter(
+                        momo_number=request.user.phone,
+                        network=request.user.phone_network,
+                        submitted_by=request.user,
+                    ).first()
+                    amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
+            elif participant_data:
                 participant_object, created = Participant.objects.get_or_create(
                     momo_number=participant_data.get("momoNumber"),
                     network=participant_data.get("network", ""),
@@ -648,7 +666,7 @@ class AudioUploadSerializer(serializers.Serializer):
                 )
                 amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
 
-            if image_object and file and audio_data:
+            if image_object and file and audio_data and participant_object:
                 file_mp3 = None
                 if (len(file.name.split(".mp3")) > 1):
                     file_mp3 = file
@@ -657,18 +675,18 @@ class AudioUploadSerializer(serializers.Serializer):
                     image=image_object,
                     submitted_by=request.user,
                     file=file,
-                    file_mp3=file_mp3,
                     duration=audio_data.get("duration"),
                     locale=request.user.locale,
                     device_id=audio_data.get("device_id"),
                     environment=audio_data.get("environment"),
                     participant=participant_object,
+                    main_file_format="mp3" if file_mp3 else "wav",
                     api_client=api_client)
 
                 participant_object.update_amount(amount)
 
                 # Convert audio to mp3
-                if not audio.file_mp3:
+                if not file_mp3:
                     convert_audio_file_to_mp3.delay(audio.id)
 
         except Exception as e:

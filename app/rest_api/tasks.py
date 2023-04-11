@@ -99,41 +99,16 @@ def export_audio_data(user_id, data, base_url):
 
 @shared_task()
 def convert_files_to_mp3(audio_status=None):
-    audios = Audio.objects.filter(Q(file_mp3=None) | Q(
-        file_mp3="")).order_by("validation_count")
-
+    audios = Audio.objects.filter(
+        main_file_format="wav").filter(Q(file_mp3=None) | Q(
+            file_mp3="")).order_by("validation_count")
+    print("audios", audios)
     if audio_status:
         audios = audios.filter(audio_status=audio_status)
     audios = audios.values("id")
 
     for item in audios:
-        audio = Audio.objects.filter(id=item["id"]).first()
-        if audio and audio.file_mp3 and os.path.isfile(audio.file_mp3.path):
-            continue
-
-        input_file = audio.file.path
-        if not input_file: continue
-        output_file = input_file.split(".wav")[0] + ".mp3"
-        if not output_file: continue
-        try:
-            stream = ffmpeg.input(input_file)
-            stream = ffmpeg.output(stream, output_file)
-            res = ffmpeg.run(stream, quiet=True, overwrite_output=True)
-        except Exception as e:
-            logger.error(str(e))
-            continue
-
-        # Update audio object
-        try:
-            audio = Audio.objects.filter(id=item["id"]).first()
-            if not audio: continue
-            audio.file_mp3 = File(open(output_file, "rb"),
-                                  output_file.split("/")[-1])
-            if os.path.isfile(output_file):
-                os.remove(output_file)
-            audio.save()
-        except Exception as e:
-            logger.error(str(e))
+        convert_audio_file_to_mp3(item.get("id"))
 
 
 @shared_task()
@@ -143,13 +118,14 @@ def convert_audio_file_to_mp3(audio_id):
         return
 
     input_file = audio.file.path
-    if not input_file: return
+    if not input_file or ".mp3" in input_file: return
+
     output_file = input_file.split(".wav")[0] + ".mp3"
     if not output_file: return
     try:
         stream = ffmpeg.input(input_file)
         stream = ffmpeg.output(stream, output_file)
-        res = ffmpeg.run(stream, overwrite_output=True)
+        res = ffmpeg.run(stream, quiet=True, overwrite_output=True)
     except Exception as e:
         logger.error(str(e))
         return
@@ -157,9 +133,11 @@ def convert_audio_file_to_mp3(audio_id):
     # Update audio object
     try:
         audio = Audio.objects.filter(id=audio_id).first()
-        if not audio: return
+        if not audio or os.path.getsize(output_file) < (1024 * 10): return
+
         audio.file_mp3 = File(open(output_file, "rb"),
                               output_file.split("/")[-1])
+        audio.main_file_format = "mp3"
         if os.path.isfile(output_file):
             os.remove(output_file)
         audio.save()

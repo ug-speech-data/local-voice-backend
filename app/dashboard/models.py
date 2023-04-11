@@ -275,9 +275,10 @@ class Audio(models.Model):
 
     image = models.ForeignKey(Image, db_index=True,related_name="audios", on_delete=models.PROTECT)
     file = models.FileField(upload_to='audios/')
+    main_file_format = models.CharField(max_length=5,default="wav", db_index=True)
     file_mp3 = models.FileField(upload_to='audios/', null=True, blank=True)
     submitted_by = models.ForeignKey(User, related_name="audios", on_delete=models.PROTECT,db_index=True)
-    participant = models.ForeignKey(Participant, related_name="audios", on_delete=models.SET_NULL, null=True, blank=True)
+    participant = models.ForeignKey(Participant, related_name="audios", on_delete=models.PROTECT, null=True, blank=True)
     device_id = models.CharField(max_length=255, blank=True, null=True)
     validation_count = models.IntegerField(default=0, db_index=True)
     transcription_count = models.IntegerField(default=0)
@@ -318,6 +319,11 @@ class Audio(models.Model):
             self.audio_status = ValidationStatus.ACCEPTED.value
         elif self.rejected:
             self.audio_status = ValidationStatus.REJECTED.value
+
+        if self.file and ".mp3" in self.file.name or self.file_mp3:
+            self.main_file_format = "mp3"
+        else:
+            self.main_file_format = "wav"
         return super().save(*args, **kwargs)
 
     @staticmethod
