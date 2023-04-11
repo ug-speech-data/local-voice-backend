@@ -78,6 +78,8 @@ class User(AbstractBaseUser, PermissionsMixin):
             return "Dagaare"
         elif "dga_gh" in self.locale:
             return "Dagbani"
+        elif "kpo_gh" in self.locale:
+            return "Ikposo"
 
     @staticmethod
     def generate_query(query):
