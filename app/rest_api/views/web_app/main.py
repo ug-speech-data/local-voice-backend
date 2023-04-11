@@ -493,7 +493,8 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
 
         ## Update
         if transcription_status and corrected_text:
-            corrected_text = " ".join(corrected_text.replace("\r", "").replace("\n", "").split())
+            corrected_text = " ".join(
+                corrected_text.replace("\r", "").replace("\n", "").split())
             transcriptions = audio.transcriptions.all()
             transcriptions.update(corrected_text=corrected_text,
                                   conflict_resolved_by=request.user)
@@ -698,6 +699,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_validation_conflict_in_hours": getattr(stats, f"{lang}_audios_validation_conflict_in_hours"),
             f"{lang}_audios_approved_in_hours": getattr(stats, f"{lang}_audios_approved_in_hours"),
             f"{lang}_audios_transcribed_in_hours": getattr(stats, f"{lang}_audios_transcribed_in_hours"),
+            f"{lang}_audios_rejected_in_hours": int(getattr(stats, f"{lang}_audios_double_validation")) - int(getattr(stats, f"{lang}_audios_approved"))
         }
 
     def language_statistics(self,lang):
@@ -710,6 +712,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_validation_conflict": getattr(stats, f"{lang}_audios_validation_conflict"),
             f"{lang}_audios_approved": getattr(stats, f"{lang}_audios_approved"),
             f"{lang}_audios_transcribed": getattr(stats, f"{lang}_audios_transcribed"),
+            f"{lang}_audios_rejected_percentage": round(float(getattr(stats, f"{lang}_audios_approved"))/max(1, float(getattr(stats, f"{lang}_audios_double_validation"))) * 100,2),
         }
 
     def get(self, request, *args, **kwargs):

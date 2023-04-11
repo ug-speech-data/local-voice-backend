@@ -624,14 +624,14 @@ class AudioUploadSerializer(serializers.Serializer):
                         fullname=participant_data.get("fullname"),
                         gender=participant_data.get("gender"),
                         submitted_by=request.user,
-                        age=participant_data.get("age")).first()
+                        age=participant_data.get("age")).order_by("-paid").first()
                     amount = configuration.participant_amount_per_audio
                 else:
                     participant_object = Participant.objects.filter(
                         momo_number=request.user.phone,
                         network=request.user.phone_network,
                         submitted_by=request.user,
-                    ).first()
+                    ).order_by("-paid").first()
                     amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
             elif participant_data:
                 participant_object, created = Participant.objects.get_or_create(
