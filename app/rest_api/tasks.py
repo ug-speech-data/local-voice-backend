@@ -102,7 +102,6 @@ def convert_files_to_mp3(audio_status=None):
     audios = Audio.objects.filter(
         main_file_format="wav").filter(Q(file_mp3=None) | Q(
             file_mp3="")).order_by("validation_count")
-    print("audios", audios)
     if audio_status:
         audios = audios.filter(audio_status=audio_status)
     audios = audios.values("id")
