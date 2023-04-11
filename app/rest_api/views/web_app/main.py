@@ -699,7 +699,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_validation_conflict_in_hours": getattr(stats, f"{lang}_audios_validation_conflict_in_hours"),
             f"{lang}_audios_approved_in_hours": getattr(stats, f"{lang}_audios_approved_in_hours"),
             f"{lang}_audios_transcribed_in_hours": getattr(stats, f"{lang}_audios_transcribed_in_hours"),
-            f"{lang}_audios_rejected_in_hours": int(getattr(stats, f"{lang}_audios_double_validation")) - int(getattr(stats, f"{lang}_audios_approved"))
+            f"{lang}_audios_rejected_in_hours": int(getattr(stats, f"{lang}_audios_double_validation_in_hours")) - int(getattr(stats, f"{lang}_audios_approved_in_hours"))
         }
 
     def language_statistics(self,lang):
