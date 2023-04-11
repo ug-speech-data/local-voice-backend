@@ -75,18 +75,18 @@ class AudiosBulkAction(generics.GenericAPIView):
 
         if action == "approve":
             # Will remove the boolean fields
-            audios.update(is_accepted=True)
-            audios.update(rejected=False)
-
-            audios.update(audio_status=ValidationStatus.ACCEPTED.value)
+            audios.update(is_accepted=True,
+                          rejected=False,
+                          audio_status=ValidationStatus.ACCEPTED.value,
+                          conflict_resolved_by=request.user)
             return Response({"message": f"Approved {audios.count()} audios."})
 
         if action == "reject":
             # Will remove the boolean fields
-            audios.update(is_accepted=False)
-            audios.update(rejected=True)
-
-            audios.update(audio_status=ValidationStatus.REJECTED.value)
+            audios.update(is_accepted=False,
+                          rejected=True,
+                          audio_status=ValidationStatus.REJECTED.value,
+                          conflict_resolved_by=request.user)
             return Response({"message": f"Rejected {audios.count()} audios."})
 
         if action == "delete":
