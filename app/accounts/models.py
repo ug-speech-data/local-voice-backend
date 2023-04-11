@@ -66,6 +66,19 @@ class User(AbstractBaseUser, PermissionsMixin):
     def fullname(self):
         return f"{self.surname} {self.other_names}"
 
+    @property
+    def language(self):
+        if not self.locale: return ""
+
+        if "ee_gh" in self.locale:
+            return "Ewe"
+        elif "akan" in self.locale:
+            return "Akan"
+        elif "dag_gh" in self.locale:
+            return "Dagaare"
+        elif "dga_gh" in self.locale:
+            return "Dagbani"
+
     @staticmethod
     def generate_query(query):
         queries = [Q(**{f"{key}__icontains": query}) for key in ["email_address", "surname", "other_names"]]

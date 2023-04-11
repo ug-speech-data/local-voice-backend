@@ -22,25 +22,36 @@ logger = logging.getLogger("app")
 
 
 class ConflictResolutionLeaderBoardSerializer(serializers.ModelSerializer):
+    language = serializers.SerializerMethodField()
+
+    def get_language(self, user):
+        return user.language
 
     class Meta:
         model = User
         fields = [
             "id",
             "surname",
+            "locale",
             "other_names",
+            "language",
             "conflicts_resolved",
         ]
 
 
 class ValidationLeaderBoardSerializer(serializers.ModelSerializer):
 
+    def get_language(self, user):
+        return user.language
+
     class Meta:
         model = User
         fields = [
             "id",
             "surname",
+            "locale",
             "other_names",
+            "language",
             "audios_validated",
         ]
 
