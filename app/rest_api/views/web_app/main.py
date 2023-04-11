@@ -729,7 +729,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         stats = Statistics.objects.first()
-        conflict_resolution_users = User.objects.filter(conflicts_resolved__gt=0)[:15]
+        conflict_resolution_users = User.objects.filter(conflicts_resolved__gt=0).order_by("-conflicts_resolved")[:15]
         validation_users = User.objects.filter().order_by("-audios_validated")[:15]
 
         return Response({
