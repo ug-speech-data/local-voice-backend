@@ -72,7 +72,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         if "ee_gh" in self.locale:
             return "Ewe"
-        elif "akan" in self.locale:
+        elif "ak_gh" in self.locale:
             return "Akan"
         elif "dag_gh" in self.locale:
             return "Dagaare"
