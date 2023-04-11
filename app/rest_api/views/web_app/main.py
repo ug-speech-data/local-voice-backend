@@ -705,6 +705,8 @@ class GetDashboardStatistics(generics.GenericAPIView):
     def language_statistics(self,lang):
         stats = Statistics.objects.first()
         #yapf: disable
+
+        rejected = float(getattr(stats, f"{lang}_audios_double_validation")) - float(getattr(stats, f"{lang}_audios_approved"))
         return {
             f"{lang}_audios_submitted": getattr(stats, f"{lang}_audios_submitted"),
             f"{lang}_audios_single_validation": getattr(stats, f"{lang}_audios_single_validation"),
@@ -712,7 +714,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_validation_conflict": getattr(stats, f"{lang}_audios_validation_conflict"),
             f"{lang}_audios_approved": getattr(stats, f"{lang}_audios_approved"),
             f"{lang}_audios_transcribed": getattr(stats, f"{lang}_audios_transcribed"),
-            f"{lang}_audios_rejected_percentage": round(float(getattr(stats, f"{lang}_audios_approved"))/max(1, float(getattr(stats, f"{lang}_audios_double_validation"))) * 100,2),
+            f"{lang}_audios_rejected_percentage": round(rejected /  max(1, float(getattr(stats, f"{lang}_audios_double_validation"))) * 100,2),
         }
 
     def get(self, request, *args, **kwargs):
