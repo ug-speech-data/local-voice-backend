@@ -70,7 +70,7 @@ class GetAssignedImagesAPI(generics.GenericAPIView):
             images = Image.objects.none()
 
         if restricted_audio_count > 0 and restricted_audio_count < 125:
-            images = images[:restricted_audio_count]
+            images = images.order_by("id")[:restricted_audio_count]
 
         data = self.serializer_class(images,
                                      many=True,
