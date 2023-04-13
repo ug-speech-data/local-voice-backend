@@ -433,4 +433,4 @@ class Transcription(models.Model):
         self.save()
 
     def __str__(self):
-        return self.text.split(" ")[50]
+        return " ".join(self.text.split(" ")[:30]) + "..."

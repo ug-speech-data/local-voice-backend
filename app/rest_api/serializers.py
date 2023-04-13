@@ -2,7 +2,6 @@ import json
 import logging
 import os
 from datetime import datetime
-from django.db.models import Count
 from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth import authenticate
