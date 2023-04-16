@@ -146,8 +146,8 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AudioSerializer
 
-    @method_decorator(cache_page(60 * 60 * 2))
-    @method_decorator(vary_on_headers(*["Authorization"]))
+    # @method_decorator(cache_page(60 * 60 * 2))
+    # @method_decorator(vary_on_headers(*["Authorization"]))
     def get(self, request, *args, **kwargs):
         count = min(request.data.get("count") or 480, 1000)
         completed = "true" in request.GET.get("completed", "")
