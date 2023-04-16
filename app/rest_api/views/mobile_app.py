@@ -169,7 +169,9 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
             assignment.audios.set(audios)
             assignment.save()
         else:
-            audios = assignment.audios.all()
+            audios = assignment.audios.filter(
+                audio_status=ValidationStatus.PENDING.value,
+                deleted=False).all()
 
         data = self.serializer_class(audios,
                                      many=True,
