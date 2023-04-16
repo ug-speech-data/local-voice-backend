@@ -171,7 +171,8 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
         else:
             audios = assignment.audios.filter(
                 audio_status=ValidationStatus.PENDING.value,
-                deleted=False).all()
+                deleted=False).exclude(Q(validations__user=request.user))\
+                .order_by("-validation_count", "image", "id")
 
         data = self.serializer_class(audios,
                                      many=True,
