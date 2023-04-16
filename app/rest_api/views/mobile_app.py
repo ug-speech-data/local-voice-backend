@@ -150,12 +150,13 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
     @method_decorator(vary_on_headers(*["Authorization"]))
     def get(self, request, *args, **kwargs):
         count = min(request.data.get("count") or 480, 1000)
+        completed = "true" in request.GET.get("completed", "")
         configuration = AppConfiguration.objects.first()
         required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
         assignment, created = AudioValidationAssignment.objects.get_or_create(
             user=request.user)
 
-        if created or assignment.audios.all().count() == 0:
+        if created or assignment.audios.all().count() == 0 or completed:
             audios = Audio.objects.annotate(c=Count("assignments")) \
                       .filter(c__lt=required_audio_validation_count) \
                       .filter(audio_status = ValidationStatus.PENDING.value,
