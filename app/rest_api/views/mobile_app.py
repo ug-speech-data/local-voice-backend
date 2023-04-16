@@ -18,7 +18,6 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
 from django.db.models import Q
 
-
 logger = logging.getLogger("app")
 
 
@@ -159,7 +158,8 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
         if created or assignment.audios.all().count() == 0:
             audios = Audio.objects.annotate(c=Count("assignments")) \
                       .filter(c__lt=required_audio_validation_count) \
-                      .filter(audio_status = ValidationStatus.PENDING.value) \
+                      .filter(audio_status = ValidationStatus.PENDING.value,
+                              locale=request.user.locale) \
                       .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user))\
                       .order_by("-validation_count", "image", "id")[:count]
             assignment.audios.set(audios)
