@@ -146,7 +146,13 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AudioSerializer
 
-    # @method_decorator(cache_page(60 * 60 * 2))
+    ##############################################################
+    # NOTE: Caching will return audios that may have been validated by the users
+    # and deleted from their device resulting in double validation
+    # The app sends request every ~30 minutes to this endpoint automatically.
+    # Users can trigger this requests too by themselves.
+    ##############################################################
+    # @method_decorator(cache_page(60 * 2* 15))
     # @method_decorator(vary_on_headers(*["Authorization"]))
     def get(self, request, *args, **kwargs):
         count = min(request.data.get("count") or 480, 1000)
