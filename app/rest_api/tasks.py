@@ -1,7 +1,7 @@
 import os
 import logging
 import zipfile
-from datetime import datetime
+from datetime import datetime, timedelta
 import ffmpeg
 from django.db.models import Q
 
@@ -10,7 +10,8 @@ from celery import shared_task
 from django.conf import settings
 from django.core.files import File
 from accounts.models import User
-
+from setup.models import AppConfiguration
+from dashboard.models import AudioValidationAssignment
 from dashboard.models import Audio, Notification
 
 logger = logging.getLogger("app")
@@ -199,3 +200,16 @@ def update_user_stats():
         user.conflicts_resolved = get_conflicts_resolved(user)
         user.estimated_deduction_amount = get_estimated_deduction_amount(user)
         user.save()
+
+
+@shared_task()
+def release_audios_not_being_validated_by_users_assigned():
+    configuration = AppConfiguration.objects.first()
+    hours_to_keep_audios_for_validation = configuration.hours_to_keep_audios_for_validation if configuration else 6
+
+    expiry_date = datetime.now() - timedelta(
+        hours=hours_to_keep_audios_for_validation)
+    forgotten_assignments = AudioValidationAssignment.objects.filter(
+        created_at__lte=expiry_date)
+    deleted, _ = forgotten_assignments.delete()
+    logger.info(f"Made {deleted} audios available for reassignment.")

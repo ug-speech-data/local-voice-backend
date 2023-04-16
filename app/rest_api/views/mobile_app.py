@@ -4,13 +4,20 @@ import logging
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-
+from dashboard.models import AudioValidationAssignment
+from django.db.models import Count
 from dashboard.models import Audio, Image
+from local_voice.utils.constants import ValidationStatus
 from rest_api.serializers import (AudioSerializer, AudioUploadSerializer,
                                   ImageSerializer,
                                   MobileAppConfigurationSerializer,
                                   ParticipantSerializer)
 from setup.models import AppConfiguration
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
+from django.db.models import Q
+
 
 logger = logging.getLogger("app")
 
@@ -134,3 +141,35 @@ class UploadAudioAPI(generics.GenericAPIView):
                 error_messages.append(f"{field}: " + str(errors))
             logger.error(error_messages)
             return Response({"error_messages": error_messages}, 400)
+
+
+class GetBulkAssignedToValidate(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AudioSerializer
+
+    @method_decorator(cache_page(60 * 60 * 2))
+    @method_decorator(vary_on_headers(*["Authorization"]))
+    def get(self, request, *args, **kwargs):
+        count = min(request.data.get("count") or 480, 1000)
+        configuration = AppConfiguration.objects.first()
+        required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
+        assignment, created = AudioValidationAssignment.objects.get_or_create(
+            user=request.user)
+
+        if created or assignment.audios.all().count() == 0:
+            audios = Audio.objects.annotate(c=Count("assignments")) \
+                      .filter(c__lt=required_audio_validation_count) \
+                      .filter(audio_status = ValidationStatus.PENDING.value) \
+                      .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user))\
+                      .order_by("-validation_count", "image", "id")[:count]
+            assignment.audios.set(audios)
+            assignment.save()
+        else:
+            audios = assignment.audios.all()
+
+        data = self.serializer_class(audios,
+                                     many=True,
+                                     context={
+                                         "request": request
+                                     }).data
+        return Response({"audios": data})

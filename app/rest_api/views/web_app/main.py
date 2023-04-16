@@ -42,6 +42,10 @@ from datetime import datetime
 
 from django.utils.timezone import make_aware
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
+
 logger = logging.getLogger("app")
 
 
@@ -727,6 +731,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_rejected_percentage": round(rejected /  max(1, float(getattr(stats, f"{lang}_audios_double_validation"))) * 100,2),
         }
 
+    @method_decorator(cache_page(60 * 10))
     def get(self, request, *args, **kwargs):
         stats = Statistics.objects.first()
         conflict_resolution_users = User.objects.filter(conflicts_resolved__gt=0).order_by("-conflicts_resolved")[:15]
@@ -768,6 +773,8 @@ class GetEnumerators(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = EnumeratorSerialiser
 
+    @method_decorator(cache_page(60 * 60 * 2))
+    @method_decorator(vary_on_headers(*["Authorization"]))
     def get(self, request, *args, **kwargs):
         users = User.objects.filter(Q(lead=request.user)).order_by("surname")
         return Response(

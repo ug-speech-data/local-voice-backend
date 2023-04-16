@@ -202,7 +202,7 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
 
     def get_participant_privacy_statement_audio(self, obj):
         request = self.context.get("request")
-        locale = request.user.locale if request and request.user else ""
+        locale = request.user.locale if request and request.user.is_authenticated else ""
         if "ee_gh" in locale and obj.participant_privacy_statement_audio_ewe:
             return request.build_absolute_uri(
                 obj.participant_privacy_statement_audio_ewe.url)
@@ -234,6 +234,7 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
             "demo_video_url",
             "participant_privacy_statement_audio",
             "max_background_noise_level",
+            "hours_to_keep_audios_for_validation",
             "participant_privacy_statement",
             "id",
         ]

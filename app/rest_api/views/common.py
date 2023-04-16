@@ -239,7 +239,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
            audio_status = ValidationStatus.PENDING.value,
             validation_count__lt=required_audio_validation_count)\
                 .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user) | Q(id=offset)) \
-            .order_by("-validation_count", "image", "?")
+            .order_by("-validation_count", "image", "id")
 
         if not request.user.is_superuser:
             audios = audios.filter(locale=request.user.locale)
@@ -272,4 +272,7 @@ class ValidateAudio(generics.GenericAPIView):
             | Q(audio_status=ValidationStatus.REJECTED.value)).first()
         if audio:
             audio.validate(request.user, status)
-        return Response({"message": "Validation recorded."})
+        return Response({
+            "message": "Validation recorded.",
+            "status": "success",
+        })

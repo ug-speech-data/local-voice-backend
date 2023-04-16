@@ -434,3 +434,10 @@ class Transcription(models.Model):
 
     def __str__(self):
         return " ".join(self.text.split(" ")[:30]) + "..."
+
+
+class AudioValidationAssignment(models.Model):
+    user = models.ForeignKey(User, related_name="aligned_audios", on_delete=models.CASCADE)
+    audios = models.ManyToManyField(Audio, related_name="assignments", db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)

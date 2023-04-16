@@ -45,6 +45,7 @@ class AppConfiguration(models.Model):
     allow_saving_less_than_required_per_participant = models.BooleanField(default=False)
     allow_recording_more_than_required_per_participant = models.BooleanField(default=False)
     number_of_audios_per_participant = models.IntegerField(default=120)
+    hours_to_keep_audios_for_validation = models.IntegerField(default=12)
 
 
 # Just for permissions
