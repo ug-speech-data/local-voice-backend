@@ -236,6 +236,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
             deleted=False,
            is_accepted=False,
            rejected=False,
+           assignments=None,
            audio_status = ValidationStatus.PENDING.value,
             validation_count__lt=required_audio_validation_count)\
                 .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user) | Q(id=offset)) \
