@@ -159,6 +159,9 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
             audios = Audio.objects.annotate(c=Count("assignments")) \
                       .filter(c__lt=required_audio_validation_count) \
                       .filter(audio_status = ValidationStatus.PENDING.value,
+                               deleted=False,
+                                is_accepted=False,
+                                rejected=False,
                               locale=request.user.locale) \
                       .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user))\
                       .order_by("-validation_count", "image", "id")[:count]
