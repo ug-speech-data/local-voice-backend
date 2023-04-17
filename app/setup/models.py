@@ -6,15 +6,11 @@ from django.db import models
 
 # General system config table - only one row.
 class AppConfiguration(models.Model):
-    DEFAULT_API_KEY = settings.ARKESEL_API or ""
     demo_video_ewe = models.FileField(upload_to="demovideos",null=True, blank=True)
     demo_video_akan = models.FileField(upload_to="demovideos",null=True, blank=True)
     demo_video_dagaare = models.FileField(upload_to="demovideos",null=True, blank=True)
     demo_video_ikposo = models.FileField(upload_to="demovideos",null=True, blank=True)
     demo_video_dagbani = models.FileField(upload_to="demovideos",null=True, blank=True)
-    sms_sender_id = models.CharField(max_length=11, unique=True, default="LOCALVOICE")
-    api_key = models.CharField(max_length=50, unique=True, default=DEFAULT_API_KEY)
-    send_sms = models.BooleanField(default=True)
     max_background_noise_level = models.IntegerField(default=100)
     max_category_for_image = models.IntegerField(default=5)
     required_image_validation_count = models.IntegerField(default=3)
@@ -46,6 +42,15 @@ class AppConfiguration(models.Model):
     allow_recording_more_than_required_per_participant = models.BooleanField(default=False)
     number_of_audios_per_participant = models.IntegerField(default=120)
     hours_to_keep_audios_for_validation = models.IntegerField(default=12)
+
+    current_apk_versions = models.CharField(max_length=11,default="")
+
+    def save(self, *args, **kwargs) -> None:
+        if self.android_apk:
+            version = self.android_apk.file.name.split("v")[-1].split("-")[0]
+            self.current_apk_versions  = version
+            return super().save(*args, **kwargs)
+
 
 
 # Just for permissions

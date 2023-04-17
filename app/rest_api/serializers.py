@@ -237,6 +237,8 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
             "hours_to_keep_audios_for_validation",
             "participant_privacy_statement",
             "id",
+            "current_apk_versions",
+            "android_apk",
         ]
 
 

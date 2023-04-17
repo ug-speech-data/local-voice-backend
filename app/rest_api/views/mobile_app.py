@@ -13,9 +13,6 @@ from rest_api.serializers import (AudioSerializer, AudioUploadSerializer,
                                   MobileAppConfigurationSerializer,
                                   ParticipantSerializer)
 from setup.models import AppConfiguration
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_headers
 from django.db.models import Q
 
 logger = logging.getLogger("app")
