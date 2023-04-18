@@ -147,13 +147,15 @@ def update_user_amounts():
     for user in User.objects.all():
         user_audios = user.audios.filter(
             participant__type=ParticipantType.ASSISTED.value).count()
-        email_prefix = user.email_address.split("@")[0][:-2]
+        participant_audios = 0
+        if "ugspeechdata.com" in user.email_address:
+            email_prefix = user.email_address.split("@")[0][:-2] 
 
-        users_participants = User.objects.filter(
-            email_address__istartswith=email_prefix)
+            users_participants = User.objects.filter(
+                email_address__istartswith=email_prefix)
 
-        participant_audios = Audio.objects.filter(
-            submitted_by__in=users_participants).count()
+            participant_audios = Audio.objects.filter(
+                submitted_by__in=users_participants).count()
 
         audios_amount = amount * (participant_audios + user_audios)
 
