@@ -149,10 +149,11 @@ def update_user_amounts():
             participant__type=ParticipantType.ASSISTED.value).count()
         participant_audios = 0
         if "ugspeechdata.com" in user.email_address:
-            email_prefix = user.email_address.split("@")[0][:-2] 
+            email_prefix = user.email_address.split("@")[0][:-2]
 
             users_participants = User.objects.filter(
-                email_address__istartswith=email_prefix)
+                email_address__istartswith=email_prefix).exclude(
+                    email_address=user.email_address)
 
             participant_audios = Audio.objects.filter(
                 submitted_by__in=users_participants).count()
