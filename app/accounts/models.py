@@ -110,6 +110,11 @@ class Wallet(models.Model):
         self.accrued_amount += decimal.Decimal(amount)
         self.save()
 
+    def set_balance(self, amount):
+        self.balance = decimal.Decimal(amount)
+        print("amount",amount)
+        self.save()
+
     def increase_payout_amount(self, amount):
         self.total_payout += decimal.Decimal(amount)
         self.save()

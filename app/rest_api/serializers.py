@@ -636,6 +636,8 @@ class AudioUploadSerializer(serializers.Serializer):
             participant_data = json.loads(participant_data)
 
         image_id = audio_data.get("remoteImageID", -1)
+        user_id = audio_data.get("userId", -1)
+        user = User.objects.filter(id=user_id).first() or request.user
         image_object = Image.objects.filter(id=image_id).first()
         participant_object = None
 
@@ -660,15 +662,15 @@ class AudioUploadSerializer(serializers.Serializer):
                         network=participant_data.get("network", ""),
                         fullname=participant_data.get("fullname"),
                         gender=participant_data.get("gender"),
-                        submitted_by=request.user,
+                        submitted_by=user,
                         age=participant_data.get("age")).order_by(
                             "-paid").first()
                     amount = configuration.participant_amount_per_audio
                 else:
                     participant_object = Participant.objects.filter(
-                        momo_number=request.user.phone,
-                        network=request.user.phone_network,
-                        submitted_by=request.user,
+                        momo_number=user.phone,
+                        network=user.phone_network,
+                        submitted_by=user,
                     ).order_by("-paid").first()
                     amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
             elif participant_data:
@@ -686,20 +688,18 @@ class AudioUploadSerializer(serializers.Serializer):
                     api_client=api_client,
                 )
                 amount = configuration.participant_amount_per_audio
-
             else:
-                participant_object, created = Participant.objects.get_or_create(
-                    momo_number=request.user.phone,
-                    network=request.user.phone_network,
-                    fullname=request.user.fullname,
-                    gender=request.user.gender,
-                    submitted_by=request.user,
+                participant_object, _ = Participant.objects.get_or_create(
+                    momo_number=user.phone,
+                    network=user.phone_network,
+                    fullname=user.fullname,
+                    gender=user.gender,
+                    submitted_by=user,
                     paid=False,
                     transaction=None,
-                    age=request.user.age,
+                    age=user.age,
                     type=ParticipantType.INDEPENDENT.value,
-                    accepted_privacy_policy=request.user.
-                    accepted_privacy_policy,
+                    accepted_privacy_policy=user.accepted_privacy_policy,
                     api_client=api_client,
                 )
                 amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
@@ -711,10 +711,10 @@ class AudioUploadSerializer(serializers.Serializer):
 
                 audio = Audio.objects.create(
                     image=image_object,
-                    submitted_by=request.user,
+                    submitted_by=user,
                     file=file,
                     duration=audio_data.get("duration"),
-                    locale=request.user.locale,
+                    locale=user.locale,
                     device_id=audio_data.get("device_id"),
                     environment=audio_data.get("environment"),
                     participant=participant_object,

@@ -3,9 +3,10 @@ from time import sleep
 
 from celery import shared_task
 from requests.exceptions import ConnectTimeout
+from accounts.models import User
 from local_voice.utils.constants import ParticipantType
 from setup.models import AppConfiguration
-from dashboard.models import Participant
+from dashboard.models import Participant, Audio
 
 from local_voice.utils.constants import (TransactionDirection,
                                          TransactionStatus,
@@ -129,10 +130,27 @@ def check_transaction_status(transaction_id, rounds=5, wait=5):
 @shared_task()
 def update_participants_amount():
     configuration = AppConfiguration.objects.first()
+    amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
     for participant in Participant.objects.filter(flatten=False,
                                                   transaction=None):
-        amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
         if participant:
             if participant.type == ParticipantType.ASSISTED.value:
                 amount = configuration.participant_amount_per_audio if configuration else 0
             participant.update_amount(amount)
+
+
+@shared_task()
+def update_user_amounts():
+    configuration = AppConfiguration.objects.first()
+    amount = configuration.audio_aggregators_amount_per_audio if configuration else 0
+    for user in User.objects.all():
+        user_audios = user.audios.all().count()
+        email_prefix = user.email_address.split("@")[0][:-2]
+
+        users_participants = User.objects.filter(
+            email_address__istartswith=email_prefix)
+
+        participant_audios = Audio.objects.filter(
+            submitted_by__in=users_participants).count()
+
+        user.wallet.set_balance(amount * (participant_audios + user_audios))
