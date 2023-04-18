@@ -564,19 +564,19 @@ class PaymentUserSerializer(serializers.ModelSerializer):
         if not obj.wallet:
             obj.wallet = Wallet.objects.create()
             obj.save()
-        return str(obj.wallet.accrued_amount)
+        return obj.wallet.accrued_amount
 
     def get_total_payout(self, obj):
         if not obj.wallet:
             obj.wallet = Wallet.objects.create()
             obj.save()
-        return str(obj.wallet.total_payout)
+        return obj.wallet.total_payout
 
     def get_balance(self, obj):
         if not obj.wallet:
             obj.wallet = Wallet.objects.create()
             obj.save()
-        return str(obj.wallet.balance)
+        return obj.wallet.balance
 
     def get_photo_url(self, obj):
         request = self.context.get("request")

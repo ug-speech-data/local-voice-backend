@@ -3,7 +3,7 @@ from time import sleep
 
 from celery import shared_task
 from requests.exceptions import ConnectTimeout
-from accounts.models import User
+from accounts.models import User, Wallet
 from local_voice.utils.constants import ParticipantType
 from setup.models import AppConfiguration
 from dashboard.models import Participant, Audio
@@ -145,7 +145,8 @@ def update_user_amounts():
     amount = configuration.audio_aggregators_amount_per_audio if configuration else 0
     amount_per_audio_validation = configuration.amount_per_audio_validation if configuration else 0
     for user in User.objects.all():
-        user_audios = user.audios.all().count()
+        user_audios = user.audios.filter(
+            participant__type=ParticipantType.ASSISTED.value).count()
         email_prefix = user.email_address.split("@")[0][:-2]
 
         users_participants = User.objects.filter(
@@ -159,4 +160,5 @@ def update_user_amounts():
         validations = user.validations.all().count()
         validations_amount = validations * amount_per_audio_validation
 
-        user.wallet.set_balance(audios_amount + validations_amount)
+        wallet = user.wallet or Wallet.objects.create()
+        wallet.set_accrued_amount(audios_amount + validations_amount)
