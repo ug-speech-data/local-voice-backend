@@ -143,6 +143,7 @@ def update_participants_amount():
 def update_user_amounts():
     configuration = AppConfiguration.objects.first()
     amount = configuration.audio_aggregators_amount_per_audio if configuration else 0
+    amount_per_audio_validation = configuration.amount_per_audio_validation if configuration else 0
     for user in User.objects.all():
         user_audios = user.audios.all().count()
         email_prefix = user.email_address.split("@")[0][:-2]
@@ -153,4 +154,9 @@ def update_user_amounts():
         participant_audios = Audio.objects.filter(
             submitted_by__in=users_participants).count()
 
-        user.wallet.set_balance(amount * (participant_audios + user_audios))
+        audios_amount = amount * (participant_audios + user_audios)
+
+        validations = user.validations.all().count()
+        validations_amount = validations * amount_per_audio_validation
+
+        user.wallet.set_balance(audios_amount + validations_amount)
