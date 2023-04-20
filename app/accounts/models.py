@@ -116,15 +116,15 @@ class Wallet(models.Model):
         self.save()
 
     def set_validation_benefit(self, amount):
-        self.validation_benefit += decimal.Decimal(amount)
+        self.validation_benefit = decimal.Decimal(amount)
         self.save()
 
     def set_recording_benefit(self, amount):
-        self.recording_benefit += decimal.Decimal(amount)
+        self.recording_benefit = decimal.Decimal(amount)
         self.save()
 
     def set_transcription_benefit(self, amount):
-        self.transcription_benefit += decimal.Decimal(amount)
+        self.transcription_benefit = decimal.Decimal(amount)
         self.save()
 
     def set_accrued_amount(self, amount):

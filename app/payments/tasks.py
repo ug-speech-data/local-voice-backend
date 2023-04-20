@@ -165,5 +165,5 @@ def update_user_amounts():
 
         wallet = user.wallet or Wallet.objects.create()
         wallet.set_validation_benefit(validations_amount)
-        wallet.set_recording_benefit(amount)
+        wallet.set_recording_benefit(audios_amount)
         wallet.set_accrued_amount(audios_amount + validations_amount)
