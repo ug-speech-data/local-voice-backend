@@ -379,47 +379,6 @@ class ParticipantSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class AudioTranscriptionSerializer(serializers.ModelSerializer):
-    transcriptions = serializers.SerializerMethodField()
-    image_url = serializers.SerializerMethodField()
-    thumbnail = serializers.SerializerMethodField()
-    audio_url = serializers.SerializerMethodField()
-
-    def get_transcriptions(self, audio):
-        transcriptions = []
-        for transcription in audio.transcriptions.all():
-            transcriptions.append(transcription.get_text())
-        return transcriptions
-
-    def get_audio_url(self, obj):
-        request = self.context.get("request")
-        return obj.get_audio_url(request)
-
-    def get_thumbnail(self, obj):
-        request = self.context.get("request")
-        if obj.image.thumbnail:
-            return request.build_absolute_uri(obj.image.thumbnail.url)
-        return self.get_image_url(obj)
-
-    def get_image_url(self, obj):
-        request = self.context.get("request")
-        if obj.image.file:
-            return request.build_absolute_uri(obj.image.file.url)
-        return ""
-
-    class Meta:
-        model = Audio
-        fields = [
-            "transcriptions",
-            "locale",
-            "audio_url",
-            "image_url",
-            "transcription_status",
-            "thumbnail",
-            "id",
-        ]
-
-
 class AudioSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
     validations = serializers.SerializerMethodField()
@@ -505,6 +464,53 @@ class TranscriptionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class AudioTranscriptionSerializer(serializers.ModelSerializer):
+    transcriptions = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
+    thumbnail = serializers.SerializerMethodField()
+    audio_url = serializers.SerializerMethodField()
+
+    def get_transcriptions(self, audio):
+        transcriptions = []
+        for transcription in audio.transcriptions.all():
+            transcriptions.append({
+                "user": {
+                    "email_address": transcription.user.email_address,
+                    "phone": transcription.user.phone,
+                },
+                "text": transcription.get_text(),
+            })
+        return transcriptions
+
+    def get_audio_url(self, obj):
+        request = self.context.get("request")
+        return obj.get_audio_url(request)
+
+    def get_thumbnail(self, obj):
+        request = self.context.get("request")
+        if obj.image.thumbnail:
+            return request.build_absolute_uri(obj.image.thumbnail.url)
+        return self.get_image_url(obj)
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.image.file:
+            return request.build_absolute_uri(obj.image.file.url)
+        return ""
+
+    class Meta:
+        model = Audio
+        fields = [
+            "transcriptions",
+            "locale",
+            "audio_url",
+            "image_url",
+            "transcription_status",
+            "thumbnail",
+            "id",
+        ]
+
+
 def time_ago(datetime_from):
     diff = make_aware(datetime.now()) - datetime_from
     total_seconds = diff.total_seconds()
@@ -519,9 +525,9 @@ def time_ago(datetime_from):
         return f"{hours} hour(s) ago"
 
     if minutes:
-        return f"{minutes} minute(s) ago"
+        return f"{minutes} min(s) ago"
 
-    return f"{seconds} second(s) ago"
+    return f"{seconds} sec(s) ago"
 
 
 class NotificationSerializer(serializers.ModelSerializer):
