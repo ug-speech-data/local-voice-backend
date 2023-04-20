@@ -26,6 +26,9 @@ class GetPaymentUsers(SimpleCrudMixin):
     response_data_label = "user"
     response_data_label_plural = "users"
 
+    def modify_response_data(self, users):
+        return users.order_by("-wallet__balance")
+
     def post(self, *args, **kwargs):
         return Response({"detail": "Method not allowed"},
                         status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -107,10 +110,39 @@ class PayUsers(generics.GenericAPIView):
                 wallet=wallet,
                 fullname=user.fullname,
                 phone_number=user.phone,
-                network=user.phone_network or "MTN",  #TODO: REMOVE THIS
+                network=user.phone_network,
                 initiated_by=request.user,
                 direction=TransactionDirection.OUT.value,
                 note="PAYOUT")
+
+            # Make API calls
+            transaction.execute()
+
+        return Response({
+            "message":
+            f"Initiated payment request for {users.count()} users."
+        })
+
+
+class PayValidationBenefit(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.manage_payment"]
+
+    def post(self, request, **kwargs):
+        user_ids = request.data.get("ids")
+        users = User.objects.filter(id__in=user_ids)
+        for user in users:
+            wallet = user.wallet
+            amount = min(wallet.validation_benefit, wallet.balance)
+            transaction = Transaction.objects.create(
+                amount=amount,
+                wallet=wallet,
+                fullname=user.fullname,
+                phone_number=user.phone,
+                network=user.phone_network,
+                initiated_by=request.user,
+                direction=TransactionDirection.OUT.value,
+                note="VALIDATION_PAYOUT")
 
             # Make API calls
             transaction.execute()
@@ -136,7 +168,7 @@ class PayUsersBalance(generics.GenericAPIView):
                 wallet=wallet,
                 fullname=user.fullname,
                 phone_number=user.phone,
-                network=user.phone_network or "MTN",  #TODO: REMOVE THIS
+                network=user.phone_network,
                 initiated_by=request.user,
                 direction=TransactionDirection.OUT.value,
                 note="PAYOUT")

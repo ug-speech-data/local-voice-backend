@@ -91,11 +91,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Wallet(models.Model):
-    total_payout = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-    accrued_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    total_payout = models.DecimalField(max_digits=10, decimal_places=2, default=decimal.Decimal(0.0))
+    accrued_amount = models.DecimalField(max_digits=10, decimal_places=2, default=decimal.Decimal(0.0))
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=decimal.Decimal(0.0))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # Miscelanous/Break down -- All in cedis
+    validation_benefit = models.DecimalField(max_digits=10, decimal_places=2, default=decimal.Decimal(0.0))
+    recording_benefit = models.DecimalField(max_digits=10, decimal_places=2, default=decimal.Decimal(0.0))
+    transcription_benefit = models.DecimalField(max_digits=10, decimal_places=2, default=decimal.Decimal(0.0))
 
     def __str__(self):
         if hasattr(self, "owner"):
@@ -108,6 +113,18 @@ class Wallet(models.Model):
 
     def credit_wallet(self, amount):
         self.accrued_amount += decimal.Decimal(amount)
+        self.save()
+
+    def set_validation_benefit(self, amount):
+        self.validation_benefit += decimal.Decimal(amount)
+        self.save()
+
+    def set_recording_benefit(self, amount):
+        self.recording_benefit += decimal.Decimal(amount)
+        self.save()
+
+    def set_transcription_benefit(self, amount):
+        self.transcription_benefit += decimal.Decimal(amount)
         self.save()
 
     def set_accrued_amount(self, amount):

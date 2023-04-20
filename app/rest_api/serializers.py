@@ -551,6 +551,11 @@ class PaymentUserSerializer(serializers.ModelSerializer):
     fullname = serializers.SerializerMethodField()
     wallet_last_updated_at = serializers.SerializerMethodField()
 
+    # Misc
+    validation_benefit = serializers.SerializerMethodField()
+    recording_benefit = serializers.SerializerMethodField()
+    transcription_benefit = serializers.SerializerMethodField()
+
     def get_fullname(self, obj):
         return obj.fullname
 
@@ -578,6 +583,24 @@ class PaymentUserSerializer(serializers.ModelSerializer):
             obj.save()
         return obj.wallet.balance
 
+    def get_validation_benefit(self, obj):
+        if not obj.wallet:
+            obj.wallet = Wallet.objects.create()
+            obj.save()
+        return obj.wallet.validation_benefit
+
+    def get_recording_benefit(self, obj):
+        if not obj.wallet:
+            obj.wallet = Wallet.objects.create()
+            obj.save()
+        return obj.wallet.recording_benefit
+
+    def get_transcription_benefit(self, obj):
+        if not obj.wallet:
+            obj.wallet = Wallet.objects.create()
+            obj.save()
+        return obj.wallet.transcription_benefit
+
     def get_photo_url(self, obj):
         request = self.context.get("request")
         if obj.photo and request:
@@ -590,9 +613,21 @@ class PaymentUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "id", "email_address", "photo_url", "short_name", "phone",
-            "surname", "other_names", "accrued_amount", "total_payout",
-            "balance", "fullname", "wallet_last_updated_at"
+            "id",
+            "email_address",
+            "photo_url",
+            "short_name",
+            "phone",
+            "surname",
+            "other_names",
+            "accrued_amount",
+            "total_payout",
+            "balance",
+            "fullname",
+            "wallet_last_updated_at",
+            "validation_benefit",
+            "recording_benefit",
+            "transcription_benefit",
         ]
 
 

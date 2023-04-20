@@ -74,6 +74,7 @@ urlpatterns += [
     path("payments/users", views.GetPaymentUsers.as_view()),
     path("payments/credit-users/", views.CreditUsers.as_view()),
     path("payments/pay-users/", views.PayUsers.as_view()),
+    path("payments/pay-users-validation-benefit/", views.PayValidationBenefit.as_view()),
     path("payments/pay-users-balance/", views.PayUsersBalance.as_view()),
     path("payments/transactions-history", views.TransactionHistory.as_view()),
     path("payments/transactions-status-check", views.TransactionStatusCheck.as_view()),

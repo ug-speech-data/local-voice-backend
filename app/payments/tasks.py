@@ -148,9 +148,9 @@ def update_user_amounts():
         user_audios = user.audios.filter(
             participant__type=ParticipantType.ASSISTED.value).count()
         participant_audios = 0
-        if "ugspeechdata.com" in user.email_address:
-            email_prefix = user.email_address.split("@")[0][:-2]
-
+        email_prefix = user.email_address.split("@")[0][:-2]
+        if "ugspeechdata.com" in user.email_address and email_prefix[
+                -2:].isdigit():
             users_participants = User.objects.filter(
                 email_address__istartswith=email_prefix).exclude(
                     email_address=user.email_address)
@@ -164,4 +164,6 @@ def update_user_amounts():
         validations_amount = validations * amount_per_audio_validation
 
         wallet = user.wallet or Wallet.objects.create()
+        wallet.set_validation_benefit(validations_amount)
+        wallet.set_recording_benefit(amount)
         wallet.set_accrued_amount(audios_amount + validations_amount)
