@@ -312,8 +312,8 @@ class Audio(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         if self.pk is not None:
-            self.validation_count = self.validations.all().count()
-            self.transcription_count = self.transcriptions.filter().count()
+            # self.validation_count = self.validations.all().count()
+            # self.transcription_count = self.transcriptions.filter().count()
             self.year = datetime.now().year
         if self.is_accepted:
             self.audio_status = ValidationStatus.ACCEPTED.value
