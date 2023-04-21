@@ -297,6 +297,7 @@ class Audio(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
     checked_in_for_transcription = models.BooleanField(default=False, db_index=True)
+    note = models.CharField(max_length=200, null=True, blank=True)
 
     class Meta:
         db_table = "audios"
