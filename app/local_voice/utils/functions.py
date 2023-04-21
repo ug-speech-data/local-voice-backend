@@ -4,9 +4,8 @@ import logging
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import Permission
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils.html import strip_tags
-from django.db.models import Q
 
 from local_voice.utils.constants import ValidationStatus
 

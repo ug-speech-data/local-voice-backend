@@ -1,14 +1,15 @@
 import json
 import logging
 import os
-from datetime import datetime
 import tempfile
+from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
 from django.db.models import Q
 from django.utils.timezone import make_aware
+from mutagen import File as MFile
 from rest_framework import serializers
 
 from accounts.models import User, Wallet
@@ -18,7 +19,6 @@ from local_voice.utils.constants import ParticipantType
 from payments.models import Transaction
 from rest_api.tasks import convert_audio_file_to_mp3
 from setup.models import AppConfiguration
-from mutagen import File as MFile
 
 logger = logging.getLogger("app")
 
