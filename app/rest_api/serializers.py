@@ -670,12 +670,14 @@ class AudioUploadSerializer(serializers.Serializer):
         file = request.FILES.get("audio_file")
         # anaylyse file
         temp_file, temp_file_path = tempfile.mkstemp()
-        f = os.fdopen(temp_file, 'w')
+        f = os.fdopen(temp_file, 'wb')
         f.write(file.read())
         f.close()
         m_file = MFile(temp_file_path)
         duration = round(m_file.info.length)
-        print("duration", duration)
+
+        if duration < 15:
+            return False, "MINIMUM_DURATION_NOT_MET"
 
         re_upload = request.data.get("re_upload", False)
         api_client = request.data.get("api_client")
