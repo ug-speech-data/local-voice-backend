@@ -21,8 +21,8 @@ def apply_filters(objects, filters):
         # Special case for validation conflict
         elif len(filter) == 3:
             key, value, annotation = filter
-            objects = objects.annotate(c=Count(annotation)).filter(
-                rejected=False, is_accepted=False, c__gt=1).exclude(
+            objects = objects.annotate(
+                c=Count(annotation)).filter(c__gt=1).exclude(
                     Q(audio_status=ValidationStatus.PENDING.value)).filter(
                         **{key: value})
     return objects

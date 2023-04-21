@@ -180,7 +180,7 @@ def get_audios_submitted(user):
 
 def get_audios_validated(user):
     from dashboard.models import Audio
-    return Audio.objects.filter(validations__user=user).count()
+    return Audio.objects.filter(deleted=False, validations__user=user).count()
 
 
 def get_conflicts_resolved(user):
