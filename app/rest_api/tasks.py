@@ -185,8 +185,7 @@ def get_audios_validated(user):
 
 def get_conflicts_resolved(user):
     from dashboard.models import Audio
-    return Audio.objects.filter(deleted=False,
-                                conflict_resolved_by=user).count()
+    return Audio.objects.filter(conflict_resolved_by=user).count()
 
 
 @shared_task()
