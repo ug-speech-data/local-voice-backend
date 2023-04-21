@@ -45,7 +45,7 @@ def export_audio_data(user_id, data, base_url):
         "YEAR",
     ]
     rows = []
-    audios = Audio.objects.filter(is_accepted=True)
+    audios = Audio.objects.filter(is_accepted=True, deleted=False)
     for audio in audios:
         if not (audio.file and audio.image and audio.image.file):
             continue
@@ -180,17 +180,18 @@ def get_audios_submitted(user):
 
 def get_audios_validated(user):
     from dashboard.models import Audio
-    return Audio.objects.filter(validations__user=user).count()
+    return Audio.objects.filter(deleted=False, validations__user=user).count()
 
 
 def get_conflicts_resolved(user):
     from dashboard.models import Audio
-    return Audio.objects.filter(conflict_resolved_by=user).count()
+    return Audio.objects.filter(deleted=False,
+                                conflict_resolved_by=user).count()
 
 
 @shared_task()
 def update_user_stats():
-    users = User.objects.all()
+    users = User.objects.filter(deleted=False, is_active=True)
     for user in users:
         user.audios_rejected = get_audios_rejected(user)
         user.audios_pending = get_audios_pending(user)

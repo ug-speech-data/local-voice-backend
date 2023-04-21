@@ -45,6 +45,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     audios_pending = models.IntegerField(default=0)
     audios_accepted = models.IntegerField(default=0)
     conflicts_resolved = models.IntegerField(default=0)
+    deleted = models.BooleanField(default=False)
 
     # Django stuff for authentication
     USERNAME_FIELD = "email_address"

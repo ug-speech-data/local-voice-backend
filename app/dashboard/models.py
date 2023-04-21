@@ -49,6 +49,7 @@ class Validation(models.Model):
     user = models.ForeignKey(User, related_name="validations", on_delete=models.PROTECT)
     is_valid = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    deleted = models.BooleanField(default=False)
 
     class Meta:
         db_table = "validations"
