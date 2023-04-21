@@ -169,7 +169,7 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
                                 val_count__lt=required_audio_validation_count,
                               locale=request.user.locale) \
                       .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user))\
-                      .order_by("-validation_count", "image", "id")[:count]
+                      .order_by("-val_count", "image", "id")[:count]
             assignment.audios.set(audios)
             assignment.save()
         else:
@@ -177,7 +177,7 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
                 audio_status=ValidationStatus.PENDING.value,
                 val_count__lt=required_audio_validation_count,
                 deleted=False).exclude(Q(validations__user=request.user))\
-                .order_by("-validation_count", "image", "id")
+                .order_by("-val_count", "image", "id")
 
         data = self.serializer_class(audios,
                                      many=True,

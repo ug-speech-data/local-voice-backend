@@ -4,6 +4,7 @@ from knox.models import AuthToken
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from django.db.models import Count
 
 from accounts.forms import UserForm
 from accounts.models import User
@@ -232,15 +233,15 @@ class GetAudiosToValidate(generics.GenericAPIView):
         offset = request.GET.get("offset", -1)
         required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
 
-        audios = Audio.objects.filter(
+        audios = Audio.objects.annotate(vals_count = Count("validations")).filter(
             deleted=False,
            is_accepted=False,
            rejected=False,
            assignments=None,
            audio_status = ValidationStatus.PENDING.value,
-            validation_count__lt=required_audio_validation_count)\
+            vals_count__lt=required_audio_validation_count)\
                 .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user) | Q(id=offset)) \
-            .order_by("-validation_count", "image", "id")
+            .order_by("-vals_count", "image", "id")
 
         if not request.user.is_superuser:
             audios = audios.filter(locale=request.user.locale)
@@ -265,9 +266,12 @@ class ValidateAudio(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         audio_id = request.data.get("id")
         status = request.data.get("status")
-        audio = Audio.objects.filter(
+        configuration = AppConfiguration.objects.first()
+        required_audio_validation_count = configuration.required_audio_validation_count if configuration else 2
+        audio = Audio.objects.annotate(vals_count=Count("validations")).filter(
             id=audio_id,
-            validation_count__lt=2,
+            deleted=False,
+            vals_count__lt=required_audio_validation_count,
         ).exclude(
             Q(audio_status=ValidationStatus.ACCEPTED.value)
             | Q(audio_status=ValidationStatus.REJECTED.value)).first()
