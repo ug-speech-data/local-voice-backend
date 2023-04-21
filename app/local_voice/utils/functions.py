@@ -22,9 +22,7 @@ def apply_filters(objects, filters):
         elif len(filter) == 3:
             key, value, annotation = filter
             objects = objects.annotate(c=Count(annotation)).filter(
-                c__gt=1).filter(
-                    audio_status=ValidationStatus.PENDING.value).filter(
-                        **{key: value})
+                c__gt=1).filter(audio_status=ValidationStatus.PENDING.value)
     return objects
 
 
