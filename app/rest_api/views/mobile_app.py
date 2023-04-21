@@ -1,19 +1,18 @@
 import json
 import logging
 
+from django.db.models import Count, Q
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from dashboard.models import AudioValidationAssignment
-from django.db.models import Count
-from dashboard.models import Audio, Image
+
+from dashboard.models import Audio, AudioValidationAssignment, Image
 from local_voice.utils.constants import ValidationStatus
 from rest_api.serializers import (AudioSerializer, AudioUploadSerializer,
                                   ImageSerializer,
                                   MobileAppConfigurationSerializer,
                                   ParticipantSerializer)
 from setup.models import AppConfiguration
-from django.db.models import Q
 
 logger = logging.getLogger("app")
 

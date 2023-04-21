@@ -1,18 +1,18 @@
-import os
 import logging
+import os
 import zipfile
 from datetime import datetime, timedelta
-import ffmpeg
-from django.db.models import Q
 
+import ffmpeg
 import pandas as pd
 from celery import shared_task
 from django.conf import settings
 from django.core.files import File
+from django.db.models import Q
+
 from accounts.models import User
+from dashboard.models import Audio, AudioValidationAssignment, Notification
 from setup.models import AppConfiguration
-from dashboard.models import AudioValidationAssignment
-from dashboard.models import Audio, Notification
 
 logger = logging.getLogger("app")
 

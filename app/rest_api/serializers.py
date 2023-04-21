@@ -2,20 +2,23 @@ import json
 import logging
 import os
 from datetime import datetime
-from django.db.models import Q
+import tempfile
+
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
+from django.db.models import Q
 from django.utils.timezone import make_aware
 from rest_framework import serializers
 
 from accounts.models import User, Wallet
-from rest_api.tasks import convert_audio_file_to_mp3
 from dashboard.models import (Audio, Category, Image, Notification,
                               Participant, Transcription, Validation)
 from local_voice.utils.constants import ParticipantType
 from payments.models import Transaction
+from rest_api.tasks import convert_audio_file_to_mp3
 from setup.models import AppConfiguration
+from mutagen import File as MFile
 
 logger = logging.getLogger("app")
 
@@ -665,6 +668,15 @@ class AudioUploadSerializer(serializers.Serializer):
         audio = None
 
         file = request.FILES.get("audio_file")
+        # anaylyse file
+        temp_file, temp_file_path = tempfile.mkstemp()
+        f = os.fdopen(temp_file, 'w')
+        f.write(file.read())
+        f.close()
+        m_file = MFile(temp_file_path)
+        duration = round(m_file.info.length)
+        print("duration", duration)
+
         re_upload = request.data.get("re_upload", False)
         api_client = request.data.get("api_client")
         audio_data = request.data.get("audio_data")

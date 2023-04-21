@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from accounts.models import User, Wallet, ActivityLog
+from accounts.models import ActivityLog, User, Wallet
 
 admin.site.register(User)
 admin.site.register(Wallet)

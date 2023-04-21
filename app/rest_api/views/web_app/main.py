@@ -1,50 +1,39 @@
 import logging
+from datetime import datetime
 
 from django.contrib.auth.models import Group, Permission
-from django.db.models import Q
+from django.db.models import Count, Q
+from django.utils.decorators import method_decorator
+from django.utils.timezone import make_aware
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
 from rest_framework import generics, permissions
 from rest_framework.response import Response
-from django.db.models import Count
 
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
-from local_voice.utils.constants import TranscriptionStatus
-from local_voice.utils.constants import ValidationStatus
 from app_statistics.models import Statistics
 from dashboard.forms import CategoryForm
 from dashboard.models import (Audio, Category, Image, Notification,
                               Participant, Transcription)
+from local_voice.utils.constants import TranscriptionStatus, ValidationStatus
 from local_voice.utils.functions import (apply_filters, get_errors_from_form,
                                          relevant_permission_objects)
 from rest_api.permissions import APILevelPermissionCheck
-from rest_api.serializers import (
-    AppConfigurationSerializer,
-    AudioSerializer,
-    CategorySerializer,
-    EnumeratorSerialiser,
-    GroupPermissionSerializer,
-    GroupSerializer,
-    ImageSerializer,
-    NotificationSerializer,
-    ParticipantSerializer,
-    LimitedUserSerializer,
-    AudioTranscriptionSerializer,
-    ConflictResolutionLeaderBoardSerializer,
-    ValidationLeaderBoardSerializer,
-    TranscriptionSerializer,
-    UserSerializer,
-)
+from rest_api.serializers import (AppConfigurationSerializer, AudioSerializer,
+                                  AudioTranscriptionSerializer,
+                                  CategorySerializer,
+                                  ConflictResolutionLeaderBoardSerializer,
+                                  EnumeratorSerialiser,
+                                  GroupPermissionSerializer, GroupSerializer,
+                                  ImageSerializer, LimitedUserSerializer,
+                                  NotificationSerializer,
+                                  ParticipantSerializer,
+                                  TranscriptionSerializer, UserSerializer,
+                                  ValidationLeaderBoardSerializer)
 from rest_api.tasks import export_audio_data
 from rest_api.views.mixins import SimpleCrudMixin
 from setup.models import AppConfiguration
-
-from datetime import datetime
-
-from django.utils.timezone import make_aware
-
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_headers
 
 logger = logging.getLogger("app")
 

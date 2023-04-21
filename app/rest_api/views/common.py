@@ -1,10 +1,11 @@
+import logging
+
 from django.contrib.auth import authenticate, logout
-from django.db.models import Q
+from django.db.models import Count, Q
 from knox.models import AuthToken
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from django.db.models import Count
 
 from accounts.forms import UserForm
 from accounts.models import User
@@ -15,7 +16,6 @@ from rest_api.permissions import APILevelPermissionCheck
 from rest_api.serializers import (AudioSerializer, LoginSerializer,
                                   RegisterSerializer, UserSerializer)
 from setup.models import AppConfiguration
-import logging
 
 logger = logging.getLogger("app")
 

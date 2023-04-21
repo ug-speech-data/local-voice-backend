@@ -3,17 +3,16 @@ from time import sleep
 
 from celery import shared_task
 from requests.exceptions import ConnectTimeout
-from accounts.models import User, Wallet
-from local_voice.utils.constants import ParticipantType
-from setup.models import AppConfiguration
-from dashboard.models import Participant, Audio
 
-from local_voice.utils.constants import (TransactionDirection,
+from accounts.models import User, Wallet
+from dashboard.models import Audio, Participant
+from local_voice.utils.constants import (ParticipantType, TransactionDirection,
                                          TransactionStatus,
                                          TransactionStatusMessages)
 from payments.models import Transaction
 from payments.third_parties.payhub import PayHub
 from payments.third_parties.payhub_status_codes import PayHubStatusCodes
+from setup.models import AppConfiguration
 
 payhub = PayHub()
 logger = logging.getLogger("django")
@@ -161,8 +160,7 @@ def update_user_amounts():
 
         audios_amount = amount * (participant_audios + user_audios)
 
-        validations = Audio.objects.filter(deleted=False,
-                                           validations__user=user).count()
+        validations = Audio.objects.filter(validations__user=user).count()
         validations_amount = validations * amount_per_audio_validation
 
         wallet = user.wallet or Wallet.objects.create()

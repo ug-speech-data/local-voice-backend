@@ -1,7 +1,7 @@
+import os
 from datetime import datetime
 from functools import reduce
 from io import BytesIO
-import os
 
 import requests
 from django.core.files import File
@@ -12,7 +12,8 @@ from PIL import Image as PillowImage
 from PIL import UnidentifiedImageError
 
 from accounts.models import User
-from local_voice.utils.constants import ParticipantType, TransactionDirection, ValidationStatus, TranscriptionStatus
+from local_voice.utils.constants import (ParticipantType, TransactionDirection,
+                                         TranscriptionStatus, ValidationStatus)
 from payments.models import Transaction
 from setup.models import AppConfiguration
 

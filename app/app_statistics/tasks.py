@@ -1,13 +1,13 @@
-import logging
 import datetime
+import logging
 
 from celery import shared_task
 from django.db import NotSupportedError
 from django.db.models import Count
-from local_voice.utils.constants import TranscriptionStatus
 
-from dashboard.models import Audio, Image, Transcription, Participant
-from local_voice.utils.constants import ParticipantType, ValidationStatus
+from dashboard.models import Audio, Image, Participant, Transcription
+from local_voice.utils.constants import (ParticipantType, TranscriptionStatus,
+                                         ValidationStatus)
 from setup.models import AppConfiguration
 
 from .models import Statistics
