@@ -6,6 +6,9 @@ from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.db.models import Count
 from django.utils.html import strip_tags
+from django.db.models import Q
+
+from local_voice.utils.constants import ValidationStatus
 
 logger = logging.getLogger("app")
 
@@ -20,8 +23,9 @@ def apply_filters(objects, filters):
         elif len(filter) == 3:
             key, value, annotation = filter
             objects = objects.annotate(c=Count(annotation)).filter(
-                rejected=False, is_accepted=False,
-                c__gt=1).filter(**{key: value})
+                rejected=False, is_accepted=False, c__gt=1).exclude(
+                    Q(audio_status=ValidationStatus.PENDING.value)).filter(
+                        **{key: value})
     return objects
 
 
