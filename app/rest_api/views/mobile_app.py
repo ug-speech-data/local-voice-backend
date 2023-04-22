@@ -5,6 +5,7 @@ from django.db.models import Count, Q
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from accounts.models import User
 
 from dashboard.models import Audio, AudioValidationAssignment, Image
 from local_voice.utils.constants import ValidationStatus
@@ -66,6 +67,19 @@ class GetAssignedImagesAPI(generics.GenericAPIView):
         batch_number = request.user.assigned_image_batch
         images = Image.objects.filter(is_accepted=True).order_by("?")
         restricted_audio_count = request.user.restricted_audio_count
+        if batch_number == -1:
+            result = User.objects.all().values(
+                'assigned_image_batch').annotate(
+                    total=Count('id')).order_by('total')
+
+            result = sorted(result, key=lambda item: item.get("total"))
+            least_used_batch = result[0].get("assigned_image_batch")
+
+            user = request.user
+            user.assigned_image_batch = least_used_batch
+            batch_number = least_used_batch
+            user.save()
+
         if batch_number > 0:
             images = images.filter(batch_number=batch_number)
         elif batch_number != -2:

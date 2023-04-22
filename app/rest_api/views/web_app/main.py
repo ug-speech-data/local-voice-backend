@@ -20,17 +20,13 @@ from local_voice.utils.constants import TranscriptionStatus, ValidationStatus
 from local_voice.utils.functions import (apply_filters, get_errors_from_form,
                                          relevant_permission_objects)
 from rest_api.permissions import APILevelPermissionCheck
-from rest_api.serializers import (AppConfigurationSerializer, AudioSerializer,
-                                  AudioTranscriptionSerializer,
-                                  CategorySerializer,
-                                  ConflictResolutionLeaderBoardSerializer,
-                                  EnumeratorSerialiser,
-                                  GroupPermissionSerializer, GroupSerializer,
-                                  ImageSerializer, LimitedUserSerializer,
-                                  NotificationSerializer,
-                                  ParticipantSerializer,
-                                  TranscriptionSerializer, UserSerializer,
-                                  ValidationLeaderBoardSerializer)
+from rest_api.serializers import (
+    AppConfigurationSerializer, AudioSerializer, AudioTranscriptionSerializer,
+    CategorySerializer, ConflictResolutionLeaderBoardSerializer,
+    EnumeratorSerialiser, GroupPermissionSerializer, GroupSerializer,
+    ImageSerializer, LimitedUserSerializer, NotificationSerializer,
+    ParticipantSerializer, TranscriptionSerializer, UserSerializer,
+    ValidationLeaderBoardSerializer)
 from rest_api.tasks import export_audio_data
 from rest_api.views.mixins import SimpleCrudMixin
 from setup.models import AppConfiguration
@@ -346,11 +342,15 @@ class AppConfigurationAPI(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         enumerators_group_name = request.data.get("enumerators_group_name")
         validators_group_name = request.data.get("validators_group_name")
+        default_user_group_name = request.data.get("default_user_group_name")
 
         enumerators_group = Group.objects.filter(
             name=enumerators_group_name).first()
         validators_group = Group.objects.filter(
             name=validators_group_name).first()
+        default_user_group = Group.objects.filter(
+            name=default_user_group_name).first()
+
         configuration = AppConfiguration.objects.first()
         if not configuration:
             return Response({"message": "No configurations"}, 400)
@@ -365,6 +365,7 @@ class AppConfigurationAPI(generics.GenericAPIView):
                         setattr(configuration, key, value)
             configuration.enumerators_group = enumerators_group
             configuration.validators_group = validators_group
+            configuration.default_user_group = default_user_group
             configuration.save()
         except Exception as e:
             print(e)

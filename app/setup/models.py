@@ -20,6 +20,7 @@ class AppConfiguration(models.Model):
     number_of_batches = models.IntegerField(default=10)
     enumerators_group = models.OneToOneField(Group, related_name="setup_enumerator_group", on_delete=models.CASCADE, null=True, blank=True)
     validators_group = models.OneToOneField(Group, related_name="setup_validator_group", on_delete=models.CASCADE, null=True, blank=True)
+    default_user_group = models.OneToOneField(Group, on_delete=models.CASCADE, null=True, blank=True)
     android_apk = models.FileField(upload_to="apks/", null=True, blank=True)
     participant_privacy_statement = models.TextField(default="",null=True, blank=True)
     max_image_for_validation_per_user = models.IntegerField(default=300)

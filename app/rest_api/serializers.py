@@ -274,6 +274,7 @@ class GroupPermissionSerializer(serializers.ModelSerializer):
 class AppConfigurationSerializer(serializers.ModelSerializer):
     enumerators_group = GroupSerializer(read_only=True)
     validators_group = GroupSerializer(read_only=True)
+    default_user_group = GroupSerializer(read_only=True)
 
     class Meta:
         model = AppConfiguration

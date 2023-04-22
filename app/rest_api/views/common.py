@@ -42,8 +42,26 @@ class UserRegistrationAPI(generics.GenericAPIView):
                 }
                 return Response(response_data, status=status.HTTP_200_OK)
         user = serializer.save()
-        AuthToken.objects.filter(user=user).delete()
+        email_address = user.email_address
+        if "@ugspeechdata.com" in email_address:
+            prefix = email_address.split("@")[0]
+            i = 0
+            while i < len(prefix) and prefix[i].isalpha():
+                i += 1
+            lead_email_address = prefix[:i] + "@ugspeechdata.com"
+            lead = User.objects.filter(
+                email_address=lead_email_address).first()
 
+            if lead:
+                user.lead = lead
+                user.locale = lead.locale
+
+            configuration = AppConfiguration.objects.first()
+            if configuration.default_user_group:
+                user.groups.add(configuration.default_user_group)
+            user.save()
+
+        AuthToken.objects.filter(user=user).delete()
         response_data = {
             "error_message": None,
             "user": UserSerializer(user).data,
