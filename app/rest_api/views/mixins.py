@@ -81,7 +81,13 @@ class SimpleCrudMixin(generics.GenericAPIView):
         obj = self.model_class.objects.filter(id=obj_id).first()
         if obj:
             try:
-                obj.delete()
+                if hasattr(obj, "deleted"):
+                    obj.deleted = True
+                    if hasattr(obj, "note"):
+                        obj.note = "WEB_DELETED"
+                    obj.save()
+                else:
+                    obj.delete()
                 return Response({
                     "success_message":
                     f"{self.model_class.__name__} deleted successfully"
