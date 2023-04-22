@@ -67,7 +67,7 @@ class GetAssignedImagesAPI(generics.GenericAPIView):
         batch_number = request.user.assigned_image_batch
         images = Image.objects.filter(is_accepted=True).order_by("?")
         restricted_audio_count = request.user.restricted_audio_count
-        if batch_number == -1 or not batch_number:
+        if not batch_number or batch_number <= 0:
             result = User.objects.all().values(
                 'assigned_image_batch').annotate(
                     total=Count('id')).order_by('total')
