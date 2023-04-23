@@ -82,8 +82,6 @@ class GetAssignedImagesAPI(generics.GenericAPIView):
 
         if batch_number > 0:
             images = images.filter(batch_number=batch_number)
-        elif batch_number != -2:
-            images = Image.objects.none()
 
         if restricted_audio_count > 0 and restricted_audio_count < 125:
             images = images.order_by("id")[:restricted_audio_count]
