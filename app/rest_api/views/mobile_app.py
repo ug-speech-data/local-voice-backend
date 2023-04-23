@@ -65,12 +65,17 @@ class GetAssignedImagesAPI(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         batch_number = request.user.assigned_image_batch
-        images = Image.objects.filter(is_accepted=True).order_by("?")
+        images = Image.objects.filter(is_accepted=True)
         restricted_audio_count = request.user.restricted_audio_count
-        if not batch_number or batch_number <= 0:
-            result = User.objects.filter(assigned_image_batch__gt=0).values(
-                'assigned_image_batch').annotate(
-                    total=Count('id')).order_by('total')
+        configuration = AppConfiguration.objects.first()
+        number_of_batches = configuration.number_of_batches if configuration else 8
+
+        if not batch_number or batch_number <= 0 or batch_number > number_of_batches:
+            result = User.objects.filter(
+                assigned_image_batch__gt=0,
+                assigned_image_batch__lte=number_of_batches).values(
+                    'assigned_image_batch').annotate(
+                        total=Count('id')).order_by('total')
 
             result = sorted(result, key=lambda item: item.get("total"))
             least_used_batch = result[0].get("assigned_image_batch")
