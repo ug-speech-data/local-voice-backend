@@ -11,7 +11,7 @@ from django.core.files import File
 from django.db.models import Q
 
 from accounts.models import User
-from dashboard.models import Audio, AudioValidationAssignment, Notification
+from dashboard.models import Audio, AudioValidationAssignment, Notification, Transcription
 from setup.models import AppConfiguration
 
 logger = logging.getLogger("app")
@@ -188,6 +188,11 @@ def get_conflicts_resolved(user):
     return Audio.objects.filter(conflict_resolved_by=user).count()
 
 
+def get_audios_transcribed(user):
+    from dashboard.models import Audio
+    return Transcription.objects.filter(user=user).count()
+
+
 @shared_task()
 def update_user_stats():
     users = User.objects.filter(deleted=False, is_active=True)
@@ -198,6 +203,7 @@ def update_user_stats():
         user.audios_submitted = get_audios_submitted(user)
         user.audios_validated = get_audios_validated(user)
         user.conflicts_resolved = get_conflicts_resolved(user)
+        user.audios_transcribed = get_audios_transcribed(user)
         user.estimated_deduction_amount = get_estimated_deduction_amount(user)
         user.save()
 
