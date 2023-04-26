@@ -223,8 +223,9 @@ class GroupsAPI(SimpleCrudMixin):
     """
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
     required_permissions = [
-        "auth.add_group", "auth.change_group", "auth.delete_group",
-        "auth.view_group", "setup.manage_setup"
+        "auth.add_group",
+        "auth.change_group",
+        "auth.view_group",
     ]
     serializer_class = GroupSerializer
     model_class = Group
