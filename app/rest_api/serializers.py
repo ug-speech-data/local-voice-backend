@@ -389,6 +389,7 @@ class AudioSerializer(serializers.ModelSerializer):
     thumbnail = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
     submitted_by = serializers.SerializerMethodField()
+    email_address = serializers.SerializerMethodField()
     audio_url = serializers.SerializerMethodField()
     image_batch_number = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
@@ -405,6 +406,11 @@ class AudioSerializer(serializers.ModelSerializer):
         return obj.get_audio_url(request)
 
     def get_submitted_by(self, obj):
+        if obj.submitted_by:
+            return obj.submitted_by.get_name()
+        return ""
+
+    def get_email_address(self, obj):
         if obj.submitted_by:
             return obj.submitted_by.email_address
         return ""
@@ -480,6 +486,7 @@ class AudioTranscriptionSerializer(serializers.ModelSerializer):
             transcriptions.append({
                 "user": {
                     "email_address": transcription.user.email_address,
+                    "full_name": transcription.user.get_name(),
                     "phone": transcription.user.phone,
                 },
                 "text": transcription.get_text(),

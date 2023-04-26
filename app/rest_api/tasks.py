@@ -189,7 +189,6 @@ def get_conflicts_resolved(user):
 
 
 def get_audios_transcribed(user):
-    from dashboard.models import Audio
     return Transcription.objects.filter(user=user).count()
 
 

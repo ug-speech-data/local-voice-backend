@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+import math
 
 from django.contrib.auth.models import Group, Permission
 from django.db.models import Count, Q
@@ -32,6 +33,7 @@ from rest_api.views.mixins import SimpleCrudMixin
 from setup.models import AppConfiguration
 
 logger = logging.getLogger("app")
+QUERY_PAGE_SIZE = 10
 
 
 class GetImagesToValidate(generics.GenericAPIView):
@@ -229,6 +231,24 @@ class GroupsAPI(SimpleCrudMixin):
     form_class = GroupForm
     response_data_label = "group"
     response_data_label_plural = "groups"
+
+    def get(self, request):
+        limited = "true" in request.GET.get("limited")
+        configuration = AppConfiguration.objects.first()
+        groups = Group.objects.all()
+        if limited:
+            groups = configuration.limited_groups.all(
+            ) if configuration else Group.objects.none()
+
+        response_data = {
+            self.response_data_label_plural:
+            self.serializer_class(groups,
+                                  context={
+                                      "request": request
+                                  },
+                                  many=True).data,
+        }
+        return Response(response_data)
 
 
 class PermissionsAPI(SimpleCrudMixin):
@@ -485,6 +505,56 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
     def modify_response_data(self, objects):
         return objects.annotate(t_count=Count("transcriptions")).filter(
             t_count__gt=0)
+
+    def get(self, request, *args, **kwargs):
+        filters = request.GET.getlist("filters")
+        query = request.GET.get("query") or request.GET.get("q")
+
+        objects = self.model_class.objects.all().order_by(
+            "-id")  # type: ignore
+        if filters:
+            objects = apply_filters(objects, filters)
+        if query and hasattr(self.model_class,
+                             "generate_query"):  # type: ignore
+            objects = objects.filter(
+                Q(transcriptions__user__email_address__contains=query)
+                | Q(transcriptions__user__surname__contains=query)
+                | Q(transcriptions__user__other_names__contains=query)
+            )  # type: ignore
+
+        if hasattr(self.model_class, "deleted"):  # type: ignore
+            objects = objects.filter(deleted=False)
+
+        if hasattr(self, "modify_response_data"):
+            objects = self.modify_response_data(objects)
+
+        page = request.GET.get("page", "")
+        page_size = request.GET.get("page_size", "")
+        page_size = int(
+            page_size) if page_size.isnumeric() else QUERY_PAGE_SIZE
+        total_pages = max(1, math.ceil(objects.count() / page_size))
+
+        page = int(page) if page.isnumeric() else 1
+        if page > total_pages:
+            page = total_pages
+        page = max(page, 1)
+
+        paginated_objects = objects[(page - 1) * page_size:page * page_size]
+        prev_page = page - 1 if page > 1 else None
+        next_page = page + 1 if total_pages > page else None
+
+        #yapf: disable
+        response_data = {
+            self.response_data_label_plural:
+            self.serializer_class(paginated_objects, context={"request": request},many=True).data,
+            "page": page,
+            "page_size": page_size,
+            "total": objects.count(),
+            "next_page": next_page,
+            "previous_page": prev_page,
+            "total_pages": total_pages,
+        }
+        return Response(response_data)
 
     def post(self, request, *args, **kwargs):
         object_id = request.data.get("id") or -1

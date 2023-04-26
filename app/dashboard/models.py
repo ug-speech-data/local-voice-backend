@@ -331,7 +331,7 @@ class Audio(models.Model):
 
     @staticmethod
     def generate_query(query):
-        queries = [Q(**{f"{key}__icontains": query}) for key in ["environment", "locale",
+        queries = [Q(**{f"{key}__icontains": query}) for key in ["locale",
                                                                  "id",
                                                                  "device_id", "submitted_by__email_address", "participant__momo_number", "participant__fullname", "image__name"]]
         return reduce(lambda x, y: x | y, queries)

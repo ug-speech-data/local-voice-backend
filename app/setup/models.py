@@ -45,6 +45,7 @@ class AppConfiguration(models.Model):
     hours_to_keep_audios_for_validation = models.IntegerField(default=12)
 
     current_apk_versions = models.CharField(max_length=11,default="")
+    limited_groups = models.ManyToManyField(Group, related_name="configurations")
 
     def save(self, *args, **kwargs) -> None:
         if self.android_apk:
