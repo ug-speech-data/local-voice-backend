@@ -285,9 +285,9 @@ class PermissionsAPI(SimpleCrudMixin):
 
 class UsersAPI(SimpleCrudMixin):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    add_permissions = ["accounts.add_user", "setup.manage_setup"]
-    change_permissions = ["accounts.change_user", "setup.manage_setup"]
-    delete_permissions = ["accounts.delete_user", "setup.manage_setup"]
+    add_permissions = ["accounts.add_user"]
+    change_permissions = ["accounts.change_user"]
+    delete_permissions = ["accounts.delete_user"]
 
     serializer_class = UserSerializer
     model_class = User
