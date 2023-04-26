@@ -233,7 +233,7 @@ class GroupsAPI(SimpleCrudMixin):
     response_data_label_plural = "groups"
 
     def get(self, request):
-        limited = "true" in request.GET.get("limited")
+        limited = "true" in request.GET.get("limited", "")
         configuration = AppConfiguration.objects.first()
         groups = Group.objects.all()
         if limited:
