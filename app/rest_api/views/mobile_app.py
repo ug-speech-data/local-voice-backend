@@ -104,7 +104,7 @@ class GetUploadedAudios(generics.GenericAPIView):
     serializer_class = AudioSerializer
 
     def get(self, request, *args, **kwargs):
-        audios = Audio.objects.filter(submitted_by=request.user)
+        audios = Audio.objects.filter(submitted_by=request.user, deleted=False)
         data = self.serializer_class(audios,
                                      many=True,
                                      context={
