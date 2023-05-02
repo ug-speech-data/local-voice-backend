@@ -47,7 +47,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     conflicts_resolved = models.IntegerField(default=0)
     audios_transcribed = models.IntegerField(default=0)
     deleted = models.BooleanField(default=False)
-    
+
     # Django stuff for authentication
     USERNAME_FIELD = "email_address"
     objects = UserManager()
@@ -90,6 +90,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email_address
+
+    def save(self, *args, **kwargs) -> None:
+        if self.deleted:
+            self.is_active = False
+        return super().save(*args, **kwargs)
 
 
 class Wallet(models.Model):

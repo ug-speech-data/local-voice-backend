@@ -312,7 +312,7 @@ class UsersAPI(SimpleCrudMixin):
         else:
             created_by = request.user
 
-        lead = User.objects.filter(email_address=lead_email_address).first()
+        lead = User.objects.filter(email_address=lead_email_address, deleted=False).first()
         if not lead and lead_email_address:
             return Response({
                 "message":
@@ -837,7 +837,7 @@ class GetEnumerators(generics.GenericAPIView):
     @method_decorator(cache_page(60 * 60 * 2))
     @method_decorator(vary_on_headers(*["Authorization"]))
     def get(self, request, *args, **kwargs):
-        users = User.objects.filter(Q(lead=request.user)).order_by("surname")
+        users = User.objects.filter(Q(lead=request.user), deleted=False).order_by("surname")
         return Response(
             {"enumerators": self.serializer_class(users, many=True).data})
 
