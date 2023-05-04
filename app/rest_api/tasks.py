@@ -211,9 +211,7 @@ def update_user_stats():
         lead=None).values_list("lead_id", flat=True)
     leads = User.objects.filter(id__in=lead_ids)
     for lead in leads:
-        enumerators = User.objects.filter(
-            deleted=False,
-            email_address__startswith=lead.email_address.split("@")[0])
+        enumerators = User.objects.filter(deleted=False, lead=lead)
         audios = Audio.objects.filter(deleted=False,
                                       submitted_by__in=enumerators)
         total_sumitted = round(
