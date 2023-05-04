@@ -794,7 +794,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_rejected_percentage": round(rejected /  max(1, float(getattr(stats, f"{lang}_audios_double_validation"))) * 100,2),
         }
 
-    # @method_decorator(cache_page(60 * 10))
+    @method_decorator(cache_page(60 * 10))
     def get(self, request, *args, **kwargs):
         stats = Statistics.objects.first()
         conflict_resolution_users = User.objects.filter(conflicts_resolved__gt=0).order_by("-conflicts_resolved")[:15]
