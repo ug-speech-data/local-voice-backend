@@ -801,7 +801,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
         validation_users = User.objects.filter().order_by("-audios_validated")[:15]
 
         lead_ids = User.objects.filter(deleted=False).exclude(lead=None).values_list("lead_id", flat=True)
-        leads = User.objects.filter(id__in=lead_ids).order_by("locale", "-proxy_audios_submitted_in_hours")
+        leads = User.objects.filter(id__in=lead_ids).order_by("-proxy_audios_submitted_in_hours")
 
         return Response({
             "updated_at":stats.updated_at.strftime("%Y-%m-%d %H:%M:%S"),
