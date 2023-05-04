@@ -13,6 +13,7 @@ from mutagen import File as MFile
 from rest_framework import serializers
 
 from accounts.models import User, Wallet
+from local_voice.utils.constants import ValidationStatus
 from dashboard.models import (Audio, Category, Image, Notification,
                               Participant, Transcription, Validation)
 from local_voice.utils.constants import ParticipantType
@@ -42,6 +43,7 @@ class ConflictResolutionLeaderBoardSerializer(serializers.ModelSerializer):
 
 
 class ValidationLeaderBoardSerializer(serializers.ModelSerializer):
+    language = serializers.SerializerMethodField()
 
     def get_language(self, user):
         return user.language
@@ -55,6 +57,24 @@ class ValidationLeaderBoardSerializer(serializers.ModelSerializer):
             "other_names",
             "language",
             "audios_validated",
+        ]
+
+
+class AudiosByLeadsSerializer(serializers.ModelSerializer):
+
+    def get_language(self, user):
+        return user.language
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "surname",
+            "locale",
+            "other_names",
+            "language",
+            "proxy_audios_submitted_in_hours",
+            "proxy_audios_accepted_in_hours",
         ]
 
 
@@ -358,6 +378,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
     submitted_by = serializers.SerializerMethodField()
     audio_count = serializers.SerializerMethodField()
     audios_validated = serializers.SerializerMethodField()
+    percentage_audios_accepted = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
 
     def get_created_at(self, obj):
@@ -371,12 +392,20 @@ class ParticipantSerializer(serializers.ModelSerializer):
     def get_audio_count(self, obj):
         return obj.audios.filter(deleted=False).count()
 
+    def get_percentage_audios_accepted(self, obj):
+        audios = max(self.get_audio_count(obj), 1)
+        return round(
+            obj.audios.filter(
+                deleted=False,
+                audio_status=ValidationStatus.ACCEPTED.value).count() /
+            audios * 100, 2)
+
     def get_audios_validated(self, obj):
         audios = max(self.get_audio_count(obj), 1)
         return round(
-            obj.audios.filter(deleted=False).filter(
-                Q(rejected=True) | Q(is_accepted=True)).count() / audios * 100,
-            2)
+            obj.audios.filter(deleted=False).exclude(
+                audio_status=ValidationStatus.PENDING.value).count() / audios *
+            100, 2)
 
     class Meta:
         model = Participant

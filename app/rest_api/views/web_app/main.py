@@ -27,7 +27,7 @@ from rest_api.serializers import (
     EnumeratorSerialiser, GroupPermissionSerializer, GroupSerializer,
     ImageSerializer, LimitedUserSerializer, NotificationSerializer,
     ParticipantSerializer, TranscriptionSerializer, UserSerializer,
-    ValidationLeaderBoardSerializer)
+    ValidationLeaderBoardSerializer, AudiosByLeadsSerializer)
 from rest_api.tasks import export_audio_data
 from rest_api.views.mixins import SimpleCrudMixin
 from setup.models import AppConfiguration
@@ -312,7 +312,8 @@ class UsersAPI(SimpleCrudMixin):
         else:
             created_by = request.user
 
-        lead = User.objects.filter(email_address=lead_email_address, deleted=False).first()
+        lead = User.objects.filter(email_address=lead_email_address,
+                                   deleted=False).first()
         if not lead and lead_email_address:
             return Response({
                 "message":
@@ -480,7 +481,8 @@ class CollectedAudiosAPI(SimpleCrudMixin):
             audio_obj.rejected = True
             audio_obj.is_accepted = False
 
-        audio_obj.conflict_resolved_by = request.user
+        if not audio_obj.conflict_resolved_by:
+            audio_obj.conflict_resolved_by = request.user
 
         audio_obj.save()
 
@@ -792,11 +794,14 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_rejected_percentage": round(rejected /  max(1, float(getattr(stats, f"{lang}_audios_double_validation"))) * 100,2),
         }
 
-    @method_decorator(cache_page(60 * 10))
+    # @method_decorator(cache_page(60 * 10))
     def get(self, request, *args, **kwargs):
         stats = Statistics.objects.first()
         conflict_resolution_users = User.objects.filter(conflicts_resolved__gt=0).order_by("-conflicts_resolved")[:15]
         validation_users = User.objects.filter().order_by("-audios_validated")[:15]
+
+        lead_ids = User.objects.filter(deleted=False).exclude(lead=None).values_list("lead_id", flat=True)
+        leads = User.objects.filter(id__in=lead_ids).order_by("locale", "proxy_audios_accepted_in_hours")
 
         return Response({
             "updated_at":stats.updated_at.strftime("%Y-%m-%d %H:%M:%S"),
@@ -828,6 +833,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
             },
             "conflict_resolution_leaders": ConflictResolutionLeaderBoardSerializer(conflict_resolution_users, many=True).data,
             "validation_leaders": ValidationLeaderBoardSerializer(validation_users, many=True).data,
+            "audios_by_leads": AudiosByLeadsSerializer(leads, many=True).data,
         })
 
 class GetEnumerators(generics.GenericAPIView):

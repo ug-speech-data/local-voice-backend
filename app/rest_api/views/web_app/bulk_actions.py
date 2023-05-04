@@ -71,26 +71,24 @@ class AudiosBulkAction(generics.GenericAPIView):
         ids = request.data.get("ids") or []
         action = request.data.get("action")
 
-        audios = Audio.objects.filter(id__in=ids)
+        audios = Audio.objects.filter(id__in=ids, deleted=False)
 
-        if action == "approve":
-            # Will remove the boolean fields
-            audios.update(is_accepted=True,
-                          rejected=False,
-                          audio_status=ValidationStatus.ACCEPTED.value,
-                          conflict_resolved_by=request.user)
-            return Response({"message": f"Approved {audios.count()} audios."})
+        if action != "delete":
+            is_accepted = action == "approve"
+            rejected = not is_accepted
+            status = ValidationStatus.ACCEPTED.value if is_accepted else ValidationStatus.REJECTED
+            for audio in audios:
+                Audio.objects.filter(id=audio.id).update(
+                    is_accepted=is_accepted,
+                    rejected=rejected,
+                    audio_status=status)
+                if not audio.conflict_resolved_by:
+                    Audio.objects.filter(id=audio.id).update(
+                        conflict_resolved_by=request.user)
+            return Response({"message": f"Updated {audios.count()} audios."})
 
-        if action == "reject":
-            # Will remove the boolean fields
-            audios.update(is_accepted=False,
-                          rejected=True,
-                          audio_status=ValidationStatus.REJECTED.value,
-                          conflict_resolved_by=request.user)
-            return Response({"message": f"Rejected {audios.count()} audios."})
-
-        if action == "delete":
-            res, _ = audios.delete()
+        elif action == "delete":
+            res, _ = audios.update(deleted=True)
             return Response({"message": f"Deleted {res} audios."})
         return Response({"message": "Invalid operation"})
 

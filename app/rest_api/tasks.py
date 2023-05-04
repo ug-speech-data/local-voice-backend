@@ -206,6 +206,26 @@ def update_user_stats():
         user.estimated_deduction_amount = get_estimated_deduction_amount(user)
         user.save()
 
+    # Update leads stats
+    lead_ids = User.objects.filter(deleted=False).exclude(
+        lead=None).values_list("lead_id", flat=True)
+    leads = User.objects.filter(id__in=lead_ids)
+    for lead in leads:
+        enumerators = User.objects.filter(
+            deleted=False,
+            email_address__startswith=lead.email_address.split("@")[0])
+        audios = Audio.objects.filter(deleted=False,
+                                      submitted_by__in=enumerators)
+        total_sumitted = round(
+            sum(audios.values_list("duration", flat=True)) / 3600, 2)
+        total_approved = round(
+            sum(
+                audios.filter(audio_status="accepted").values_list(
+                    "duration", flat=True)) / 3600, 2)
+        User.objects.filter(id=lead.id).update(
+            proxy_audios_submitted_in_hours=total_sumitted,
+            proxy_audios_accepted_in_hours=total_approved)
+
 
 @shared_task()
 def release_audios_not_being_validated_by_users_assigned():
