@@ -49,6 +49,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     deleted = models.BooleanField(default=False)
     proxy_audios_submitted_in_hours = models.DecimalField(default=0, decimal_places=2, max_digits=15)
     proxy_audios_accepted_in_hours = models.DecimalField(default=0, decimal_places=2, max_digits=15)
+    proxy_audios_rejected_in_hours = models.DecimalField(default=0, decimal_places=2, max_digits=15)
 
     # Django stuff for authentication
     USERNAME_FIELD = "email_address"

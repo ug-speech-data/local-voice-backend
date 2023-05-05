@@ -377,6 +377,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
     transaction = TransactionSerializer(read_only=True)
     submitted_by = serializers.SerializerMethodField()
     audio_count = serializers.SerializerMethodField()
+    locale = serializers.SerializerMethodField()
     audios_validated = serializers.SerializerMethodField()
     percentage_audios_accepted = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
@@ -387,6 +388,11 @@ class ParticipantSerializer(serializers.ModelSerializer):
     def get_submitted_by(self, obj):
         if obj.submitted_by:
             return obj.submitted_by.email_address
+        return ""
+
+    def get_locale(self, obj):
+        if obj.submitted_by:
+            return obj.submitted_by.locale
         return ""
 
     def get_audio_count(self, obj):

@@ -16,7 +16,11 @@ def apply_filters(objects, filters):
     for filter in filters:
         filter = filter.split(":")
         if len(filter) == 2:
-            objects = objects.filter(**{filter[0]: filter[1]})
+            key, value = filter
+            if value == "null":
+                objects = objects.filter(**{key: None})
+            else:
+                objects = objects.filter(**{key: value})
 
         # Special case for validation conflict
         elif len(filter) == 3:

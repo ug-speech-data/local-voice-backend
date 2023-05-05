@@ -220,8 +220,13 @@ def update_user_stats():
             sum(
                 audios.filter(audio_status="accepted").values_list(
                     "duration", flat=True)) / 3600, 2)
+        total_rejected = round(
+            sum(
+                audios.filter(audio_status="rejected").values_list(
+                    "duration", flat=True)) / 3600, 2)
         User.objects.filter(id=lead.id).update(
             proxy_audios_submitted_in_hours=total_sumitted,
+            proxy_audios_rejected_in_hours=total_rejected,
             proxy_audios_accepted_in_hours=total_approved)
 
 
