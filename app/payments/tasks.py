@@ -149,14 +149,16 @@ def update_user_amounts():
             participant__type=ParticipantType.ASSISTED.value).count()
         participant_audios = 0
         email_prefix = user.email_address.split("@")[0][:-2]
-        if "ugspeechdata.com" in user.email_address and email_prefix[
+        if "ugspeechdata.com" in user.email_address and not email_prefix[
                 -2:].isdigit():
             users_participants = User.objects.filter(
                 email_address__istartswith=email_prefix).exclude(
                     email_address=user.email_address)
 
             participant_audios = Audio.objects.filter(
-                deleted=False, submitted_by__in=users_participants).count()
+                participant__type=ParticipantType.INDEPENDENT.value,
+                deleted=False,
+                submitted_by__in=users_participants).count()
 
         audios_amount = amount * (participant_audios + user_audios)
 
