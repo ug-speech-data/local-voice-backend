@@ -75,6 +75,7 @@ class AudiosByLeadsSerializer(serializers.ModelSerializer):
             "language",
             "proxy_audios_submitted_in_hours",
             "proxy_audios_accepted_in_hours",
+            "proxy_audios_rejected_in_hours",
         ]
 
 
