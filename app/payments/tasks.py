@@ -151,8 +151,12 @@ def update_user_amounts():
             participant__type=ParticipantType.ASSISTED.value).count()
         participant_audios = 0
         email_prefix = user.email_address.split("@")[0][:-2]
-        if "ugspeechdata.com" in user.email_address and not email_prefix[
-                -2:].isdigit():
+        if ("ugspeechdata.com" in user.email_address
+                # Is not a lead
+                and user.email_address.split("@")[0][:-2].isdigit()
+                # Is not a participant recruited by an enumerator
+                and not email_prefix[-2:].isdigit()):
+
             users_participants = User.objects.filter(
                 email_address__istartswith=email_prefix).exclude(
                     email_address=user.email_address)
