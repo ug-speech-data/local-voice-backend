@@ -79,7 +79,11 @@ class Image(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted = models.BooleanField(default=False)
-    transcription_count = models.IntegerField(default=0)
+    transcription_count_ee_gh = models.IntegerField(default=0)
+    transcription_count_dag_gh = models.IntegerField(default=0)
+    transcription_count_dga_gh = models.IntegerField(default=0)
+    transcription_count_kpo_gh = models.IntegerField(default=0)
+    transcription_count_ak_gh = models.IntegerField(default=0)
 
     class Meta:
         db_table = "images"

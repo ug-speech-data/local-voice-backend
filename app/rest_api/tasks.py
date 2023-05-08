@@ -11,7 +11,7 @@ from django.core.files import File
 from django.db.models import Q
 
 from accounts.models import User
-from dashboard.models import Audio, AudioValidationAssignment, Notification, Transcription
+from dashboard.models import Audio, AudioValidationAssignment, Notification, Transcription, AudioTranscriptionAssignment
 from setup.models import AppConfiguration
 
 logger = logging.getLogger("app")
@@ -238,6 +238,19 @@ def release_audios_not_being_validated_by_users_assigned():
     expiry_date = datetime.now() - timedelta(
         hours=hours_to_keep_audios_for_validation)
     forgotten_assignments = AudioValidationAssignment.objects.filter(
+        created_at__lte=expiry_date)
+    deleted, _ = forgotten_assignments.delete()
+    logger.info(f"Made {deleted} audios available for reassignment.")
+
+
+@shared_task()
+def release_audios_not_being_transcribed_by_users_assigned():
+    configuration = AppConfiguration.objects.first()
+    hours_to_keep_audios_for_transcription = configuration.hours_to_keep_audios_for_transcription if configuration else 6
+
+    expiry_date = datetime.now() - timedelta(
+        hours=hours_to_keep_audios_for_transcription)
+    forgotten_assignments = AudioTranscriptionAssignment.objects.filter(
         created_at__lte=expiry_date)
     deleted, _ = forgotten_assignments.delete()
     logger.info(f"Made {deleted} audios available for reassignment.")

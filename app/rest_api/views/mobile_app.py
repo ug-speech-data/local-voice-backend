@@ -224,31 +224,37 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
             user=request.user)
         EXPECTED_TRANSCRIPTIONS_PER_IMAGE = 24 * required_transcription_validation_count
 
+        locale_count = f"image__transcription_count_{request.user.locale}"
+        if not hasattr(Image, f"transcription_count_{request.user.locale}"):
+            return Response({"message": "Invalid locale"})
+
+        transcription_count_filter = {
+            locale_count: EXPECTED_TRANSCRIPTIONS_PER_IMAGE
+        }
         if created or assignment.audios.all().count() == 0 or completed:
             audios = (Audio.objects.annotate(
                 t_assign=Count("transcriptions_assignments"),
                 t_count=Count("transcriptions")).filter(
-                    image__transcription_count__lte=
-                    EXPECTED_TRANSCRIPTIONS_PER_IMAGE,
-                    transcription_status=ValidationStatus.PENDING.value,
-                    locale=request.user.locale,
-                    deleted=False,
-                    t_assign__lt=required_transcription_validation_count,
-                    t_count__lt=required_transcription_validation_count).
-                      exclude(Q(transcriptions__user=request.user)).order_by(
-                          "-t_count", "?"))[:count]
+                    Q(**transcription_count_filter)
+                    | Q(t_count__gte=1)).filter(
+                        transcription_status=ValidationStatus.PENDING.value,
+                        locale=request.user.locale,
+                        deleted=False,
+                        t_assign__lt=required_transcription_validation_count,
+                        t_count__lt=required_transcription_validation_count
+                    ).exclude(Q(transcriptions__user=request.user)).order_by(
+                        "-t_count", locale_count, "?"))[:count]
             assignment.audios.set(audios)
             assignment.save()
         else:
             audios = assignment.audios.annotate(
                 t_count=Count("transcriptions")).filter(
-                    image__transcription_count__lte=
-                    EXPECTED_TRANSCRIPTIONS_PER_IMAGE,
+                    **transcription_count_filter,
                     transcription_status=ValidationStatus.PENDING.value,
                     t_count__lt=required_transcription_validation_count,
                     deleted=False).exclude(
                         Q(transcriptions__user=request.user)).order_by(
-                            "-t_count", "?")
+                            "-t_count", locale_count, "?")
 
         data = self.serializer_class(audios,
                                      many=True,

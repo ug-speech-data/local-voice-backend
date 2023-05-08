@@ -311,25 +311,21 @@ class SubmitTranscription(generics.GenericAPIView):
         configuration = AppConfiguration.objects.first()
         required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 2
 
-        audio = Audio.objects.filter(
+        audio = Audio.objects.annotate(t_count=Count("transcriptions")).filter(
             id=audio_id,
-            transcription_count__lt=required_transcription_validation_count)\
+            t_count__lt=required_transcription_validation_count)\
             .exclude(transcriptions__user=request.user)\
                 .first()
         if audio:
             text = request.data.get("text")
-            transcription, _ = Transcription.objects.get_or_create(audio=audio, user=request.user)
+            transcription, _ = Transcription.objects.get_or_create(
+                audio=audio, user=request.user)
             transcription.text = text
             transcription.save()
             audio.transcription_status = TranscriptionStatus.PENDING.value
             audio.save()
-
-            image = audio.image
-            image.transcription_count = Transcription.objects.filter(
-                deleted=False, audio__image=image).count()
-            image.save()
         else:
-            logger.info("Audio is not available for transciption.")
+            logger.info("Audio is not available for transcription.")
             return Response({
                 "message": "Audio no longer available for transcription.",
                 "status": "success",

@@ -5,7 +5,7 @@ from django.dispatch import receiver
 
 from setup.models import AppConfiguration
 
-from .models import Audio, Image, Transcription
+from dashboard.models import Audio, Image, Transcription
 
 
 @receiver(models.signals.post_delete, sender=Image)
@@ -208,6 +208,10 @@ def auto_delete_audio_file_on_change(sender, instance, **kwargs):
 @receiver(models.signals.post_save, sender=Transcription)
 def recount_transcriptions_per_image(sender, instance, **kwargs):
     image = instance.audio.image
-    image.transcription_count = Transcription.objects.filter(
-        deleted=False, audio__image=image).count()
+    audio = instance.audio
+    transcription_count = Transcription.objects.filter(
+                audio__locale=audio.locale, deleted=False,
+                audio__image=image).count()
+    setattr(image, f"transcription_count_{audio.locale}",
+                    transcription_count)
     image.save()
