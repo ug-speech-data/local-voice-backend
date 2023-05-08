@@ -79,6 +79,7 @@ class Image(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted = models.BooleanField(default=False)
+    transcription_count = models.IntegerField(default=0)
 
     class Meta:
         db_table = "images"
@@ -442,5 +443,12 @@ class Transcription(models.Model):
 class AudioValidationAssignment(models.Model):
     user = models.ForeignKey(User, related_name="aligned_audios", on_delete=models.CASCADE)
     audios = models.ManyToManyField(Audio, related_name="assignments", db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
+
+
+class AudioTranscriptionAssignment(models.Model):
+    user = models.ForeignKey(User, related_name="aligned_transcription_audios", on_delete=models.CASCADE)
+    audios = models.ManyToManyField(Audio, related_name="transcriptions_assignments", db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)

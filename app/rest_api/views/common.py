@@ -9,7 +9,8 @@ from rest_framework.response import Response
 
 from accounts.forms import UserForm
 from accounts.models import User
-from dashboard.models import Audio
+from local_voice.utils.constants import TranscriptionStatus
+from dashboard.models import Audio, Transcription
 from local_voice.utils.constants import ValidationStatus
 from local_voice.utils.functions import get_all_user_permissions
 from rest_api.permissions import APILevelPermissionCheck
@@ -297,5 +298,43 @@ class ValidateAudio(generics.GenericAPIView):
             audio.validate(request.user, status)
         return Response({
             "message": "Validation recorded.",
+            "status": "success",
+        })
+
+
+class SubmitTranscription(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.transcribe_audio"]
+
+    def post(self, request, *args, **kwargs):
+        audio_id = request.data.get("id")
+        configuration = AppConfiguration.objects.first()
+        required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 2
+
+        audio = Audio.objects.filter(
+            id=audio_id,
+            transcription_count__lt=required_transcription_validation_count)\
+            .exclude(transcriptions__user=request.user)\
+                .first()
+        if audio:
+            text = request.data.get("text")
+            transcription, _ = Transcription.objects.get_or_create(audio=audio, user=request.user)
+            transcription.text = text
+            transcription.save()
+            audio.transcription_status = TranscriptionStatus.PENDING.value
+            audio.save()
+
+            image = audio.image
+            image.transcription_count = Transcription.objects.filter(
+                deleted=False, audio__image=image).count()
+            image.save()
+        else:
+            logger.info("Audio is not available for transciption.")
+            return Response({
+                "message": "Audio no longer available for transcription.",
+                "status": "success",
+            })
+        return Response({
+            "message": "Transcription saved.",
             "status": "success",
         })

@@ -259,6 +259,7 @@ class MobileAppConfigurationSerializer(serializers.ModelSerializer):
             "participant_privacy_statement_audio",
             "max_background_noise_level",
             "hours_to_keep_audios_for_validation",
+            "hours_to_keep_audios_for_transcription",
             "participant_privacy_statement",
             "id",
             "current_apk_versions",

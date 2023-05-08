@@ -53,6 +53,7 @@ urlpatterns += [
     path("limited-users/", views.LimitedUsersAPIView.as_view()),
 
     path("get-assigned-audios-to-validate/", views.GetBulkAssignedToValidate.as_view()),
+    path("get-assigned-audios-to-transcribe/", views.GetBulkAssignedToTranscribe.as_view()),
 ]
 
 

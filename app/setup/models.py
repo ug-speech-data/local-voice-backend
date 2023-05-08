@@ -43,6 +43,7 @@ class AppConfiguration(models.Model):
     allow_recording_more_than_required_per_participant = models.BooleanField(default=False)
     number_of_audios_per_participant = models.IntegerField(default=120)
     hours_to_keep_audios_for_validation = models.IntegerField(default=12)
+    hours_to_keep_audios_for_transcription = models.IntegerField(default=12)
 
     current_apk_versions = models.CharField(max_length=11,default="")
     limited_groups = models.ManyToManyField(Group, related_name="configurations")
