@@ -254,3 +254,17 @@ def release_audios_not_being_transcribed_by_users_assigned():
         created_at__lte=expiry_date)
     deleted, _ = forgotten_assignments.delete()
     logger.info(f"Made {deleted} audios available for reassignment.")
+
+
+@shared_task()
+def clear_temp_dir():
+    temp = os.path.join(settings.MEDIA_ROOT, "temps")
+    if not os.path.exists(temp):
+        os.makedirs(temp)
+
+    for file_name in os.listdir(temp):
+        # construct full file path
+        file = temp + "/" + file_name
+        if os.path.isfile(file):
+            logger.info('Deleting file:', file)
+            os.remove(file)
