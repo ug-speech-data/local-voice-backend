@@ -271,7 +271,9 @@ class Participant(models.Model):
         if self.pk is None and self.fullname is not None:
             slug = "-".join(sorted(self.fullname.split()))
             self.slug = slug
-        self.transactions.add(self.transaction)
+
+        if self.transaction:
+            self.transactions.add(self.transaction)
 
         paid = sum(self.transactions.exclude(Q(status="failed")).values_list("amount", flat=True))
         self.balance = decimal.Decimal(self.amount) - decimal.Decimal(paid)
