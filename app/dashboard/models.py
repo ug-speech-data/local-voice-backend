@@ -214,7 +214,7 @@ class Participant(models.Model):
     paid = models.BooleanField(default=False, db_index=True)
     transaction = models.OneToOneField(
         Transaction, related_name="participant", on_delete=models.SET_NULL, blank=True, null=True)
-    transactions = models.ManyToManyField(Transaction, related_name="participants")
+    transactions = models.ManyToManyField(Transaction, related_name="participants", blank=True)
     accepted_privacy_policy = models.BooleanField(default=False)
     api_client = models.CharField(max_length=255, blank=True, null=True)
     type = models.CharField(max_length=100, choices=PARTICIPANT_TYPES, default=ParticipantType.ASSISTED.value)
