@@ -779,34 +779,40 @@ class AudioUploadSerializer(serializers.Serializer):
                     ).order_by("-paid").first()
                     amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
             elif participant_data:
-                participant_object, created = Participant.objects.get_or_create(
-                    momo_number=participant_data.get("momoNumber"),
-                    network=participant_data.get("network", ""),
-                    fullname=participant_data.get("fullname"),
-                    gender=participant_data.get("gender"),
-                    submitted_by=request.user,
-                    # paid=False,
-                    # transaction=None,
-                    age=participant_data.get("age"),
-                    accepted_privacy_policy=participant_data.get(
-                        "acceptedPrivacyPolicy", False),
-                    api_client=api_client,
-                )
+                object_file = {
+                    "momo_number": participant_data.get("momoNumber"),
+                    "network": participant_data.get("network",  ""),
+                    "fullname": participant_data.get("fullname"),
+                    "gender": participant_data.get("gender"),
+                    "submitted_by": request.user,
+                    "age": participant_data.get("age"),
+                    "accepted_privacy_policy": participant_data.get("acceptedPrivacyPolicy", False),
+                    "api_client": api_client
+                }  # yapf: disable
+
+                participant_object = Participant.objects.filter(
+                    **object_file).first()
+                if not participant_object:
+                    participant_object = Participant.objects.create(
+                        **object_file)
                 amount = configuration.participant_amount_per_audio
             else:
-                participant_object, _ = Participant.objects.get_or_create(
-                    momo_number=user.phone,
-                    network=user.phone_network,
-                    fullname=user.fullname,
-                    gender=user.gender,
-                    submitted_by=user,
-                    # paid=False,
-                    # transaction=None,
-                    age=user.age,
-                    type=ParticipantType.INDEPENDENT.value,
-                    accepted_privacy_policy=user.accepted_privacy_policy,
-                    api_client=api_client,
-                )
+                object_file = {
+                    "momo_number": user.phone,
+                    "network": user.phone_network,
+                    "fullname": user.fullname,
+                    "gender": user.gender,
+                    "submitted_by": user,
+                    "age": user.age,
+                    "type": ParticipantType.INDEPENDENT.value,
+                    "accepted_privacy_policy": user.accepted_privacy_policy,
+                    "api_client": api_client,
+                }# yapf: disable
+                participant_object = Participant.objects.filter(
+                    **object_file).first()
+                if not participant_object:
+                    participant_object = Participant.objects.create(
+                        **object_file)
                 amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
 
             if image_object and file and audio_data and participant_object:

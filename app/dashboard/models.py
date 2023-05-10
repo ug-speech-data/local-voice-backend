@@ -272,15 +272,16 @@ class Participant(models.Model):
             slug = "-".join(sorted(self.fullname.split()))
             self.slug = slug
 
-        if self.transaction:
-            self.transactions.add(self.transaction)
+        if self.pk:
+            if self.transaction:
+                self.transactions.add(self.transaction)
 
-        paid = sum(self.transactions.exclude(Q(status="failed")).values_list("amount", flat=True))
-        self.balance = decimal.Decimal(self.amount) - decimal.Decimal(paid)
-        if self.balance > 0:
-            self.paid = False
-        else:
-            self.paid = True
+            paid = sum(self.transactions.exclude(Q(status="failed")).values_list("amount", flat=True))
+            self.balance = decimal.Decimal(self.amount) - decimal.Decimal(paid)
+            if self.balance > 0:
+                self.paid = False
+            else:
+                self.paid = True
 
         return super().save(*args, **kwargs)
 

@@ -45,7 +45,7 @@ def export_audio_data(user_id, data, base_url):
         "YEAR",
     ]
     rows = []
-    audios = Audio.objects.filter(is_accepted=True, deleted=False)
+    audios = Audio.objects.filter(audio_status="accepted", deleted=False)
     for audio in audios:
         if not (audio.file and audio.image and audio.image.file):
             continue
