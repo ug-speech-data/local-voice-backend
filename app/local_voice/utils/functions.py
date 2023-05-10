@@ -27,7 +27,7 @@ def apply_filters(objects, filters):
             key, value, annotation = filter
             objects = objects.annotate(c=Count(annotation)).filter(
                 c__gt=1).filter(audio_status=ValidationStatus.PENDING.value)
-    return objects
+    return objects.distinct()
 
 
 def get_errors_from_form(form):
