@@ -376,13 +376,18 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 
 class ParticipantSerializer(serializers.ModelSerializer):
-    transaction = TransactionSerializer(read_only=True)
+    transactions = serializers.SerializerMethodField()
     submitted_by = serializers.SerializerMethodField()
     audio_count = serializers.SerializerMethodField()
     locale = serializers.SerializerMethodField()
     audios_validated = serializers.SerializerMethodField()
     percentage_audios_accepted = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
+
+    def get_transactions(self, obj):
+        return TransactionSerializer(obj.get_transactions(),
+                                     read_only=True,
+                                     many=True).data
 
     def get_created_at(self, obj):
         return obj.created_at.strftime("%Y-%m-%d %H:%M:%S")
@@ -722,7 +727,7 @@ class AudioUploadSerializer(serializers.Serializer):
         duration = round(m_file.info.length)
 
         if duration < 15:
-            return False, "MINIMUM_DURATION_NOT_MET"
+            return False, f"MINIMUM_DURATION_NOT_MET, {request.user}"
 
         re_upload = request.data.get("re_upload", False)
         api_client = request.data.get("api_client")
@@ -780,8 +785,8 @@ class AudioUploadSerializer(serializers.Serializer):
                     fullname=participant_data.get("fullname"),
                     gender=participant_data.get("gender"),
                     submitted_by=request.user,
-                    paid=False,
-                    transaction=None,
+                    # paid=False,
+                    # transaction=None,
                     age=participant_data.get("age"),
                     accepted_privacy_policy=participant_data.get(
                         "acceptedPrivacyPolicy", False),
@@ -795,8 +800,8 @@ class AudioUploadSerializer(serializers.Serializer):
                     fullname=user.fullname,
                     gender=user.gender,
                     submitted_by=user,
-                    paid=False,
-                    transaction=None,
+                    # paid=False,
+                    # transaction=None,
                     age=user.age,
                     type=ParticipantType.INDEPENDENT.value,
                     accepted_privacy_policy=user.accepted_privacy_policy,

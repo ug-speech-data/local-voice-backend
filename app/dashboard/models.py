@@ -1,3 +1,4 @@
+import decimal
 import os
 from datetime import datetime
 from functools import reduce
@@ -213,22 +214,29 @@ class Participant(models.Model):
     paid = models.BooleanField(default=False, db_index=True)
     transaction = models.OneToOneField(
         Transaction, related_name="participant", on_delete=models.SET_NULL, blank=True, null=True)
+    transactions = models.ManyToManyField(Transaction, related_name="participants")
     accepted_privacy_policy = models.BooleanField(default=False)
     api_client = models.CharField(max_length=255, blank=True, null=True)
     type = models.CharField(max_length=100, choices=PARTICIPANT_TYPES, default=ParticipantType.ASSISTED.value)
     flatten = models.BooleanField(default=False)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=decimal.Decimal(0.0))
 
     class Meta:
         db_table = "participants"
 
+    def get_transactions(self):
+        return self.transactions
+
     def pay_participant(self, user):
-        if self.paid:
+        paid = sum(self.transactions.exclude(Q(status="failed")).values_list("amount", flat=True))
+        self.balance = decimal.Decimal(self.amount) - decimal.Decimal(paid)
+        self.save()
+
+        if self.balance <= 0:
             return
 
-        transaction = Transaction.objects.filter(participant=self).first()
-        if not transaction  or transaction.status == "failed":
-            transaction = Transaction.objects.create()
-        transaction.amount = self.amount
+        transaction = Transaction.objects.create()
+        transaction.amount = self.balance
         transaction.phone_number = self.momo_number
         transaction.network = self.network
         transaction.status = "new"
@@ -237,22 +245,19 @@ class Participant(models.Model):
         transaction.initiated_by = user
         transaction.direction = TransactionDirection.OUT.value
         transaction.save()
-        self.transaction = transaction
+        self.transactions.add(transaction)
+        self.transactions.add(self.transaction)
         self.save()
 
         # Make API calls
         transaction.execute()
 
     def check_payment_status(self):
-        if self.transaction:
-            if self.transaction.success():
-                self.paid = True
-                self.save()
-            else:
-                self.transaction.recheck_status()
+        for transaction in self.transactions.filter():
+            transaction.recheck_status()
 
     def update_amount(self, amount_per_audio):
-        if not (self.flatten or self.paid):
+        if not (self.flatten):
             self.amount = self.audios.filter(deleted=False, is_accepted=True).values("image").distinct().count() * amount_per_audio
             self.save()
 
@@ -266,6 +271,15 @@ class Participant(models.Model):
         if self.pk is None and self.fullname is not None:
             slug = "-".join(sorted(self.fullname.split()))
             self.slug = slug
+        self.transactions.add(self.transaction)
+
+        paid = sum(self.transactions.exclude(Q(status="failed")).values_list("amount", flat=True))
+        self.balance = decimal.Decimal(self.amount) - decimal.Decimal(paid)
+        if self.balance > 0:
+            self.paid = False
+        else:
+            self.paid = True
+
         return super().save(*args, **kwargs)
 
     def __str__(self):

@@ -131,8 +131,7 @@ def check_transaction_status(transaction_id, rounds=5, wait=5):
 def update_participants_amount():
     configuration = AppConfiguration.objects.first()
     amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
-    for participant in Participant.objects.filter(flatten=False,
-                                                  transaction=None):
+    for participant in Participant.objects.filter(flatten=False, paid=False):
         if participant:
             if participant.type == ParticipantType.ASSISTED.value:
                 amount = configuration.participant_amount_per_audio if configuration else 0
