@@ -88,6 +88,11 @@ def execute_transaction(transaction_id, callback_url) -> None:
             participant.paid = True
             participant.save()
 
+    # Save to update participants
+    if hasattr(transaction, "participants"):
+        for participant in transaction.participants.all():
+            participant.save()
+
     logger.error("Transaction {} status: {}".format(transaction_id,
                                                     response.text))
 
@@ -123,6 +128,11 @@ def check_transaction_status(transaction_id, rounds=5, wait=5):
             participant.save()
 
     transaction.save()
+
+    # Save to update participants
+    if hasattr(transaction, "participants"):
+        for participant in transaction.participants.all():
+            participant.save()
     print("Transaction {} status: {}".format(transaction_id,
                                              transaction.status_message))
 
@@ -132,10 +142,9 @@ def update_participants_amount():
     configuration = AppConfiguration.objects.first()
     amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
     for participant in Participant.objects.filter(flatten=False, paid=False):
-        if participant:
-            if participant.type == ParticipantType.ASSISTED.value:
-                amount = configuration.participant_amount_per_audio if configuration else 0
-            participant.update_amount(amount)
+        if participant.type == ParticipantType.ASSISTED.value:
+            amount = configuration.participant_amount_per_audio if configuration else 0
+        participant.update_amount(amount)
 
 
 @shared_task()
