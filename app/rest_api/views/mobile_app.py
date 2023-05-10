@@ -224,12 +224,12 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
             user=request.user)
         EXPECTED_TRANSCRIPTIONS_PER_IMAGE = 24 * required_transcription_validation_count
 
-        locale_count = f"image__transcription_count_{request.user.locale}__lt"
+        locale_count = f"image__transcription_count_{request.user.locale}"
         if not hasattr(Image, f"transcription_count_{request.user.locale}"):
             return Response({"message": "Invalid locale"})
 
         transcription_count_filter = {
-            locale_count: EXPECTED_TRANSCRIPTIONS_PER_IMAGE
+            f"{locale_count}__lt": EXPECTED_TRANSCRIPTIONS_PER_IMAGE
         }
         if created or assignment.audios.all().count() == 0 or completed:
             audios = (Audio.objects.annotate(
@@ -262,3 +262,17 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
                                          "request": request
                                      }).data
         return Response({"audios": data})
+    
+
+audios = (Audio.objects.annotate(
+            t_assign=Count("transcriptions_assignments"),
+            t_count=Count("transcriptions")).filter(
+                Q(**transcription_count_filter)
+                | Q(t_count__gte=1)).filter(
+                    transcription_status=ValidationStatus.PENDING.value,
+                    locale=user.locale,
+                    deleted=False,
+                    t_assign__lt=required_transcription_validation_count,
+                    t_count__lt=required_transcription_validation_count
+                ).exclude(Q(transcriptions__user=user)).order_by(
+                    "-t_count", locale_count, "?"))
