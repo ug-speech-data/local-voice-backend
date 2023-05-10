@@ -67,7 +67,7 @@ class Transaction(models.Model):
         """
         from payments.tasks import \
             execute_transaction  # Avoid circular imports
-        
+
         if self.status == "pending":
             self.recheck_status()
         return execute_transaction.delay(self.transaction_id, callback_url)
@@ -94,6 +94,8 @@ class Transaction(models.Model):
             check_transaction_status  # Avoid circular imports
         if self.accepted_by_provider:
             check_transaction_status.delay(self.transaction_id)
+        else:
+            self.retry()
 
 
     @method_decorator(django_db_transaction.atomic())

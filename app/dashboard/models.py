@@ -246,7 +246,6 @@ class Participant(models.Model):
         transaction.direction = TransactionDirection.OUT.value
         transaction.save()
         self.transactions.add(transaction)
-        self.transactions.add(self.transaction)
         self.save()
 
         # Make API calls
