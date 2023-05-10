@@ -21,7 +21,7 @@ logger = logging.getLogger("app")
 def export_audio_data(user_id, data, base_url):
     update_notification = Notification.objects.create(
         message="Data export started",
-        title="Data Data",
+        title="Data Export",
         type="info",
         user_id=user_id)
     update_notification = Notification.objects.filter(
@@ -59,7 +59,7 @@ def export_audio_data(user_id, data, base_url):
         if not (audio.file and audio.image and audio.image.file):
             continue
 
-        message = f"{(index + 1) // total_audios * 100}% Done: Writing audio {index + 1} of {total_audios}."
+        message = f"{round((index + 1) / total_audios * 100)}% Done: Writing audio {index + 1} of {total_audios}."
         update_notification.update(message=message)
 
         # Copy audio and image files to temp directory
