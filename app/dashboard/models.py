@@ -433,6 +433,7 @@ class Transcription(models.Model):
 
         if self.corrected_text:
             self.corrected_text = " ".join(self.corrected_text.replace("\r", "").replace("\n", "").split())
+            self.transcription_status = TranscriptionStatus.ACCEPTED.value
 
         if self.pk is not None:
             self.validation_count = self.validations.all().count()

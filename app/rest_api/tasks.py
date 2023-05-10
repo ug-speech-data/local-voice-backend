@@ -60,7 +60,7 @@ def export_audio_data(user_id, data, base_url):
     tag = data.get("tag")
     locale = data.get("locale")
     number_of_files = data.get("number_of_files")
-    number_of_files = int(number_of_files) if number_of_files.isdigit() else 0
+    number_of_files = int(number_of_files) if str(number_of_files).isdigit() else 0
 
     if tag:
         audios = audios.exclude(tags__tag=tag)
