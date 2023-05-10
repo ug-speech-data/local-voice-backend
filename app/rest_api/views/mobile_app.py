@@ -262,17 +262,3 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
                                          "request": request
                                      }).data
         return Response({"audios": data})
-    
-
-audios = (Audio.objects.annotate(
-            t_assign=Count("transcriptions_assignments"),
-            t_count=Count("transcriptions")).filter(
-                Q(**transcription_count_filter)
-                | Q(t_count__gte=1)).filter(
-                    transcription_status=ValidationStatus.PENDING.value,
-                    locale=user.locale,
-                    deleted=False,
-                    t_assign__lt=required_transcription_validation_count,
-                    t_count__lt=required_transcription_validation_count
-                ).exclude(Q(transcriptions__user=user)).order_by(
-                    "-t_count", locale_count, "?"))
