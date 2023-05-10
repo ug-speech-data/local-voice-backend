@@ -722,7 +722,7 @@ class ExportAudioData(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     required_permissions = ["setup.manage_setup"]
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         base_url = request.build_absolute_uri("/").strip("/")
 
         export_audio_data.delay(user_id=request.user.id,

@@ -473,3 +473,13 @@ class AudioTranscriptionAssignment(models.Model):
     audios = models.ManyToManyField(Audio, related_name="transcriptions_assignments", db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
+
+class ExportTag(models.Model):
+    user = models.ForeignKey(User, related_name="tags", on_delete=models.CASCADE,db_index=True)
+    tag = models.CharField(max_length=50,db_index=True)
+    audio = models.ForeignKey(Audio, related_name="tags", on_delete=models.CASCADE, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.tag} - {self.user}"

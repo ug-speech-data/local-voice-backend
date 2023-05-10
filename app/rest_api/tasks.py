@@ -9,9 +9,9 @@ from celery import shared_task
 from django.conf import settings
 from django.core.files import File
 from django.db.models import Q
-
 from accounts.models import User
-from dashboard.models import Audio, AudioValidationAssignment, Notification, Transcription, AudioTranscriptionAssignment
+from local_voice.utils.constants import TranscriptionStatus
+from dashboard.models import Audio, AudioValidationAssignment, Notification, Transcription, AudioTranscriptionAssignment, ExportTag
 from setup.models import AppConfiguration
 
 logger = logging.getLogger("app")
@@ -54,12 +54,34 @@ def export_audio_data(user_id, data, base_url):
     ]
     rows = []
     audios = Audio.objects.filter(audio_status="accepted", deleted=False)
+
+    # Apply filters
+    status = data.get("status")
+    tag = data.get("tag")
+    locale = data.get("locale")
+    number_of_files = data.get("number_of_files")
+    number_of_files = int(number_of_files) if number_of_files.isdigit() else 0
+
+    if tag:
+        audios = audios.exclude(tags__tag=tag)
+
+    if locale != "all":
+        audios = audios.filter(locale=locale)
+
+    if status == "transcribed":
+        audios = audios.filter(
+            transcription_status=TranscriptionStatus.ACCEPTED.value)
+
+    audios = audios.order_by("id")
+    if number_of_files > 0:
+        audios = audios[:number_of_files]
+
     total_audios = audios.count()
     for index, audio in enumerate(audios):
         if not (audio.file and audio.image and audio.image.file):
             continue
 
-        message = f"{round((index + 1) / total_audios * 100)}% Done: Writing audio {index + 1} of {total_audios}."
+        message = f"{round((index + 1) / total_audios * 100, 2)}% Done: Writing audio {index + 1} of {total_audios}."
         update_notification.update(message=message)
 
         # Copy audio and image files to temp directory
@@ -103,9 +125,12 @@ def export_audio_data(user_id, data, base_url):
                    arcname='waxal-project-data.xlsx')
     zip_file.close()
     os.remove(temp + '/waxal-project-data.xlsx')
-    
+
     message = f"Export completed successfully."
     update_notification.update(message=message)
+    for audio in audios:
+        ExportTag.objects.create(user_id=user_id, tag=tag, audio=audio)
+
     Notification.objects.create(
         message=
         "Data exported successfully. Click on the link below to download.",
