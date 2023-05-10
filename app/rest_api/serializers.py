@@ -532,6 +532,7 @@ class AudioTranscriptionSerializer(serializers.ModelSerializer):
                     "phone": transcription.user.phone,
                 },
                 "text": transcription.get_text(),
+                "id": transcription.id,
             })
         return transcriptions
 

@@ -174,7 +174,6 @@ def validate_audio_transcriptions():
     required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 1
 
     audios = Audio.objects.annotate(t_count=Count("transcriptions")).filter(
-            checked_in_for_transcription=True,
             transcription_status=TranscriptionStatus.PENDING.value)\
             .filter(t_count__gte=required_transcription_validation_count)
 
@@ -191,4 +190,4 @@ def validate_audio_transcriptions():
         else:
             audio.transcription_status = TranscriptionStatus.ACCEPTED.value
             audio.save()
-            
+            audio.transcriptions.all().update(transcription_status = TranscriptionStatus.ACCEPTED.value)

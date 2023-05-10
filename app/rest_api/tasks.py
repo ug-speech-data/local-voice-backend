@@ -19,6 +19,14 @@ logger = logging.getLogger("app")
 
 @shared_task()
 def export_audio_data(user_id, data, base_url):
+    update_notification = Notification.objects.create(
+        message="Data export started",
+        title="Data Data",
+        type="info",
+        user_id=user_id)
+    update_notification = Notification.objects.filter(
+        id=update_notification.id)
+
     # Create temp directory
     temp = os.path.join(settings.MEDIA_ROOT, "temps")
     if not os.path.exists(temp):
@@ -46,9 +54,13 @@ def export_audio_data(user_id, data, base_url):
     ]
     rows = []
     audios = Audio.objects.filter(audio_status="accepted", deleted=False)
-    for audio in audios:
+    total_audios = audios.count()
+    for index, audio in enumerate(audios):
         if not (audio.file and audio.image and audio.image.file):
             continue
+
+        message = f"{(index + 1) // total_audios * 100}% Done: Writing audio {index + 1} of {total_audios}."
+        update_notification.update(message=message)
 
         # Copy audio and image files to temp directory
         audio_filename = audio.file_mp3.name if audio.file_mp3 else audio.file.name
@@ -81,6 +93,9 @@ def export_audio_data(user_id, data, base_url):
         ]
         rows.append(row)
 
+    message = f"Writing excel file..."
+    update_notification.update(message=message)
+
     # Write data to excel file
     df = pd.DataFrame(rows, columns=columns)
     df.to_excel(temp + '/waxal-project-data.xlsx')
@@ -88,7 +103,9 @@ def export_audio_data(user_id, data, base_url):
                    arcname='waxal-project-data.xlsx')
     zip_file.close()
     os.remove(temp + '/waxal-project-data.xlsx')
-
+    
+    message = f"Export completed successfully."
+    update_notification.update(message=message)
     Notification.objects.create(
         message=
         "Data exported successfully. Click on the link below to download.",

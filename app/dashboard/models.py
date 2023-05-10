@@ -391,8 +391,9 @@ class Audio(models.Model):
         if not hasattr(self, "transcriptions"):
             return []
         values = []
-        for t in self.transcriptions.all().values("text"):
-            values.append(t.get("text"))
+        transcription = self.transcriptions.filter(transcription_status=ValidationStatus.ACCEPTED.value).first()
+        if transcription:
+            values.append(transcription.get_text())
         return values
 
 
