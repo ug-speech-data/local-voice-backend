@@ -224,7 +224,7 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
             user=request.user)
         EXPECTED_TRANSCRIPTIONS_PER_IMAGE = 24 * required_transcription_validation_count
 
-        locale_count = f"image__transcription_count_{request.user.locale}"
+        locale_count = f"image__transcription_count_{request.user.locale}__lt"
         if not hasattr(Image, f"transcription_count_{request.user.locale}"):
             return Response({"message": "Invalid locale"})
 
