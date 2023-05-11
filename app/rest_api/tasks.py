@@ -80,6 +80,7 @@ def export_audio_data(user_id, data, base_url):
         audios = audios[:number_of_files]
 
     total_audios = audios.count()
+    skip_count = 0
     with zipfile.ZipFile(output_dir,
                          'w',
                          compression=zipfile.ZIP_DEFLATED,
@@ -88,40 +89,46 @@ def export_audio_data(user_id, data, base_url):
             if not (audio.file and audio.image and audio.image.file):
                 continue
 
-            message = f"{round((index + 1) / total_audios * 100, 2)}% Done: Writing audio {index + 1} of {total_audios}."
+            message = f"{round((index + 1) / total_audios * 100, 2)}% Done: Writing audio {index + 1} of {total_audios}. Skipped {skip_count}"
             update_notification.update(message=message)
 
             # Copy audio and image files to temp directory
             audio_filename = audio.file_mp3.name if audio.file_mp3 else audio.file.name
-
             image_filename = audio.image.file.name
-            new_image_filename = image_filename.split("/")[0] + "/" + str(
-                audio.id).zfill(4) + "." + image_filename.split(".")[-1]
-            zip_file.write(settings.MEDIA_ROOT / audio_filename,
-                           arcname=f"assets/{audio.locale}_{audio_filename}")
-            zip_file.write(settings.MEDIA_ROOT / image_filename,
-                           arcname=f"assets/{new_image_filename}")
+            if (audio.image and os.path.exists(audio.image.file.path) and
+                ((audio.file and os.path.exists(audio.file.path)) or
+                 (audio.file_mp3 and os.path.exists(audio.file_mp3.path)))):
 
-            participant = audio.participant
-            transcriptions = "\n\n".join(audio.get_transcriptions())
+                new_image_filename = image_filename.split("/")[0] + "/" + str(
+                    audio.id).zfill(4) + "." + image_filename.split(".")[-1]
+                zip_file.write(
+                    settings.MEDIA_ROOT / audio_filename,
+                    arcname=f"assets/{audio.locale}_{audio_filename}")
+                zip_file.write(settings.MEDIA_ROOT / image_filename,
+                               arcname=f"assets/{new_image_filename}")
 
-            row = [
-                f"assets/{new_image_filename}",
-                audio.image.source_url,
-                f"assets/{audio.locale}_{audio_filename}",
-                "University of Ghana",
-                "Waxal",
-                participant.id if participant else audio.submitted_by.id,
-                audio.locale,
-                transcriptions,
-                participant.gender
-                if participant else audio.submitted_by.gender,
-                participant.age if participant else audio.submitted_by.age,
-                audio.device_id,
-                audio.environment,
-                audio.year,
-            ]
-            rows.append(row)
+                participant = audio.participant
+                transcriptions = "\n\n".join(audio.get_transcriptions())
+
+                row = [
+                    f"assets/{new_image_filename}",
+                    audio.image.source_url,
+                    f"assets/{audio.locale}_{audio_filename}",
+                    "University of Ghana",
+                    "Waxal",
+                    participant.id if participant else audio.submitted_by.id,
+                    audio.locale,
+                    transcriptions,
+                    participant.gender
+                    if participant else audio.submitted_by.gender,
+                    participant.age if participant else audio.submitted_by.age,
+                    audio.device_id,
+                    audio.environment,
+                    audio.year,
+                ]
+                rows.append(row)
+            else:
+                skip_count += 1
 
         message = f"Writing excel file..."
         update_notification.update(message=message)
