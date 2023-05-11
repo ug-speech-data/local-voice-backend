@@ -677,7 +677,7 @@ class NotificationAPI(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         notifications = Notification.objects.filter(
-            is_read=False, user=request.user).order_by("-created_at")[:3]
+            is_read=False, user=request.user).order_by("-created_at")[:10]
         return Response({
             "message":
             "Notifications",
