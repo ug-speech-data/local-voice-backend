@@ -88,17 +88,12 @@ def export_audio_data(user_id, data, base_url):
         for index, audio in enumerate(audios):
             if not (audio.file and audio.image and audio.image.file):
                 continue
-
-            message = f"{round((index + 1) / total_audios * 100, 2)}% Done: Writing audio {index + 1} of {total_audios}. Skipped {skip_count}"
-            update_notification.update(message=message)
-
-            # Copy audio and image files to temp directory
-            audio_filename = audio.file_mp3.name if audio.file_mp3 else audio.file.name
-            image_filename = audio.image.file.name
-            if (audio.image and os.path.exists(audio.image.file.path) and
-                ((audio.file and os.path.exists(audio.file.path)) or
-                 (audio.file_mp3 and os.path.exists(audio.file_mp3.path)))):
-
+            try:
+                message = f"{round((index + 1) / total_audios * 100, 2)}% Done: Writing audio {index + 1} of {total_audios}. Skipped {skip_count}"
+                update_notification.update(message=message)
+                # Copy audio and image files to temp directory
+                audio_filename = audio.file_mp3.name if audio.file_mp3 else audio.file.name
+                image_filename = audio.image.file.name
                 new_image_filename = image_filename.split("/")[0] + "/" + str(
                     audio.id).zfill(4) + "." + image_filename.split(".")[-1]
                 zip_file.write(
@@ -127,7 +122,8 @@ def export_audio_data(user_id, data, base_url):
                     audio.year,
                 ]
                 rows.append(row)
-            else:
+            except Exception as e:
+                logger.error(str(e))
                 skip_count += 1
 
         message = f"Writing excel file..."
