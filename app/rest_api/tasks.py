@@ -35,7 +35,6 @@ def export_audio_data(user_id, data, base_url):
     timestamp = str(datetime.today()).split(".")[0]
     output_filename = f"temps/export_audio_{timestamp}.zip"
     output_dir = settings.MEDIA_ROOT / output_filename
-    zip_file = zipfile.ZipFile(output_dir, 'w')
 
     columns = [
         'IMAGE_PATH',
@@ -60,7 +59,8 @@ def export_audio_data(user_id, data, base_url):
     tag = data.get("tag")
     locale = data.get("locale")
     number_of_files = data.get("number_of_files")
-    number_of_files = int(number_of_files) if str(number_of_files).isdigit() else 0
+    number_of_files = int(number_of_files) if str(
+        number_of_files).isdigit() else 0
 
     if tag:
         audios = audios.exclude(tags__tag=tag)
@@ -77,54 +77,58 @@ def export_audio_data(user_id, data, base_url):
         audios = audios[:number_of_files]
 
     total_audios = audios.count()
-    for index, audio in enumerate(audios):
-        if not (audio.file and audio.image and audio.image.file):
-            continue
+    with zipfile.ZipFile(output_dir,
+                         'w',
+                         compression=zipfile.ZIP_DEFLATED,
+                         allowZip64=True) as zip_file:
+        for index, audio in enumerate(audios):
+            if not (audio.file and audio.image and audio.image.file):
+                continue
 
-        message = f"{round((index + 1) / total_audios * 100, 2)}% Done: Writing audio {index + 1} of {total_audios}."
+            message = f"{round((index + 1) / total_audios * 100, 2)}% Done: Writing audio {index + 1} of {total_audios}."
+            update_notification.update(message=message)
+
+            # Copy audio and image files to temp directory
+            audio_filename = audio.file_mp3.name if audio.file_mp3 else audio.file.name
+
+            image_filename = audio.image.file.name
+            new_image_filename = image_filename.split("/")[0] + "/" + str(
+                audio.id).zfill(4) + "." + image_filename.split(".")[-1]
+            zip_file.write(settings.MEDIA_ROOT / audio_filename,
+                           arcname=f"assets/{audio.locale}_{audio_filename}")
+            zip_file.write(settings.MEDIA_ROOT / image_filename,
+                           arcname=f"assets/{new_image_filename}")
+
+            participant = audio.participant
+            transcriptions = "\n\n".join(audio.get_transcriptions())
+
+            row = [
+                f"assets/{new_image_filename}",
+                audio.image.source_url,
+                f"assets/{audio.locale}_{audio_filename}",
+                "University of Ghana",
+                "Waxal",
+                participant.id if participant else audio.submitted_by.id,
+                audio.locale,
+                transcriptions,
+                participant.gender
+                if participant else audio.submitted_by.gender,
+                participant.age if participant else audio.submitted_by.age,
+                audio.device_id,
+                audio.environment,
+                audio.year,
+            ]
+            rows.append(row)
+
+        message = f"Writing excel file..."
         update_notification.update(message=message)
 
-        # Copy audio and image files to temp directory
-        audio_filename = audio.file_mp3.name if audio.file_mp3 else audio.file.name
-
-        image_filename = audio.image.file.name
-        new_image_filename = image_filename.split("/")[0] + "/" + str(
-            audio.id).zfill(4) + "." + image_filename.split(".")[-1]
-        zip_file.write(settings.MEDIA_ROOT / audio_filename,
-                       arcname=f"assets/{audio.locale}_{audio_filename}")
-        zip_file.write(settings.MEDIA_ROOT / image_filename,
-                       arcname=f"assets/{new_image_filename}")
-
-        participant = audio.participant
-        transcriptions = "\n\n".join(audio.get_transcriptions())
-
-        row = [
-            f"assets/{new_image_filename}",
-            audio.image.source_url,
-            f"assets/{audio.locale}_{audio_filename}",
-            "University of Ghana",
-            "Waxal",
-            participant.id if participant else audio.submitted_by.id,
-            audio.locale,
-            transcriptions,
-            participant.gender if participant else audio.submitted_by.gender,
-            participant.age if participant else audio.submitted_by.age,
-            audio.device_id,
-            audio.environment,
-            audio.year,
-        ]
-        rows.append(row)
-
-    message = f"Writing excel file..."
-    update_notification.update(message=message)
-
-    # Write data to excel file
-    df = pd.DataFrame(rows, columns=columns)
-    df.to_excel(temp + '/waxal-project-data.xlsx')
-    zip_file.write(temp + '/waxal-project-data.xlsx',
-                   arcname='waxal-project-data.xlsx')
-    zip_file.close()
-    os.remove(temp + '/waxal-project-data.xlsx')
+        # Write data to excel file
+        df = pd.DataFrame(rows, columns=columns)
+        df.to_excel(temp + '/waxal-project-data.xlsx')
+        zip_file.write(temp + '/waxal-project-data.xlsx',
+                    arcname='waxal-project-data.xlsx')
+        os.remove(temp + '/waxal-project-data.xlsx')
 
     message = f"Export completed successfully."
     update_notification.update(message=message)
