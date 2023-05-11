@@ -8,7 +8,7 @@ import pandas as pd
 from celery import shared_task
 from django.conf import settings
 from django.core.files import File
-from django.db.models import Q
+from django.db.models import Q, Count
 from accounts.models import User
 from local_voice.utils.constants import TranscriptionStatus
 from dashboard.models import Audio, AudioValidationAssignment, Notification, Transcription, AudioTranscriptionAssignment, ExportTag
@@ -68,9 +68,12 @@ def export_audio_data(user_id, data, base_url):
     if locale != "all":
         audios = audios.filter(locale=locale)
 
-    if status == "transcribed":
+    if status == "transcription_resolved":
         audios = audios.filter(
             transcription_status=TranscriptionStatus.ACCEPTED.value)
+    if status == "transcribed":
+        audios = audios.annotate(t_count=Count("transcriptions")).filter(
+            t_count__gt=0)
 
     audios = audios.order_by("id")
     if number_of_files > 0:
@@ -127,7 +130,7 @@ def export_audio_data(user_id, data, base_url):
         df = pd.DataFrame(rows, columns=columns)
         df.to_excel(temp + '/waxal-project-data.xlsx')
         zip_file.write(temp + '/waxal-project-data.xlsx',
-                    arcname='waxal-project-data.xlsx')
+                       arcname='waxal-project-data.xlsx')
         os.remove(temp + '/waxal-project-data.xlsx')
 
     message = f"Export completed successfully."
