@@ -136,14 +136,17 @@ def export_audio_data(user_id, data, base_url):
                        arcname='waxal-project-data.xlsx')
         os.remove(temp + '/waxal-project-data.xlsx')
 
-    message = f"Export completed successfully."
-    update_notification.update(message=message)
-    for audio in audios:
-        ExportTag.objects.create(user_id=user_id, tag=tag, audio=audio)
+    if tag:
+        message = f"Tagging {total_audios} exported files ...."
+        update_notification.update(message=message)
+        for audio in audios:
+            ExportTag.objects.create(user_id=user_id, tag=tag, audio=audio)
 
+    message = f"Export completed successfully. Exported {total_audios} files, kkipped {skip_count}."
+    update_notification.update(message=message)
     Notification.objects.create(
         message=
-        "Data exported successfully. Click on the link below to download.",
+        f"Exported {total_audios} files successfully. Click on the attached link to download.",
         url=base_url + settings.MEDIA_URL + output_filename,
         title="Data Exported",
         type="success",
