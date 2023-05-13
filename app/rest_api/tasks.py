@@ -8,10 +8,14 @@ import pandas as pd
 from celery import shared_task
 from django.conf import settings
 from django.core.files import File
-from django.db.models import Q, Count
+from django.db import NotSupportedError
+from django.db.models import Count, Q
+
 from accounts.models import User
+from dashboard.models import (Audio, AudioTranscriptionAssignment,
+                              AudioValidationAssignment, ExportTag,
+                              Notification, Transcription)
 from local_voice.utils.constants import TranscriptionStatus
-from dashboard.models import Audio, AudioValidationAssignment, Notification, Transcription, AudioTranscriptionAssignment, ExportTag
 from setup.models import AppConfiguration
 
 logger = logging.getLogger("app")
@@ -247,6 +251,15 @@ def get_audios_transcribed(user):
     return Transcription.objects.filter(user=user).count()
 
 
+def get_transcriptions_resolved(user):
+    transcriptions = Transcription.objects.filter(conflict_resolved_by=user)
+    try:
+        return transcriptions.distinct("audio").count()
+    except NotSupportedError as e:
+        ## SQLite does not support distanct on files
+        return transcriptions.distinct().count()
+
+
 @shared_task()
 def update_user_stats():
     users = User.objects.filter(deleted=False, is_active=True)
@@ -257,6 +270,7 @@ def update_user_stats():
         user.audios_submitted = get_audios_submitted(user)
         user.audios_validated = get_audios_validated(user)
         user.conflicts_resolved = get_conflicts_resolved(user)
+        user.transcriptions_resolved = get_transcriptions_resolved(user)
         user.audios_transcribed = get_audios_transcribed(user)
         user.estimated_deduction_amount = get_estimated_deduction_amount(user)
         user.save()

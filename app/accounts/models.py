@@ -45,6 +45,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     audios_pending = models.IntegerField(default=0)
     audios_accepted = models.IntegerField(default=0)
     conflicts_resolved = models.IntegerField(default=0)
+    transcriptions_resolved = models.IntegerField(default=0)
     audios_transcribed = models.IntegerField(default=0)
     deleted = models.BooleanField(default=False)
     proxy_audios_submitted_in_hours = models.DecimalField(default=0, decimal_places=2, max_digits=15)

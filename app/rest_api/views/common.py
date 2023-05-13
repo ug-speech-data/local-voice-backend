@@ -9,9 +9,8 @@ from rest_framework.response import Response
 
 from accounts.forms import UserForm
 from accounts.models import User
-from local_voice.utils.constants import TranscriptionStatus
 from dashboard.models import Audio, Transcription
-from local_voice.utils.constants import ValidationStatus
+from local_voice.utils.constants import TranscriptionStatus, ValidationStatus
 from local_voice.utils.functions import get_all_user_permissions
 from rest_api.permissions import APILevelPermissionCheck
 from rest_api.serializers import (AudioSerializer, LoginSerializer,

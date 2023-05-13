@@ -1,13 +1,15 @@
 import json
 import logging
 
+from django.db import transaction
 from django.db.models import Count, Q
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from accounts.models import User
 
-from dashboard.models import Audio, AudioValidationAssignment, AudioTranscriptionAssignment, Image
+from accounts.models import User
+from dashboard.models import (Audio, AudioTranscriptionAssignment,
+                              AudioValidationAssignment, Image)
 from local_voice.utils.constants import ValidationStatus
 from rest_api.serializers import (AudioSerializer, AudioUploadSerializer,
                                   ImageSerializer,
@@ -175,25 +177,27 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
         assignment, created = AudioValidationAssignment.objects.get_or_create(
             user=request.user)
 
-        if created or assignment.audios.all().count() == 0 or completed:
-            audios = Audio.objects.annotate(c=Count("assignments"), val_count=Count("validations")) \
-                      .filter(c__lt=required_audio_validation_count) \
-                      .filter(audio_status = ValidationStatus.PENDING.value,
-                               deleted=False,
-                                is_accepted=False,
-                                rejected=False,
-                                val_count__lt=required_audio_validation_count,
-                              locale=request.user.locale) \
-                      .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user))\
-                      .order_by("-val_count", "image", "id")[:count]
-            assignment.audios.set(audios)
-            assignment.save()
-        else:
-            audios = assignment.audios.annotate(val_count=Count("validations")).filter(
-                audio_status=ValidationStatus.PENDING.value,
-                val_count__lt=required_audio_validation_count,
-                deleted=False).exclude(Q(validations__user=request.user))\
-                .order_by("-val_count", "image", "id")
+        audios = Audio.objects.none()
+        with transaction.atomic():
+            if created or assignment.audios.all().count() == 0 or completed:
+                audios = Audio.objects.select_for_update().annotate(c=Count("assignments"), val_count=Count("validations")) \
+                        .filter(c__lt=required_audio_validation_count) \
+                        .filter(audio_status = ValidationStatus.PENDING.value,
+                                deleted=False,
+                                    is_accepted=False,
+                                    rejected=False,
+                                    val_count__lt=required_audio_validation_count,
+                                locale=request.user.locale) \
+                        .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user))\
+                        .order_by("-val_count", "image", "id")[:count]
+                assignment.audios.set(audios)
+                assignment.save()
+            else:
+                audios = assignment.audios.annotate(val_count=Count("validations")).filter(
+                    audio_status=ValidationStatus.PENDING.value,
+                    val_count__lt=required_audio_validation_count,
+                    deleted=False).exclude(Q(validations__user=request.user))\
+                    .order_by("-val_count", "image", "id")
 
         data = self.serializer_class(audios,
                                      many=True,
@@ -231,12 +235,16 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
         transcription_count_filter = {
             f"{locale_count}__lt": EXPECTED_TRANSCRIPTIONS_PER_IMAGE
         }
-        if created or assignment.audios.all().count() == 0 or completed:
-            audios = (Audio.objects.annotate(
-                t_assign=Count("transcriptions_assignments"),
-                t_count=Count("transcriptions")).filter(
-                    Q(**transcription_count_filter)
-                    | Q(t_count__gte=1)).filter(
+
+        audios = Audio.objects.none()
+        with transaction.atomic():
+            if created or assignment.audios.all().count() == 0 or completed:
+                audios = (Audio.objects.select_for_update().annotate(
+                    t_assign=Count("transcriptions_assignments"),
+                    t_count=Count("transcriptions")).filter(
+                        Q(**transcription_count_filter)
+                        | Q(t_count__gte=1)
+                    ).filter(
                         transcription_status=ValidationStatus.PENDING.value,
                         locale=request.user.locale,
                         deleted=False,
@@ -244,17 +252,17 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
                         t_count__lt=required_transcription_validation_count
                     ).exclude(Q(transcriptions__user=request.user)).order_by(
                         "-t_count", locale_count, "?"))[:count]
-            assignment.audios.set(audios)
-            assignment.save()
-        else:
-            audios = assignment.audios.annotate(
-                t_count=Count("transcriptions")).filter(
-                    **transcription_count_filter,
-                    transcription_status=ValidationStatus.PENDING.value,
-                    t_count__lt=required_transcription_validation_count,
-                    deleted=False).exclude(
-                        Q(transcriptions__user=request.user)).order_by(
-                            "-t_count", locale_count, "?")
+                assignment.audios.set(audios)
+                assignment.save()
+            else:
+                audios = assignment.audios.select_for_update().annotate(
+                    t_count=Count("transcriptions")).filter(
+                        **transcription_count_filter,
+                        transcription_status=ValidationStatus.PENDING.value,
+                        t_count__lt=required_transcription_validation_count,
+                        deleted=False).exclude(
+                            Q(transcriptions__user=request.user)).order_by(
+                                "-t_count", locale_count, "?")
 
         data = self.serializer_class(audios,
                                      many=True,

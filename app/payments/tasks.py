@@ -5,11 +5,11 @@ from celery import shared_task
 from requests.exceptions import ConnectTimeout
 
 from accounts.models import User, Wallet
-from local_voice.utils.constants import ValidationStatus
 from dashboard.models import Audio, Participant
 from local_voice.utils.constants import (ParticipantType, TransactionDirection,
                                          TransactionStatus,
-                                         TransactionStatusMessages)
+                                         TransactionStatusMessages,
+                                         ValidationStatus)
 from payments.models import Transaction
 from payments.third_parties.payhub import PayHub
 from payments.third_parties.payhub_status_codes import PayHubStatusCodes

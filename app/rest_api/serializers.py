@@ -13,10 +13,9 @@ from mutagen import File as MFile
 from rest_framework import serializers
 
 from accounts.models import User, Wallet
-from local_voice.utils.constants import ValidationStatus
 from dashboard.models import (Audio, Category, Image, Notification,
                               Participant, Transcription, Validation)
-from local_voice.utils.constants import ParticipantType
+from local_voice.utils.constants import ParticipantType, ValidationStatus
 from payments.models import Transaction
 from rest_api.tasks import convert_audio_file_to_mp3
 from setup.models import AppConfiguration

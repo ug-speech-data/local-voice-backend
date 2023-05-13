@@ -3,9 +3,8 @@ import os
 from django.db import models
 from django.dispatch import receiver
 
-from setup.models import AppConfiguration
-
 from dashboard.models import Audio, Image, Transcription
+from setup.models import AppConfiguration
 
 
 @receiver(models.signals.post_delete, sender=Image)
