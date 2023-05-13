@@ -177,9 +177,8 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
         assignment, created = AudioValidationAssignment.objects.get_or_create(
             user=request.user)
 
-        audios = Audio.objects.none()
-        with transaction.atomic():
-            if created or assignment.audios.all().count() == 0 or completed:
+        if created or assignment.audios.all().count() == 0 or completed:
+            with transaction.atomic():
                 audios = Audio.objects.select_for_update().annotate(c=Count("assignments"), val_count=Count("validations")) \
                         .filter(c__lt=required_audio_validation_count) \
                         .filter(audio_status = ValidationStatus.PENDING.value,
@@ -192,12 +191,11 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
                         .order_by("-val_count", "image", "id")[:count]
                 assignment.audios.set(audios)
                 assignment.save()
-            else:
-                audios = assignment.audios.annotate(val_count=Count("validations")).filter(
-                    audio_status=ValidationStatus.PENDING.value,
-                    val_count__lt=required_audio_validation_count,
-                    deleted=False).exclude(Q(validations__user=request.user))\
-                    .order_by("-val_count", "image", "id")
+        audios = assignment.audios.annotate(val_count=Count("validations")).filter(
+            audio_status=ValidationStatus.PENDING.value,
+            val_count__lt=required_audio_validation_count,
+            deleted=False).exclude(Q(validations__user=request.user))\
+            .order_by("-val_count", "image", "id")
 
         data = self.serializer_class(audios,
                                      many=True,
@@ -236,9 +234,8 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
             f"{locale_count}__lt": EXPECTED_TRANSCRIPTIONS_PER_IMAGE
         }
 
-        audios = Audio.objects.none()
-        with transaction.atomic():
-            if created or assignment.audios.all().count() == 0 or completed:
+        if created or assignment.audios.all().count() == 0 or completed:
+            with transaction.atomic():
                 audios = (Audio.objects.select_for_update().annotate(
                     t_assign=Count("transcriptions_assignments"),
                     t_count=Count("transcriptions")).filter(
@@ -254,15 +251,14 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
                         "-t_count", locale_count, "?"))[:count]
                 assignment.audios.set(audios)
                 assignment.save()
-            else:
-                audios = assignment.audios.select_for_update().annotate(
-                    t_count=Count("transcriptions")).filter(
-                        **transcription_count_filter,
-                        transcription_status=ValidationStatus.PENDING.value,
-                        t_count__lt=required_transcription_validation_count,
-                        deleted=False).exclude(
-                            Q(transcriptions__user=request.user)).order_by(
-                                "-t_count", locale_count, "?")
+        audios = assignment.audios.annotate(
+            t_count=Count("transcriptions")).filter(
+                **transcription_count_filter,
+                transcription_status=ValidationStatus.PENDING.value,
+                t_count__lt=required_transcription_validation_count,
+                deleted=False).exclude(
+                    Q(transcriptions__user=request.user)).order_by(
+                        "-t_count", locale_count, "?")
 
         data = self.serializer_class(audios,
                                      many=True,
