@@ -178,7 +178,7 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
             user=request.user)
 
         if created or assignment.audios.all().count() == 0 or completed:
-            audios = Audio.objects.select_for_update().annotate(c=Count("assignments"), val_count=Count("validations")) \
+            audios = Audio.objects.annotate(c=Count("assignments"), val_count=Count("validations")) \
                     .filter(c__lt=required_audio_validation_count) \
                     .filter(audio_status = ValidationStatus.PENDING.value,
                             deleted=False,
