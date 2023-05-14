@@ -855,7 +855,7 @@ class LimitedUsersAPIView(SimpleCrudMixin):
 
 class GetAudioTranscriptionToResolve(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
-    required_permissions = ["setup.transcribe_audio"]
+    required_permissions = ["setup.resolve_transcription"]
     serializer_class = AudioTranscriptionSerializer
 
     def get(self, request, *args, **kwargs):
