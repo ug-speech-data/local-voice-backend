@@ -70,6 +70,7 @@ class SetupPerms(models.Model):
             ("validate_audio", "Can validate audio"),
             ("transcribe_audio", "Can transcribe audio"),
             ("validate_transcription", "Can validate transcription"),
+            ("resolve_transcription", "Can resolve transcription"),
             ("manage_collected_data", "Can manage collected data"),
             ("manage_payment", "Can manage payments"),
             ("record_self", "Can record oneself"),

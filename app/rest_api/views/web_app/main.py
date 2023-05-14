@@ -10,9 +10,10 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
 from rest_framework import generics, permissions
 from rest_framework.response import Response
-
+from django.db import transaction
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
+from local_voice.utils.constants import TranscriptionStatus
 from app_statistics.models import Statistics
 from dashboard.forms import CategoryForm
 from dashboard.models import (Audio, Category, Image, Notification,
@@ -21,18 +22,13 @@ from local_voice.utils.constants import ValidationStatus
 from local_voice.utils.functions import (apply_filters, get_errors_from_form,
                                          relevant_permission_objects)
 from rest_api.permissions import APILevelPermissionCheck
-from rest_api.serializers import (AppConfigurationSerializer,
-                                  AudiosByLeadsSerializer, AudioSerializer,
-                                  AudioTranscriptionSerializer,
-                                  CategorySerializer,
-                                  ConflictResolutionLeaderBoardSerializer,
-                                  EnumeratorSerialiser,
-                                  GroupPermissionSerializer, GroupSerializer,
-                                  ImageSerializer, LimitedUserSerializer,
-                                  NotificationSerializer,
-                                  ParticipantSerializer,
-                                  TranscriptionSerializer, UserSerializer,
-                                  ValidationLeaderBoardSerializer)
+from rest_api.serializers import (
+    AppConfigurationSerializer, AudiosByLeadsSerializer, AudioSerializer,
+    AudioTranscriptionSerializer, CategorySerializer,
+    ConflictResolutionLeaderBoardSerializer, EnumeratorSerialiser,
+    GroupPermissionSerializer, GroupSerializer, ImageSerializer,
+    LimitedUserSerializer, NotificationSerializer, ParticipantSerializer,
+    TranscriptionSerializer, UserSerializer, ValidationLeaderBoardSerializer)
 from rest_api.tasks import export_audio_data
 from rest_api.views.mixins import SimpleCrudMixin
 from setup.models import AppConfiguration
@@ -117,12 +113,13 @@ class GetAudiosToTranscribe(generics.GenericAPIView):
         required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 2
         offset = request.GET.get("offset", -1)
 
-        audio = Audio.objects.annotate(t_count=Count("transcriptions")).filter(
-            checked_in_for_transcription=True,
+        audio = Audio.objects.annotate(t_count=Count("transcriptions"), t_assign=Count("transcriptions_assignments")).filter(
             deleted=False,
+            audio_status = ValidationStatus.ACCEPTED.value,
             transcription_status=ValidationStatus.PENDING.value,
+            t_assign__lt=required_transcription_validation_count,
+            t_count__lt=required_transcription_validation_count,
             locale=request.user.locale)\
-            .filter(t_count__lt=required_transcription_validation_count)\
             .exclude(Q(transcriptions__user=request.user) | Q(id=offset))\
             .order_by("-t_count", "?")\
                 .first()
@@ -350,9 +347,7 @@ class AppConfigurationAPI(generics.GenericAPIView):
         default_user_group = Group.objects.filter(
             name=default_user_group_name).first()
 
-        configuration = AppConfiguration.objects.first()
-        if not configuration:
-            return Response({"message": "No configurations"}, 400)
+        configuration, _ = AppConfiguration.objects.get_or_create()
 
         try:
             for key, value in request.data.items():
@@ -550,8 +545,8 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
             corrected_text = " ".join(
                 corrected_text.replace("\r", "").replace("\n", "").split())
             transcriptions = audio.transcriptions.all()
-            transcriptions.update(corrected_text=corrected_text,
-                                  conflict_resolved_by=request.user)
+            transcriptions.update(corrected_text=corrected_text)
+            transcriptions.filter(conflict_resolved_by=None).update(conflict_resolved_by=request.user)
 
         audio.transcription_status = transcription_status
         audio.save()
@@ -853,6 +848,66 @@ class LimitedUsersAPIView(SimpleCrudMixin):
             "User updated successfully",
             self.response_data_label:
             self.serializer_class(user, context={
+                "request": request
+            }).data
+        })
+
+
+class GetAudioTranscriptionToResolve(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
+    required_permissions = ["setup.transcribe_audio"]
+    serializer_class = AudioTranscriptionSerializer
+
+    def get(self, request, *args, **kwargs):
+        configuration = AppConfiguration.objects.first()
+        required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 2
+        offset = request.GET.get("offset", -1)
+
+        with transaction.atomic():
+            audio = Audio.objects.annotate(t_count=Count("transcriptions")).filter(
+                deleted=False,
+                audio_status = ValidationStatus.ACCEPTED.value,
+                transcription_status=TranscriptionStatus.CONFLICT.value,
+                t_count__gte=required_transcription_validation_count,
+                locale=request.user.locale)\
+                .exclude(Q(transcriptions__user=request.user) | Q(id=offset))\
+                .order_by("-t_count", "?")\
+                    .first()
+            if audio:
+                audio.transcription_status = ValidationStatus.IN_REVIEW.value
+                audio.save()
+        data = self.serializer_class(audio, context={
+            "request": request
+        }).data if audio else None
+        return Response({
+            "audio": data,
+        })
+
+    def post(self, request, *args, **kwargs):
+        object_id = request.data.get("id") or -1
+        corrected_text = request.data.get("text")
+        transcription_status = request.data.get("transcription_status")
+        audio = Audio.objects.filter(id=object_id).first()
+
+        if not audio:
+            return Response({"message": "Invalid id"}, 400)
+
+        ## Update
+        if transcription_status and corrected_text:
+            corrected_text = " ".join(
+                corrected_text.replace("\r", "").replace("\n", "").split())
+            transcriptions = audio.transcriptions.all()
+            transcriptions.update(corrected_text=corrected_text)
+            transcriptions.filter(conflict_resolved_by=None).update(conflict_resolved_by=request.user)
+
+        audio.transcription_status = transcription_status
+        audio.save()
+
+        return Response({
+            "message":
+            "Transcription update successfully",
+            "audio":
+            self.serializer_class(audio, context={
                 "request": request
             }).data
         })

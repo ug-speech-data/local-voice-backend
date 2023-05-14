@@ -80,7 +80,7 @@ class GetAssignedImagesAPI(generics.GenericAPIView):
                         total=Count('id')).order_by('total')
 
             result = sorted(result, key=lambda item: item.get("total"))
-            least_used_batch = result[0].get("assigned_image_batch")
+            least_used_batch = result[0].get("assigned_image_batch") if result else 1
 
             user = request.user
             user.assigned_image_batch = least_used_batch

@@ -22,6 +22,7 @@ urlpatterns += [
     path("get-audio-to-validate", views.GetAudiosToValidate.as_view()),
     path("get-audio-to-transcribe", views.GetAudiosToTranscribe.as_view()),
     path("get-transcription-to-validate", views.GetTranscriptionToValidate.as_view()),
+    path("get-transcription-to-resolve/", views.GetAudioTranscriptionToResolve.as_view()),
 
     path("validate-image/", views.ValidateImage.as_view()),
     path("validate-audio/", views.ValidateAudio.as_view()),
