@@ -99,7 +99,7 @@ def export_audio_data(user_id, data, base_url):
                 audio_filename = audio.file_mp3.name if audio.file_mp3 else audio.file.name
                 image_filename = audio.image.file.name
                 new_image_filename = image_filename.split("/")[0] + "/" + str(
-                    audio.id).zfill(4) + "." + image_filename.split(".")[-1]
+                    audio.image.id).zfill(4) + "." + image_filename.split(".")[-1]
                 zip_file.write(
                     settings.MEDIA_ROOT / audio_filename,
                     arcname=f"assets/{audio.locale}_{audio_filename}")
