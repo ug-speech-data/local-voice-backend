@@ -146,7 +146,7 @@ def export_audio_data(user_id, data, base_url):
         for audio in audios:
             ExportTag.objects.create(user_id=user_id, tag=tag, audio=audio)
 
-    message = f"Export completed successfully. Exported {total_audios} files, kkipped {skip_count}."
+    message = f"Export completed successfully. Exported {total_audios} files, skipped {skip_count}."
     update_notification.update(message=message)
     Notification.objects.create(
         message=
