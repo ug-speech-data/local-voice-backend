@@ -123,7 +123,11 @@ class Wallet(models.Model):
         return super().save(*args, **kwargs)
 
     def credit_wallet(self, amount):
-        self.accrued_amount += decimal.Decimal(amount)
+        amount = decimal.Decimal(amount)
+        if amount > 0:
+            self.accrued_amount += amount
+        else:
+            self.total_payout += abs(amount)
         self.save()
 
     def set_validation_benefit(self, amount):
