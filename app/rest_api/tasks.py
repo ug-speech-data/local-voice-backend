@@ -62,10 +62,14 @@ def export_audio_data(user_id, data, base_url):
     status = data.get("status")
     tag = data.get("tag")
     locale = data.get("locale")
-    number_of_files = data.get("number_of_files")
-    number_of_files = int(number_of_files) if str(
-        number_of_files).isdigit() else 0
+    randomise = "t" in data.get("randomise", "").lower()
+    number_of_files = data.get("number_of_files", "0")
+    skip = data.get("skip", "0")
+    number_of_files = int(number_of_files) if str(number_of_files).isdigit() else 0
+    skip = int(skip) if str(skip).isdigit() else 0
 
+    print('data',data)
+    
     if tag:
         audios = audios.exclude(tags__tag=tag)
 
@@ -79,9 +83,15 @@ def export_audio_data(user_id, data, base_url):
         audios = audios.annotate(t_count=Count("transcriptions")).filter(
             t_count__gt=0)
 
-    audios = audios.order_by("id")
+    if randomise:
+        audios = audios.order_by("?")
+    else:
+        audios = audios.order_by("id")
     if number_of_files > 0:
         audios = audios[:number_of_files]
+    
+    if skip > 0:
+        audios = audios[skip:]
 
     total_audios = audios.count()
     skip_count = 0
