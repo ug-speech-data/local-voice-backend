@@ -38,6 +38,7 @@ def export_audio_data(user_id, data, base_url):
 
     timestamp = str(datetime.today()).split(".")[0]
     output_filename = f"temps/export_audio_{timestamp}.zip"
+    output_filename = output_filename.replace(" ","_")
     output_dir = settings.MEDIA_ROOT / output_filename
 
     columns = [
