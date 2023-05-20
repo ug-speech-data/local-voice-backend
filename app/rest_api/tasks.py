@@ -56,7 +56,7 @@ def export_audio_data(user_id, data, base_url):
         "YEAR",
     ]
     rows = []
-    audios = Audio.objects.filter(audio_status="accepted", deleted=False)
+    audios = Audio.objects.filter(deleted=False)
 
     # Apply filters
     status = data.get("status")
@@ -65,20 +65,25 @@ def export_audio_data(user_id, data, base_url):
     randomise = "t" in data.get("randomise", "").lower()
     number_of_files = data.get("number_of_files", "0")
     skip = data.get("skip", "0")
-    number_of_files = int(number_of_files) if str(number_of_files).isdigit() else 0
+    number_of_files = int(number_of_files) if str(
+        number_of_files).isdigit() else 0
     skip = int(skip) if str(skip).isdigit() else 0
 
-    print('data',data)
-    
     if tag:
         audios = audios.exclude(tags__tag=tag)
 
     if locale != "all":
         audios = audios.filter(locale=locale)
 
+    if status == "not_accepted":
+        audios = audios.exclude(audio_status="accepted")
+    else:
+        audios = audios.filter(audio_status="accepted")
+
     if status == "transcription_resolved":
         audios = audios.filter(
             transcription_status=TranscriptionStatus.ACCEPTED.value)
+
     if status == "transcribed":
         audios = audios.annotate(t_count=Count("transcriptions")).filter(
             t_count__gt=0)
@@ -89,7 +94,7 @@ def export_audio_data(user_id, data, base_url):
         audios = audios.order_by("id")
     if number_of_files > 0:
         audios = audios[:number_of_files]
-    
+
     if skip > 0:
         audios = audios[skip:]
 
@@ -109,7 +114,8 @@ def export_audio_data(user_id, data, base_url):
                 audio_filename = audio.file_mp3.name if audio.file_mp3 else audio.file.name
                 image_filename = audio.image.file.name
                 new_image_filename = image_filename.split("/")[0] + "/" + str(
-                    audio.image.id).zfill(4) + "." + image_filename.split(".")[-1]
+                    audio.image.id).zfill(4) + "." + image_filename.split(
+                        ".")[-1]
                 zip_file.write(
                     settings.MEDIA_ROOT / audio_filename,
                     arcname=f"assets/{audio.locale}_{audio_filename}")
