@@ -44,7 +44,7 @@ def export_audio_data(user_id, data, base_url):
     if not os.path.exists(temp):
         os.makedirs(temp)
 
-    timestamp = str(datetime.today()).split(".")[0]
+    timestamp = datetime.today().strftime("%Y%m%d%H%M%S")
     output_filename = f"temps/export_audio_{locale}_{timestamp}.zip"
     output_filename = output_filename.replace(" ","_")
     output_dir = settings.MEDIA_ROOT / output_filename
