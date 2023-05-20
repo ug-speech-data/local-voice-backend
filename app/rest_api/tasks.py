@@ -30,6 +30,14 @@ def export_audio_data(user_id, data, base_url):
         user_id=user_id)
     update_notification = Notification.objects.filter(
         id=update_notification.id)
+    
+    # Apply filters
+    status = data.get("status")
+    tag = data.get("tag")
+    locale = data.get("locale", "")
+    randomise = "t" in data.get("randomise", "").lower()
+    number_of_files = data.get("number_of_files", "0")
+    skip = data.get("skip", "0")
 
     # Create temp directory
     temp = os.path.join(settings.MEDIA_ROOT, "temps")
@@ -37,7 +45,7 @@ def export_audio_data(user_id, data, base_url):
         os.makedirs(temp)
 
     timestamp = str(datetime.today()).split(".")[0]
-    output_filename = f"temps/export_audio_{timestamp}.zip"
+    output_filename = f"temps/export_audio_{locale}_{timestamp}.zip"
     output_filename = output_filename.replace(" ","_")
     output_dir = settings.MEDIA_ROOT / output_filename
 
@@ -59,13 +67,6 @@ def export_audio_data(user_id, data, base_url):
     rows = []
     audios = Audio.objects.filter(deleted=False)
 
-    # Apply filters
-    status = data.get("status")
-    tag = data.get("tag")
-    locale = data.get("locale")
-    randomise = "t" in data.get("randomise", "").lower()
-    number_of_files = data.get("number_of_files", "0")
-    skip = data.get("skip", "0")
     number_of_files = int(number_of_files) if str(
         number_of_files).isdigit() else 0
     skip = int(skip) if str(skip).isdigit() else 0
