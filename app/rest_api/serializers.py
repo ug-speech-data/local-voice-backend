@@ -751,7 +751,7 @@ class AudioUploadSerializer(serializers.Serializer):
             return False, f"Invalid Image ID: {image_id}; by {request.user}"
 
         if not file:
-            return False, "No file"
+            return False, f"No file: {image_id}; by {request.user}"
 
         # Check for duplicate files.
         new_file_path = settings.MEDIA_ROOT / "audios" / file.name
@@ -840,7 +840,7 @@ class AudioUploadSerializer(serializers.Serializer):
                     convert_audio_file_to_mp3.delay(audio.id)
 
         except Exception as e:
-            logger.error(e)
+            logger.error(f"{str(e)}; {request.user}")
             return False, str(e)
         return True, audio
 
