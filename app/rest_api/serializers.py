@@ -748,7 +748,7 @@ class AudioUploadSerializer(serializers.Serializer):
         participant_object = None
 
         if not image_object:
-            return False, "Invalid Image ID"
+            return False, f"Invalid Image ID: {image_id}; by {request.user}"
 
         if not file:
             return False, "No file"
@@ -758,7 +758,7 @@ class AudioUploadSerializer(serializers.Serializer):
         if os.path.isfile(new_file_path):
             for audio in Audio.objects.filter(deleted=False):
                 if audio.file.path == str(new_file_path):
-                    logger.info("Audio already exists.")
+                    logger.info(f"Audio already exists. {new_file_path}; by {request.user}")
                     return True, audio
         try:
             if re_upload:
