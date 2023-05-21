@@ -728,7 +728,7 @@ class AudioUploadSerializer(serializers.Serializer):
         duration = round(m_file.info.length)
 
         if duration < 15:
-            return False, f"MINIMUM_DURATION_NOT_MET, {request.user}"
+            return False, f"MINIMUM_DURATION_NOT_MET, {file} {request.user}"
 
         re_upload = request.data.get("re_upload", False)
         api_client = request.data.get("api_client")
