@@ -1,3 +1,4 @@
+from decimal import Decimal
 import logging
 from time import sleep
 
@@ -185,9 +186,12 @@ def update_user_amounts():
         validations = Audio.objects.filter(validations__user=user).count()
         validations_amount = validations * amount_per_audio_validation
 
+        transcription_amount = Decimal(user.audios_transcribed * TRANSCRIPTION_RATE)
+        amount_accrued_by_recruits = Decimal(participant_audios * amount / 2)
+
         wallet = user.wallet or Wallet.objects.create()
         wallet.set_validation_benefit(validations_amount)
         wallet.set_recording_benefit(audios_amount)
-        wallet.set_audios_by_recruits_benefit(participant_audios * amount / 2)
-        wallet.set_transcription_benefit(user.audios_transcribed * TRANSCRIPTION_RATE)
-        wallet.set_accrued_amount(audios_amount + validations_amount)
+        wallet.set_audios_by_recruits_benefit(amount_accrued_by_recruits)
+        wallet.set_transcription_benefit(transcription_amount)
+        wallet.set_accrued_amount(audios_amount + validations_amount + transcription_amount + amount_accrued_by_recruits)
