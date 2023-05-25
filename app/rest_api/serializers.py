@@ -614,7 +614,14 @@ class PaymentUserSerializer(serializers.ModelSerializer):
     # Misc
     validation_benefit = serializers.SerializerMethodField()
     recording_benefit = serializers.SerializerMethodField()
+    audios_by_recruits_benefit = serializers.SerializerMethodField()
     transcription_benefit = serializers.SerializerMethodField()
+
+    def get_audios_by_recruits_benefit(self, obj):
+        if not obj.wallet:
+            obj.wallet = Wallet.objects.create()
+            obj.save()
+        return obj.wallet.audios_by_recruits_benefit 
 
     def get_fullname(self, obj):
         return obj.fullname
@@ -686,8 +693,13 @@ class PaymentUserSerializer(serializers.ModelSerializer):
             "fullname",
             "wallet_last_updated_at",
             "validation_benefit",
+            "audios_validated",
             "recording_benefit",
             "transcription_benefit",
+            "audios_accepted",
+            "audios_transcribed",
+            "audios_by_recruits_benefit",
+            "accepted_audios_from_recruits",
         ]
 
 

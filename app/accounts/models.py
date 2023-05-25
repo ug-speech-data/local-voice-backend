@@ -40,6 +40,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     restricted_audio_count = models.IntegerField(default=10)
     reference_code = models.IntegerField(null=True, blank=True)
     audios_submitted = models.IntegerField(default=0)
+    accepted_audios_from_recruits = models.IntegerField(default=0)
     audios_validated = models.IntegerField(default=0)
     audios_rejected = models.IntegerField(default=0)
     audios_pending = models.IntegerField(default=0)
@@ -48,6 +49,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     transcriptions_resolved = models.IntegerField(default=0)
     audios_transcribed = models.IntegerField(default=0)
     deleted = models.BooleanField(default=False)
+
+    # For language leads
     proxy_audios_submitted_in_hours = models.DecimalField(default=0, decimal_places=2, max_digits=15)
     proxy_audios_accepted_in_hours = models.DecimalField(default=0, decimal_places=2, max_digits=15)
     proxy_audios_rejected_in_hours = models.DecimalField(default=0, decimal_places=2, max_digits=15)
@@ -111,6 +114,7 @@ class Wallet(models.Model):
     # Miscelanous/Break down -- All in cedis
     validation_benefit = models.DecimalField(max_digits=10, decimal_places=2, default=decimal.Decimal(0.0))
     recording_benefit = models.DecimalField(max_digits=10, decimal_places=2, default=decimal.Decimal(0.0))
+    audios_by_recruits_benefit = models.DecimalField(max_digits=10, decimal_places=2, default=decimal.Decimal(0.0))
     transcription_benefit = models.DecimalField(max_digits=10, decimal_places=2, default=decimal.Decimal(0.0))
 
     def __str__(self):
@@ -140,6 +144,10 @@ class Wallet(models.Model):
 
     def set_transcription_benefit(self, amount):
         self.transcription_benefit = decimal.Decimal(amount)
+        self.save()
+
+    def set_audios_by_recruits_benefit(self, amount):
+        self.audios_by_recruits_benefit = decimal.Decimal(amount)
         self.save()
 
     def set_accrued_amount(self, amount):

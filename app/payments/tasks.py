@@ -152,6 +152,8 @@ def update_user_amounts():
     configuration = AppConfiguration.objects.first()
     amount = configuration.audio_aggregators_amount_per_audio if configuration else 0
     amount_per_audio_validation = configuration.amount_per_audio_validation if configuration else 0
+    TRANSCRIPTION_RATE = 0.41
+
     for user in User.objects.filter(deleted=False, is_active=True):
         user_audios = user.audios.filter(
             deleted=False,
@@ -175,7 +177,10 @@ def update_user_amounts():
                 deleted=False,
                 submitted_by__in=users_participants).count()
 
-        audios_amount = amount * (participant_audios + user_audios)
+            user.accepted_audios_from_recruits = participant_audios
+            user.save()
+        
+        audios_amount = amount * user_audios
 
         validations = Audio.objects.filter(validations__user=user).count()
         validations_amount = validations * amount_per_audio_validation
@@ -183,4 +188,6 @@ def update_user_amounts():
         wallet = user.wallet or Wallet.objects.create()
         wallet.set_validation_benefit(validations_amount)
         wallet.set_recording_benefit(audios_amount)
+        wallet.set_audios_by_recruits_benefit(participant_audios * amount / 2)
+        wallet.set_transcription_benefit(user.audios_transcribed * TRANSCRIPTION_RATE)
         wallet.set_accrued_amount(audios_amount + validations_amount)
