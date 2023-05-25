@@ -154,19 +154,19 @@ def update_user_amounts():
     amount = configuration.audio_aggregators_amount_per_audio if configuration else 0
     amount_per_audio_validation = configuration.amount_per_audio_validation if configuration else 0
     TRANSCRIPTION_RATE = 0.41
-
+    # dagbfh
     for user in User.objects.filter(deleted=False, is_active=True):
         user_audios = user.audios.filter(
             deleted=False,
             audio_status=ValidationStatus.ACCEPTED.value,
             participant__type=ParticipantType.ASSISTED.value).count()
         participant_audios = 0
-        email_prefix = user.email_address.split("@")[0][:-2]
+        email_prefix = user.email_address.split("@")[0]
         if ("ugspeechdata.com" in user.email_address
                 # Is not a lead
-                and user.email_address.split("@")[0][:-2].isdigit()
+                and email_prefix[-2:].isdigit()
                 # Is not a participant recruited by an enumerator
-                and not email_prefix[-2:].isdigit()):
+                and not email_prefix[-4:].isdigit()):
 
             users_participants = User.objects.filter(
                 email_address__istartswith=email_prefix).exclude(
