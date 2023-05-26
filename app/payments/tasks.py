@@ -186,7 +186,7 @@ def update_user_amounts():
         validations = Audio.objects.filter(validations__user=user).count()
         validations_amount = validations * amount_per_audio_validation
 
-        transcription_amount = Decimal(user.audios_transcribed * TRANSCRIPTION_RATE)
+        transcription_amount = Decimal((user.audios_transcribed + user.transcriptions_resolved) * TRANSCRIPTION_RATE)
         amount_accrued_by_recruits = Decimal(participant_audios * amount / 2)
 
         wallet = user.wallet or Wallet.objects.create()
