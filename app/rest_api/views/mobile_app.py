@@ -1,7 +1,6 @@
 import json
 import logging
 
-from django.db import transaction
 from django.db.models import Count, Q
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
