@@ -382,6 +382,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
     audios_validated = serializers.SerializerMethodField()
     percentage_audios_accepted = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
+    balance = serializers.SerializerMethodField()
 
     def get_transactions(self, obj):
         return TransactionSerializer(obj.get_transactions(),
@@ -418,6 +419,9 @@ class ParticipantSerializer(serializers.ModelSerializer):
             obj.audios.filter(deleted=False).exclude(
                 audio_status=ValidationStatus.PENDING.value).count() / audios *
             100, 2)
+
+    def get_balance(self, obj):
+        return float(obj.balance)
 
     class Meta:
         model = Participant
@@ -621,7 +625,7 @@ class PaymentUserSerializer(serializers.ModelSerializer):
         if not obj.wallet:
             obj.wallet = Wallet.objects.create()
             obj.save()
-        return obj.wallet.audios_by_recruits_benefit 
+        return obj.wallet.audios_by_recruits_benefit
 
     def get_fullname(self, obj):
         return obj.fullname
@@ -771,7 +775,9 @@ class AudioUploadSerializer(serializers.Serializer):
         if os.path.isfile(new_file_path):
             for audio in Audio.objects.filter(deleted=False):
                 if audio.file.path == str(new_file_path):
-                    logger.info(f"Audio already exists. {new_file_path}; by {request.user}")
+                    logger.info(
+                        f"Audio already exists. {new_file_path}; by {request.user}"
+                    )
                     return True, audio
         try:
             if re_upload:
