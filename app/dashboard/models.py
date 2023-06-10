@@ -279,7 +279,7 @@ class Participant(models.Model):
             self.balance = decimal.Decimal(self.amount) - decimal.Decimal(paid)
             if self.balance > 0:
                 self.paid = False
-            else:
+            elif self.transactions.exists():
                 self.paid = True
 
         return super().save(*args, **kwargs)
