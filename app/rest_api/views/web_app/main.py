@@ -72,7 +72,7 @@ class GetImagesToValidate(generics.GenericAPIView):
             created_at__gte=start_date,
             is_accepted=False,
             validation_count__lt=required_image_validation_count)\
-                .exclude(validations__user=request.user)
+            .exclude(validations__user=request.user)
 
         if request.user.assigned_image_batch > -1:  # All images
             images = images.filter(
@@ -115,14 +115,14 @@ class GetAudiosToTranscribe(generics.GenericAPIView):
 
         audio = Audio.objects.annotate(t_count=Count("transcriptions"), t_assign=Count("transcriptions_assignments")).filter(
             deleted=False,
-            audio_status = ValidationStatus.ACCEPTED.value,
+            audio_status=ValidationStatus.ACCEPTED.value,
             transcription_status=ValidationStatus.PENDING.value,
             t_assign__lt=required_transcription_validation_count,
             t_count__lt=required_transcription_validation_count,
             locale=request.user.locale)\
             .exclude(Q(transcriptions__user=request.user) | Q(id=offset))\
             .order_by("-t_count", "?")\
-                .first()
+            .first()
 
         if audio:
             audio.transcription_status = ValidationStatus.IN_REVIEW.value
@@ -146,14 +146,13 @@ class GetTranscriptionToValidate(generics.GenericAPIView):
         required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 2
         offset = request.GET.get("offset", -1)
 
-
         transcription = Transcription.objects.filter(
             id__gt=offset,
             is_accepted=False,
             validation_count__lt=required_transcription_validation_count)\
-                .exclude(validations__user=request.user) \
+            .exclude(validations__user=request.user) \
             .order_by("id")\
-                .first()
+            .first()
 
         data = self.serializer_class(transcription,
                                      context={
@@ -351,7 +350,8 @@ class AppConfigurationAPI(generics.GenericAPIView):
 
         try:
             for key, value in request.data.items():
-                if not value: continue
+                if not value:
+                    continue
                 if hasattr(configuration, key):
                     if type(getattr(configuration, key)) == bool:
                         setattr(configuration, key, value == "true")
@@ -518,10 +518,11 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
         prev_page = page - 1 if page > 1 else None
         next_page = page + 1 if total_pages > page else None
 
-        #yapf: disable
+        # yapf: disable
         response_data = {
             self.response_data_label_plural:
-            self.serializer_class(paginated_objects, context={"request": request},many=True).data,
+            self.serializer_class(paginated_objects, context={
+                                  "request": request}, many=True).data,
             "page": page,
             "page_size": page_size,
             "total": objects.count(),
@@ -540,13 +541,14 @@ class CollectedTranscriptionsAPI(SimpleCrudMixin):
         if not audio:
             return Response({"message": "Invalid id"}, 400)
 
-        ## Update
+        # Update
         if transcription_status and corrected_text:
             corrected_text = " ".join(
                 corrected_text.replace("\r", "").replace("\n", "").split())
             transcriptions = audio.transcriptions.all()
             transcriptions.update(corrected_text=corrected_text)
-            transcriptions.filter(conflict_resolved_by=None).update(conflict_resolved_by=request.user)
+            transcriptions.filter(conflict_resolved_by=None).update(
+                conflict_resolved_by=request.user)
 
         audio.transcription_status = transcription_status
         audio.save()
@@ -740,7 +742,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
 
     def language_statistics_in_hours(self, lang):
         stats = Statistics.objects.first()
-        #yapf: disable
+        # yapf: disable
         return {
             f"{lang}_audios_submitted_in_hours": getattr(stats, f"{lang}_audios_submitted_in_hours"),
             f"{lang}_audios_single_validation_in_hours": getattr(stats, f"{lang}_audios_single_validation_in_hours"),
@@ -751,11 +753,12 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_rejected_in_hours": int(getattr(stats, f"{lang}_audios_double_validation_in_hours")) - int(getattr(stats, f"{lang}_audios_approved_in_hours"))
         }
 
-    def language_statistics(self,lang):
+    def language_statistics(self, lang):
         stats = Statistics.objects.first()
-        #yapf: disable
+        # yapf: disable
 
-        rejected = max(0,float(getattr(stats, f"{lang}_audios_double_validation")) - float(getattr(stats, f"{lang}_audios_approved")))
+        rejected = max(0, float(getattr(
+            stats, f"{lang}_audios_double_validation")) - float(getattr(stats, f"{lang}_audios_approved")))
         return {
             f"{lang}_audios_submitted": getattr(stats, f"{lang}_audios_submitted"),
             f"{lang}_audios_single_validation": getattr(stats, f"{lang}_audios_single_validation"),
@@ -763,20 +766,24 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_validation_conflict": getattr(stats, f"{lang}_audios_validation_conflict"),
             f"{lang}_audios_approved": getattr(stats, f"{lang}_audios_approved"),
             f"{lang}_audios_transcribed": getattr(stats, f"{lang}_audios_transcribed"),
-            f"{lang}_audios_rejected_percentage": round(rejected /  max(1, float(getattr(stats, f"{lang}_audios_double_validation"))) * 100,2),
+            f"{lang}_audios_rejected_percentage": round(rejected / max(1, float(getattr(stats, f"{lang}_audios_double_validation"))) * 100, 2),
         }
 
     @method_decorator(cache_page(60 * 10))
     def get(self, request, *args, **kwargs):
         stats = Statistics.objects.first()
-        conflict_resolution_users = User.objects.filter(conflicts_resolved__gt=0).order_by("-conflicts_resolved")[:15]
-        validation_users = User.objects.filter().order_by("-audios_validated")[:15]
+        conflict_resolution_users = User.objects.filter(
+            conflicts_resolved__gt=0).order_by("-conflicts_resolved")[:15]
+        validation_users = User.objects.filter().order_by(
+            "-audios_validated")[:15]
 
-        lead_ids = User.objects.filter(deleted=False).exclude(lead=None).values_list("lead_id", flat=True)
-        leads = User.objects.filter(id__in=lead_ids).order_by("-proxy_audios_submitted_in_hours")
+        lead_ids = User.objects.filter(deleted=False).exclude(
+            lead=None).values_list("lead_id", flat=True)
+        leads = User.objects.filter(id__in=lead_ids).order_by(
+            "-proxy_audios_submitted_in_hours")
 
         return Response({
-            "updated_at":stats.updated_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "updated_at": stats.updated_at.strftime("%Y-%m-%d %H:%M:%S"),
             "statistics": {
                 "audios_submitted": stats.audios_submitted,
                 "audios_approved": stats.audios_approved,
@@ -808,6 +815,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
             "audios_by_leads": AudiosByLeadsSerializer(leads, many=True).data,
         })
 
+
 class GetEnumerators(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = EnumeratorSerialiser
@@ -815,7 +823,8 @@ class GetEnumerators(generics.GenericAPIView):
     @method_decorator(cache_page(60 * 60 * 2))
     @method_decorator(vary_on_headers(*["Authorization"]))
     def get(self, request, *args, **kwargs):
-        users = User.objects.filter(Q(lead=request.user), deleted=False).order_by("surname")
+        users = User.objects.filter(
+            Q(lead=request.user), deleted=False).order_by("surname")
         return Response(
             {"enumerators": self.serializer_class(users, many=True).data})
 
@@ -840,7 +849,8 @@ class LimitedUsersAPIView(SimpleCrudMixin):
         if not user:
             return Response({"message": "Invalid id"}, 400)
 
-        user.restricted_audio_count = -1 # Negative number if used as unrestricted when filtering image.
+        # Negative number if used as unrestricted when filtering image.
+        user.restricted_audio_count = -1
         user.save()
 
         return Response({
@@ -866,13 +876,13 @@ class GetAudioTranscriptionToResolve(generics.GenericAPIView):
         with transaction.atomic():
             audio = Audio.objects.annotate(t_count=Count("transcriptions")).filter(
                 deleted=False,
-                audio_status = ValidationStatus.ACCEPTED.value,
+                audio_status=ValidationStatus.ACCEPTED.value,
                 transcription_status=TranscriptionStatus.CONFLICT.value,
                 t_count__gte=required_transcription_validation_count,
                 locale=request.user.locale)\
                 .exclude(Q(transcriptions__user=request.user) | Q(id=offset))\
                 .order_by("-t_count", "?")\
-                    .first()
+                .first()
             if audio:
                 audio.transcription_status = ValidationStatus.IN_REVIEW.value
                 audio.save()
@@ -892,13 +902,14 @@ class GetAudioTranscriptionToResolve(generics.GenericAPIView):
         if not audio:
             return Response({"message": "Invalid id"}, 400)
 
-        ## Update
+        # Update
         if transcription_status and corrected_text:
             corrected_text = " ".join(
                 corrected_text.replace("\r", "").replace("\n", "").split())
             transcriptions = audio.transcriptions.all()
             transcriptions.update(corrected_text=corrected_text)
-            transcriptions.filter(conflict_resolved_by=None).update(conflict_resolved_by=request.user)
+            transcriptions.filter(conflict_resolved_by=None).update(
+                conflict_resolved_by=request.user)
 
         audio.transcription_status = transcription_status
         audio.save()
@@ -910,4 +921,20 @@ class GetAudioTranscriptionToResolve(generics.GenericAPIView):
             self.serializer_class(audio, context={
                 "request": request
             }).data
+        })
+
+
+class SearchUser(generics.GenericAPIView):
+    serializer_class = UserSerializer
+
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get("query")
+        users = User.objects.filter(Q(surname__icontains=query) |
+                                    Q(other_names__icontains=query) |
+                                    Q(phone=query))
+        users = users[:5]
+        return Response({
+            "users": self.serializer_class(users, context={
+                "request": request
+            }, many=True).data,
         })
