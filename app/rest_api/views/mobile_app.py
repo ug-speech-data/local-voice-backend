@@ -177,6 +177,7 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
             user=request.user)
 
         if created or assignment.audios.all().count() == 0 or completed:
+            user_email_prefix = request.user.email_address.split("@")[0]
             audios = Audio.objects.annotate(c=Count("assignments"), val_count=Count("validations")) \
                     .filter(c__lt=required_audio_validation_count) \
                     .filter(audio_status = ValidationStatus.PENDING.value,
@@ -185,7 +186,7 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
                                 rejected=False,
                                 val_count__lt=required_audio_validation_count,
                             locale=request.user.locale) \
-                    .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user))\
+                    .exclude(Q(validations__user=request.user)|Q(submitted_by__email_address__startswith=user_email_prefix))\
                     .order_by("-val_count", "image", "id")[:count]
             assignment.audios.set(audios)
             assignment.save()
@@ -252,7 +253,7 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
                 transcription_status=ValidationStatus.PENDING.value,
                 t_count__lt=required_transcription_validation_count,
                 deleted=False).exclude(
-                    Q(transcriptions__user=request.user)).order_by(locale_count, "?")
+                    Q(transcriptions__user=request.user)).order_by(locale_count, "-t_count")
 
         data = self.serializer_class(audios,
                                      many=True,

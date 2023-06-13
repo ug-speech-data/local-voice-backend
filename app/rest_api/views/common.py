@@ -251,6 +251,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
         offset = request.GET.get("offset", -1)
         required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
 
+        user_email_prefix = request.user.email_address.split("@")[0]
         audios = Audio.objects.annotate(vals_count = Count("validations")).filter(
             deleted=False,
            is_accepted=False,
@@ -258,7 +259,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
            assignments=None,
            audio_status = ValidationStatus.PENDING.value,
             vals_count__lt=required_audio_validation_count)\
-                .exclude(Q(validations__user=request.user)|Q(submitted_by=request.user) | Q(id=offset)) \
+                .exclude(Q(validations__user=request.user)|Q(submitted_by__email_address__startswith=user_email_prefix) | Q(id=offset)) \
             .order_by("-vals_count", "image", "id")
 
         if not request.user.is_superuser:
