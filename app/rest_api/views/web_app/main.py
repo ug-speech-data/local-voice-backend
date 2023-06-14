@@ -749,8 +749,9 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_double_validation_in_hours": getattr(stats, f"{lang}_audios_double_validation_in_hours"),
             f"{lang}_audios_validation_conflict_in_hours": getattr(stats, f"{lang}_audios_validation_conflict_in_hours"),
             f"{lang}_audios_approved_in_hours": getattr(stats, f"{lang}_audios_approved_in_hours"),
+            f"{lang}_audios_rejected_in_hours": int(getattr(stats, f"{lang}_audios_double_validation_in_hours")) - int(getattr(stats, f"{lang}_audios_approved_in_hours")),
             f"{lang}_audios_transcribed_in_hours": getattr(stats, f"{lang}_audios_transcribed_in_hours"),
-            f"{lang}_audios_rejected_in_hours": int(getattr(stats, f"{lang}_audios_double_validation_in_hours")) - int(getattr(stats, f"{lang}_audios_approved_in_hours"))
+            f"{lang}_audios_transcribed_in_hours_unique": getattr(stats, f"{lang}_audios_transcribed_in_hours_unique"),
         }
 
     def language_statistics(self, lang):
@@ -765,13 +766,14 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_double_validation": getattr(stats, f"{lang}_audios_double_validation"),
             f"{lang}_audios_validation_conflict": getattr(stats, f"{lang}_audios_validation_conflict"),
             f"{lang}_audios_approved": getattr(stats, f"{lang}_audios_approved"),
-            f"{lang}_audios_transcribed": getattr(stats, f"{lang}_audios_transcribed"),
             f"{lang}_audios_rejected_percentage": round(rejected / max(1, float(getattr(stats, f"{lang}_audios_double_validation"))) * 100, 2),
+            f"{lang}_audios_transcribed": getattr(stats, f"{lang}_audios_transcribed"),
+            f"{lang}_audios_transcribed_unique": getattr(stats, f"{lang}_audios_transcribed_unique"),
         }
 
     @method_decorator(cache_page(60 * 10))
     def get(self, request, *args, **kwargs):
-        stats = Statistics.objects.first()
+        stats, _ = Statistics.objects.get_or_create()
         conflict_resolution_users = User.objects.filter(
             conflicts_resolved__gt=0).order_by("-conflicts_resolved")[:15]
         validation_users = User.objects.filter().order_by(
@@ -787,10 +789,12 @@ class GetDashboardStatistics(generics.GenericAPIView):
             "statistics": {
                 "audios_submitted": stats.audios_submitted,
                 "audios_approved": stats.audios_approved,
-                "audios_transcribed": stats.audios_transcribed,
                 "audios_hours_submitted": stats.audios_hours_submitted,
                 "audios_hours_approved": stats.audios_hours_approved,
+                "audios_transcribed": stats.audios_transcribed,
                 "audios_hours_transcribed": stats.audios_hours_transcribed,
+                "audios_transcribed_unique": stats.audios_transcribed_unique,
+                "audios_hours_transcribed_unique": stats.audios_hours_transcribed_unique,
                 "images_submitted": stats.images_submitted,
                 "images_approved": stats.images_approved,
             },

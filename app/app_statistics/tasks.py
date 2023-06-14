@@ -62,6 +62,8 @@ def language_statistics_in_hours(lang,locale):
     }
 
 def language_statistics(lang,locale):
+    hours_in_seconds = 3600
+    decimal_places = 4
     audios = Audio.objects.filter(deleted=False, locale=locale)
     transcriptions = Transcription.objects.filter(deleted=False, audio__locale=locale)
     submitted = audios.count()
@@ -79,13 +81,20 @@ def language_statistics(lang,locale):
         # Sqlite Deos not support distinct operation on columns
         logger.error(str(e))
 
+    audios_transcribed = transcriptions.count()
+    audios_transcribed_in_hours = round(sum([transcription.audio.duration for transcription in transcriptions]) / hours_in_seconds, decimal_places)
+    audios_transcribed_unique = unique_transcriptions.count()
+    audios_transcribed_in_hours_unique = round(sum([transcription.audio.duration for transcription in unique_transcriptions]) / hours_in_seconds, decimal_places)
     return {
         f"{lang}_audios_submitted": submitted,
         f"{lang}_audios_single_validation": single_validation,
         f"{lang}_audios_double_validation": double_validation,
         f"{lang}_audios_validation_conflict": conflicts,
         f"{lang}_audios_approved": approved,
-        f"{lang}_audios_transcribed": unique_transcriptions.count(),
+        f"{lang}_audios_transcribed": audios_transcribed,
+        f"{lang}_audios_transcribed_in_hours": audios_transcribed_in_hours,
+        f"{lang}_audios_transcribed_unique": audios_transcribed_unique,
+        f"{lang}_audios_transcribed_in_hours_unique": audios_transcribed_in_hours_unique,
     }
 
 
@@ -126,10 +135,11 @@ def update_statistics():
 
     audios_hours_submitted = round(sum([audio.get("duration") for audio in audios.values("duration")]) / hours_in_seconds, decimal_places)
     audios_hours_approved = round(sum([audio.get("duration") for audio in audios.filter(is_accepted=True).values("duration") ]) / hours_in_seconds, decimal_places)
-    audios_hours_transcribed = round(sum([transcription.audio.duration for transcription in unique_transcriptions]) / hours_in_seconds, decimal_places)
+    audios_hours_transcribed_unique = round(sum([transcription.audio.duration for transcription in unique_transcriptions]) / hours_in_seconds, decimal_places)
     stats.audios_hours_submitted = audios_hours_submitted
     stats.audios_hours_approved = audios_hours_approved
-    stats.audios_hours_transcribed = audios_hours_transcribed
+    stats.audios_transcribed_unique = unique_transcriptions.count()
+    stats.audios_hours_transcribed_unique = audios_hours_transcribed_unique
     stats.save()
 
     languages = [("ewe", "ee_gh"), ("akan", "ak_gh"), ("ikposo","kpo_gh"), ("dagaare","dag_gh"), ("dagbani", "dga_gh")]

@@ -10,10 +10,12 @@ class Statistics(models.Model):
     audios_submitted = models.IntegerField(default=0)
     audios_approved = models.IntegerField(default=0)
     audios_transcribed = models.IntegerField(default=0)
+    audios_transcribed_unique = models.IntegerField(default=0)
 
     audios_hours_submitted = models.DecimalField(default=0, decimal_places=2, max_digits=20)
     audios_hours_approved = models.DecimalField(default=0, decimal_places=2, max_digits=20)
     audios_hours_transcribed = models.DecimalField(default=0, decimal_places=2, max_digits=20)
+    audios_hours_transcribed_unique = models.DecimalField(default=0, decimal_places=2, max_digits=20)
 
     ########### EWE ########################
     # Total Count
@@ -23,6 +25,7 @@ class Statistics(models.Model):
     ewe_audios_validation_conflict = models.IntegerField(default=0)
     ewe_audios_approved = models.IntegerField(default=0)
     ewe_audios_transcribed = models.IntegerField(default=0)
+    ewe_audios_transcribed_unique = models.IntegerField(default=0)
 
     # Total Hours
     ewe_audios_submitted_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
@@ -31,6 +34,7 @@ class Statistics(models.Model):
     ewe_audios_validation_conflict_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
     ewe_audios_approved_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
     ewe_audios_transcribed_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
+    ewe_audios_transcribed_in_hours_unique = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
 
 
     ########### AKAN ########################
@@ -41,6 +45,7 @@ class Statistics(models.Model):
     akan_audios_validation_conflict = models.IntegerField(default=0)
     akan_audios_approved = models.IntegerField(default=0)
     akan_audios_transcribed = models.IntegerField(default=0)
+    akan_audios_transcribed_unique = models.IntegerField(default=0)
 
     # Total Hours
     akan_audios_submitted_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
@@ -49,6 +54,7 @@ class Statistics(models.Model):
     akan_audios_validation_conflict_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
     akan_audios_approved_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
     akan_audios_transcribed_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
+    akan_audios_transcribed_in_hours_unique = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
 
 
     ########### DAGBANI ########################
@@ -59,6 +65,7 @@ class Statistics(models.Model):
     dagbani_audios_validation_conflict = models.IntegerField(default=0)
     dagbani_audios_approved = models.IntegerField(default=0)
     dagbani_audios_transcribed = models.IntegerField(default=0)
+    dagbani_audios_transcribed_unique = models.IntegerField(default=0)
 
     # Total Hours
     dagbani_audios_submitted_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
@@ -67,6 +74,7 @@ class Statistics(models.Model):
     dagbani_audios_validation_conflict_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
     dagbani_audios_approved_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
     dagbani_audios_transcribed_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
+    dagbani_audios_transcribed_in_hours_unique = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
 
     ########### DAGAARE ########################
     # Total Count
@@ -76,6 +84,7 @@ class Statistics(models.Model):
     dagaare_audios_validation_conflict = models.IntegerField(default=0)
     dagaare_audios_approved = models.IntegerField(default=0)
     dagaare_audios_transcribed = models.IntegerField(default=0)
+    dagaare_audios_transcribed_unique = models.IntegerField(default=0)
 
     # Total Hours
     dagaare_audios_submitted_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
@@ -84,6 +93,7 @@ class Statistics(models.Model):
     dagaare_audios_validation_conflict_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
     dagaare_audios_approved_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
     dagaare_audios_transcribed_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
+    dagaare_audios_transcribed_in_hours_unique = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
 
     ########### IKPOSO ########################
     # Total Count
@@ -93,6 +103,7 @@ class Statistics(models.Model):
     ikposo_audios_validation_conflict = models.IntegerField(default=0)
     ikposo_audios_approved = models.IntegerField(default=0)
     ikposo_audios_transcribed = models.IntegerField(default=0)
+    ikposo_audios_transcribed_unique = models.IntegerField(default=0)
 
     # Total Hours
     ikposo_audios_submitted_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
@@ -101,6 +112,7 @@ class Statistics(models.Model):
     ikposo_audios_validation_conflict_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
     ikposo_audios_approved_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
     ikposo_audios_transcribed_in_hours = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
+    ikposo_audios_transcribed_in_hours_unique = models.DecimalField(default=0.0, decimal_places=2, max_digits=20)
 
     # Timestamp
     created_at = models.DateTimeField(auto_now_add=True)
