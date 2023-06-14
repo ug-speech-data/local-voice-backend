@@ -163,7 +163,7 @@ def update_statistics():
         setattr(stats,f"{lang}_audios_validation_conflict_in_hours",language_stat_in_hours.get(f"{lang}_audios_validation_conflict_in_hours"))
         setattr(stats,f"{lang}_audios_approved_in_hours",language_stat_in_hours.get(f"{lang}_audios_approved_in_hours"))
         setattr(stats,f"{lang}_audios_transcribed_in_hours",language_stat_in_hours.get(f"{lang}_audios_transcribed_in_hours"))
-        setattr(stats,f"{lang}_audios_transcribed_in_hours_unique",language_stat.get(f"{lang}_audios_transcribed_in_hours_unique"))
+        setattr(stats,f"{lang}_audios_transcribed_in_hours_unique",language_stat_in_hours.get(f"{lang}_audios_transcribed_in_hours_unique"))
     stats.save()
 
 
