@@ -130,16 +130,18 @@ def update_statistics():
         if unique_transcriptions.distinct("audio").exists():
             unique_transcriptions = unique_transcriptions.distinct("audio")
     except NotSupportedError as e:
-        # Sqlite Deos not support distinct operation on columns
+        # E.g., sqlite for testing, does not support distinct operation on columns
         logger.error(str(e))
 
     audios_hours_submitted = round(sum([audio.get("duration") for audio in audios.values("duration")]) / hours_in_seconds, decimal_places)
     audios_hours_approved = round(sum([audio.get("duration") for audio in audios.filter(is_accepted=True).values("duration") ]) / hours_in_seconds, decimal_places)
+    audios_hours_transcribed = round(sum([transcription.audio.duration for transcription in transcriptions]) / hours_in_seconds, decimal_places)
     audios_hours_transcribed_unique = round(sum([transcription.audio.duration for transcription in unique_transcriptions]) / hours_in_seconds, decimal_places)
     stats.audios_hours_submitted = audios_hours_submitted
     stats.audios_hours_approved = audios_hours_approved
     stats.audios_transcribed_unique = unique_transcriptions.count()
     stats.audios_hours_transcribed_unique = audios_hours_transcribed_unique
+    stats.audios_hours_transcribed = audios_hours_transcribed
     stats.save()
 
     languages = [("ewe", "ee_gh"), ("akan", "ak_gh"), ("ikposo","kpo_gh"), ("dagaare","dag_gh"), ("dagbani", "dga_gh")]
@@ -151,6 +153,7 @@ def update_statistics():
         setattr(stats,f"{lang}_audios_validation_conflict",language_stat.get(f"{lang}_audios_validation_conflict"))
         setattr(stats,f"{lang}_audios_approved",language_stat.get(f"{lang}_audios_approved"))
         setattr(stats,f"{lang}_audios_transcribed",language_stat.get(f"{lang}_audios_transcribed"))
+        setattr(stats,f"{lang}_audios_transcribed_unique",language_stat.get(f"{lang}_audios_transcribed_unique"))
 
         # Hours
         language_stat_in_hours = language_statistics_in_hours(lang,locale)
@@ -160,6 +163,7 @@ def update_statistics():
         setattr(stats,f"{lang}_audios_validation_conflict_in_hours",language_stat_in_hours.get(f"{lang}_audios_validation_conflict_in_hours"))
         setattr(stats,f"{lang}_audios_approved_in_hours",language_stat_in_hours.get(f"{lang}_audios_approved_in_hours"))
         setattr(stats,f"{lang}_audios_transcribed_in_hours",language_stat_in_hours.get(f"{lang}_audios_transcribed_in_hours"))
+        setattr(stats,f"{lang}_audios_transcribed_in_hours_unique",language_stat.get(f"{lang}_audios_transcribed_in_hours_unique"))
     stats.save()
 
 
