@@ -50,7 +50,8 @@ def language_statistics_in_hours(lang,locale):
     except NotSupportedError as e:
         # Sqlite Deos not support distinct operation on columns
         logger.error(str(e))
-    audios_transcribed_hours = round(sum([transcription.audio.duration for transcription in unique_transcriptions]) / hours_in_seconds, decimal_places)
+    audios_transcribed_hours = round(sum([transcription.audio.duration for transcription in transcriptions]) / hours_in_seconds, decimal_places)
+    audios_transcribed_in_hours_unique = round(sum([transcription.audio.duration for transcription in unique_transcriptions]) / hours_in_seconds, decimal_places)
 
     return {
         f"{lang}_audios_submitted_in_hours": submitted,
@@ -59,6 +60,7 @@ def language_statistics_in_hours(lang,locale):
         f"{lang}_audios_validation_conflict_in_hours": conflicts,
         f"{lang}_audios_approved_in_hours": approved,
         f"{lang}_audios_transcribed_in_hours": audios_transcribed_hours,
+        f"{lang}_audios_transcribed_in_hours_unique": audios_transcribed_in_hours_unique,
     }
 
 def language_statistics(lang,locale):
