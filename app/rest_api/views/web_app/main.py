@@ -121,7 +121,7 @@ class GetAudiosToTranscribe(generics.GenericAPIView):
             t_count__lt=required_transcription_validation_count,
             locale=request.user.locale)\
             .exclude(Q(transcriptions__user=request.user) | Q(id=offset))\
-            .order_by("-t_count", "?")\
+            .order_by("image", "-t_count", "?")\
             .first()
 
         if audio:

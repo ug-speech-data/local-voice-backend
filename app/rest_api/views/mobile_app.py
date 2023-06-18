@@ -253,7 +253,7 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
                 transcription_status=ValidationStatus.PENDING.value,
                 t_count__lt=required_transcription_validation_count,
                 deleted=False).exclude(
-                    Q(transcriptions__user=request.user)).order_by(locale_count, "-t_count")
+                    Q(transcriptions__user=request.user)).order_by("image", locale_count, "-t_count")
 
         data = self.serializer_class(audios,
                                      many=True,
