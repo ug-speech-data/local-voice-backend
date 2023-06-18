@@ -30,7 +30,7 @@ def export_audio_data(user_id, data, base_url):
         user_id=user_id)
     update_notification = Notification.objects.filter(
         id=update_notification.id)
-    
+
     # Apply filters
     status = data.get("status")
     tag = data.get("tag")
@@ -46,7 +46,7 @@ def export_audio_data(user_id, data, base_url):
 
     timestamp = datetime.today().strftime("%Y%m%d%H%M%S")
     output_filename = f"temps/export_audio_{locale}_{timestamp}.zip"
-    output_filename = output_filename.replace(" ","_")
+    output_filename = output_filename.replace(" ", "_")
     output_dir = settings.MEDIA_ROOT / output_filename
 
     columns = [
@@ -167,8 +167,7 @@ def export_audio_data(user_id, data, base_url):
     message = f"Export completed successfully. Exported {total_audios} files, skipped {skip_count}."
     update_notification.update(message=message)
     Notification.objects.create(
-        message=
-        f"Exported {total_audios} files successfully. Click on the attached link to download.",
+        message=f"Exported {total_audios} files successfully. Click on the attached link to download.",
         url=base_url + settings.MEDIA_URL + output_filename,
         title="Data Exported",
         type="success",
@@ -195,10 +194,12 @@ def convert_audio_file_to_mp3(audio_id):
         return
 
     input_file = audio.file.path
-    if not input_file or ".mp3" in input_file: return
+    if not input_file or ".mp3" in input_file:
+        return
 
     output_file = input_file.split(".wav")[0] + ".mp3"
-    if not output_file: return
+    if not output_file:
+        return
     try:
         stream = ffmpeg.input(input_file)
         stream = ffmpeg.output(stream, output_file)
@@ -210,7 +211,8 @@ def convert_audio_file_to_mp3(audio_id):
     # Update audio object
     try:
         audio = Audio.objects.filter(id=audio_id).first()
-        if not audio or os.path.getsize(output_file) < (1024 * 10): return
+        if not audio or os.path.getsize(output_file) < (1024 * 10):
+            return
 
         audio.file_mp3 = File(open(output_file, "rb"),
                               output_file.split("/")[-1])
@@ -274,7 +276,7 @@ def get_transcriptions_resolved(user):
     try:
         return transcriptions.distinct("audio").count()
     except NotSupportedError as e:
-        ## SQLite does not support distanct on files
+        # SQLite does not support distanct on files
         return transcriptions.distinct().count()
 
 
@@ -282,16 +284,21 @@ def get_transcriptions_resolved(user):
 def update_user_stats():
     users = User.objects.filter(deleted=False, is_active=True)
     for user in users:
-        user.audios_rejected = get_audios_rejected(user)
-        user.audios_pending = get_audios_pending(user)
-        user.audios_accepted = get_audios_accepted(user)
-        user.audios_submitted = get_audios_submitted(user)
-        user.audios_validated = get_audios_validated(user)
-        user.conflicts_resolved = get_conflicts_resolved(user)
-        user.transcriptions_resolved = get_transcriptions_resolved(user)
-        user.audios_transcribed = get_audios_transcribed(user)
-        user.estimated_deduction_amount = get_estimated_deduction_amount(user)
-        user.save()
+        try:
+            user.audios_rejected = get_audios_rejected(user)
+            user.audios_pending = get_audios_pending(user)
+            user.audios_accepted = get_audios_accepted(user)
+            user.audios_submitted = get_audios_submitted(user)
+            user.audios_validated = get_audios_validated(user)
+            user.conflicts_resolved = get_conflicts_resolved(user)
+            user.transcriptions_resolved = get_transcriptions_resolved(user)
+            user.audios_transcribed = get_audios_transcribed(user)
+            user.estimated_deduction_amount = get_estimated_deduction_amount(
+                user)
+            user.save()
+        except Exception as e:
+            logger.error(str(e))
+            continue
 
     # Update leads stats
     lead_ids = User.objects.filter(deleted=False).exclude(
