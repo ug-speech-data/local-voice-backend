@@ -104,12 +104,16 @@ def execute_transaction(transaction_id, callback_url) -> None:
 def bulk_check_transaction_status(ids):
     transactions = Transaction.objects.filter(id__in=ids)
     for transaction in transactions:
-        if not transaction.accepted_by_provider:
-            # This transaction has not been executed yet.
-            execute_transaction(transaction.transaction_id, None)
-        else:
-            check_transaction_status(
-                transaction.transaction_id, rounds=1, wait=0)
+        try:
+            if not transaction.accepted_by_provider:
+                # This transaction has not been executed yet.
+                execute_transaction(transaction.transaction_id, None)
+            else:
+                check_transaction_status(
+                    transaction.transaction_id, rounds=1, wait=0)
+        except Exception as e:
+            logger.error(str(e))
+            continue
 
 
 @shared_task()
