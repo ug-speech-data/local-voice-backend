@@ -207,6 +207,7 @@ def update_user_amounts():
             wallet=wallet,
             status=TransactionStatus.SUCCESS.value,
             direction=TransactionDirection.IN.value,
+            amount__gt=0,
             note="DIRECT DEPOSIT").values_list("amount", flat=True)
         total_deposits = sum(transactions)
         total_accrued_amount = total_deposits + audios_amount + \

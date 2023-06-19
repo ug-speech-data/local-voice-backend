@@ -27,22 +27,22 @@ class Transaction(models.Model):
     def generate_id():
         return timezone.now().strftime("%y%m%d%H%M%S%f")
 
-    transaction_id = models.CharField(max_length=20,unique=True, default=generate_id)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    wallet = models.ForeignKey("accounts.Wallet",on_delete=models.SET_NULL,null=True,blank=True)
-    paid = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    transaction_id = models.CharField(max_length=20,db_index=True, unique=True, default=generate_id)
+    amount = models.DecimalField(max_digits=10,db_index=True, decimal_places=2, default=0)
+    wallet = models.ForeignKey("accounts.Wallet",db_index=True, on_delete=models.SET_NULL,null=True,blank=True)
+    paid = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True, )
     phone_number = models.CharField(max_length=20, blank=True, null=True)
-    network = models.CharField(max_length=255, blank=True, null=True)
+    network = models.CharField(max_length=255, db_index=True,  blank=True, null=True)
     fullname = models.CharField(max_length=255, blank=True, null=True)
     response_data = models.TextField(blank=True, null=True)
     note = models.TextField(blank=True, null=True)
-    initiated_by = models.ForeignKey("accounts.User", on_delete=models.SET_NULL, null=True, blank=True)
-    direction = models.CharField(max_length=10, choices=TRANSACTION_DIRECTION)
-    status = models.CharField(max_length=255, blank=True, null=True, choices=TRANSACTION_STATUS, default="new")
+    initiated_by = models.ForeignKey("accounts.User", db_index=True, on_delete=models.SET_NULL, null=True, blank=True)
+    direction = models.CharField(max_length=10,db_index=True, choices=TRANSACTION_DIRECTION)
+    status = models.CharField(max_length=255, db_index=True, blank=True, null=True, choices=TRANSACTION_STATUS, default="new")
     status_message = models.CharField(max_length=255, blank=True, null=True)
-    wallet_balances_updated = models.BooleanField(default=False)
-    accepted_by_provider = models.BooleanField(default=False)
+    wallet_balances_updated = models.BooleanField(default=False, db_index=True, )
+    accepted_by_provider = models.BooleanField(default=False, db_index=True, )
 
 
     class Meta:
