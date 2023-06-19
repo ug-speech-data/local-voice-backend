@@ -196,20 +196,20 @@ def update_user_amounts():
             (user.audios_transcribed + user.transcriptions_resolved) * TRANSCRIPTION_RATE)
         amount_accrued_by_recruits = Decimal(participant_audios * amount / 2)
 
-        wallet = user.wallet or Wallet.objects.create()
+        wallet = Wallet.objects.select_for_update(id=user.wallet.id) or Wallet.objects.create()
         wallet.set_validation_benefit(validations_amount)
         wallet.set_recording_benefit(audios_amount)
         wallet.set_audios_by_recruits_benefit(amount_accrued_by_recruits)
         wallet.set_transcription_benefit(transcription_amount)
 
         # Calculate total direct deposits
-        transactions = Transaction.objects.filter(
+        deposit_transactions = Transaction.objects.filter(
             wallet=wallet,
             status=TransactionStatus.SUCCESS.value,
             direction=TransactionDirection.IN.value,
             amount__gt=0,
             note="DIRECT DEPOSIT").values_list("amount", flat=True)
-        total_deposits = sum(transactions)
+        total_deposits = sum(deposit_transactions)
         total_accrued_amount = total_deposits + audios_amount + \
             validations_amount + transcription_amount + amount_accrued_by_recruits
         wallet.set_accrued_amount(total_accrued_amount)

@@ -134,6 +134,10 @@ class PayValidationBenefit(generics.GenericAPIView):
         for user in users:
             wallet = user.wallet
             amount = min(wallet.validation_benefit, wallet.balance)
+            if amount <= 0 or Transaction.objects.filter(
+                    wallet=wallet,
+                    status=TransactionStatus.PENDING.value).exists():
+                continue
             transaction = Transaction.objects.create(
                 amount=amount,
                 wallet=wallet,
@@ -163,6 +167,10 @@ class PayUsersBalance(generics.GenericAPIView):
         for user in users:
             wallet = user.wallet
             amount = wallet.balance
+            if amount <= 0 or Transaction.objects.filter(
+                    wallet=wallet,
+                    status=TransactionStatus.PENDING.value).exists():
+                continue
             transaction = Transaction.objects.create(
                 amount=amount,
                 wallet=wallet,
