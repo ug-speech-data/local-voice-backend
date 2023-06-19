@@ -1,4 +1,5 @@
 import logging
+from payments.tasks import bulk_check_transaction_status
 
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -61,12 +62,10 @@ class TransactionStatusCheck(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         ids = request.data.get("ids")
-        transactions = Transaction.objects.filter(id__in=ids)
-        for transaction in transactions:
-            transaction.recheck_status()
+        bulk_check_transaction_status.delay(ids)
         return Response({
             "message":
-            f"Checking status of {transactions.count()} transactions"
+            f"Checking status of {len(ids)} transactions"
         })
 
 

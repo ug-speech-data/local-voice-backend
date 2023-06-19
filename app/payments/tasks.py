@@ -101,6 +101,13 @@ def execute_transaction(transaction_id, callback_url) -> None:
 
 
 @shared_task()
+def bulk_check_transaction_status(ids):
+    transactions = Transaction.objects.filter(id__in=ids)
+    for transaction in transactions:
+        check_transaction_status(transaction.transaction_id, rounds=1, wait=0)
+
+
+@shared_task()
 @db_transaction.atomic()
 def check_transaction_status(transaction_id, rounds=5, wait=5):
     if rounds <= 0:
@@ -196,7 +203,8 @@ def update_user_amounts():
             (user.audios_transcribed + user.transcriptions_resolved) * TRANSCRIPTION_RATE)
         amount_accrued_by_recruits = Decimal(participant_audios * amount / 2)
 
-        wallet = Wallet.objects.select_for_update(id=user.wallet.id) or Wallet.objects.create()
+        wallet = Wallet.objects.select_for_update(
+            id=user.wallet.id) or Wallet.objects.create()
         wallet.set_validation_benefit(validations_amount)
         wallet.set_recording_benefit(audios_amount)
         wallet.set_audios_by_recruits_benefit(amount_accrued_by_recruits)
