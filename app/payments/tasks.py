@@ -103,7 +103,8 @@ def execute_transaction(transaction_id, callback_url) -> None:
 @shared_task()
 @db_transaction.atomic()
 def check_transaction_status(transaction_id, rounds=5, wait=5):
-    if rounds <= 0: return
+    if rounds <= 0:
+        return
     sleep(wait)
     logger.info("Checking transaction {}".format(transaction_id))
     if not transaction_id:
@@ -185,13 +186,14 @@ def update_user_amounts():
 
             user.accepted_audios_from_recruits = participant_audios
             user.save()
-        
+
         audios_amount = amount * user_audios
 
         validations = Audio.objects.filter(validations__user=user).count()
         validations_amount = validations * amount_per_audio_validation
 
-        transcription_amount = Decimal((user.audios_transcribed + user.transcriptions_resolved) * TRANSCRIPTION_RATE)
+        transcription_amount = Decimal(
+            (user.audios_transcribed + user.transcriptions_resolved) * TRANSCRIPTION_RATE)
         amount_accrued_by_recruits = Decimal(participant_audios * amount / 2)
 
         wallet = user.wallet or Wallet.objects.create()
@@ -199,4 +201,14 @@ def update_user_amounts():
         wallet.set_recording_benefit(audios_amount)
         wallet.set_audios_by_recruits_benefit(amount_accrued_by_recruits)
         wallet.set_transcription_benefit(transcription_amount)
-        wallet.set_accrued_amount(audios_amount + validations_amount + transcription_amount + amount_accrued_by_recruits)
+
+        # Calculate total direct deposits
+        transactions = Transaction.objects.filter(
+            wallet=wallet,
+            status=TransactionStatus.SUCCESS.value,
+            direction=TransactionDirection.IN.value,
+            note="DIRECT DEPOSIT").values_list("amount", flat=True)
+        total_deposits = sum(transactions)
+        total_accrued_amount = total_deposits + audios_amount + \
+            validations_amount + transcription_amount + amount_accrued_by_recruits
+        wallet.set_accrued_amount(total_accrued_amount)
