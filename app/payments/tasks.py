@@ -4,6 +4,7 @@ from time import sleep
 
 from celery import shared_task
 from requests.exceptions import ConnectTimeout
+from django.db import transaction as db_transaction
 
 from accounts.models import User, Wallet
 from dashboard.models import Audio, Participant
@@ -21,13 +22,14 @@ logger = logging.getLogger("django")
 
 
 @shared_task()
+@db_transaction.atomic()
 def execute_transaction(transaction_id, callback_url) -> None:
     logger.info("Executing transaction {}".format(transaction_id))
     if not transaction_id:
         logger.info(f"Cannot execute a transaction with id: {transaction_id}")
         return
 
-    transaction = Transaction.objects.filter(
+    transaction = Transaction.objects.select_for_update().filter(
         transaction_id=transaction_id).first()
     if transaction.success():
         logger.info("Transaction {} is successful".format(transaction_id))
@@ -99,6 +101,7 @@ def execute_transaction(transaction_id, callback_url) -> None:
 
 
 @shared_task()
+@db_transaction.atomic()
 def check_transaction_status(transaction_id, rounds=5, wait=5):
     if rounds <= 0: return
     sleep(wait)
@@ -106,7 +109,7 @@ def check_transaction_status(transaction_id, rounds=5, wait=5):
     if not transaction_id:
         return
 
-    transaction = Transaction.objects.filter(
+    transaction = Transaction.objects.select_for_update().filter(
         transaction_id=transaction_id).first()
     response = payhub.status_check(transaction_id)
     transaction.response_data = response.json()
@@ -139,16 +142,18 @@ def check_transaction_status(transaction_id, rounds=5, wait=5):
 
 
 @shared_task()
+@db_transaction.atomic()
 def update_participants_amount():
     configuration = AppConfiguration.objects.first()
     amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
-    for participant in Participant.objects.filter(flatten=False, paid=False):
+    for participant in Participant.objects.select_for_update().filter(flatten=False, paid=False):
         if participant.type == ParticipantType.ASSISTED.value:
             amount = configuration.participant_amount_per_audio if configuration else 0
         participant.update_amount(amount)
 
 
 @shared_task()
+@db_transaction.atomic()
 def update_user_amounts():
     configuration = AppConfiguration.objects.first()
     amount = configuration.audio_aggregators_amount_per_audio if configuration else 0
