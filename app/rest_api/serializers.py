@@ -368,6 +368,10 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class TransactionSerializer(serializers.ModelSerializer):
+    amount = serializers.SerializerMethodField()
+
+    def get_amount(self, obj):
+        return round(float(obj.amount), 2)
 
     class Meta:
         model = Transaction
@@ -827,7 +831,7 @@ class AudioUploadSerializer(serializers.Serializer):
                     "type": ParticipantType.INDEPENDENT.value,
                     "accepted_privacy_policy": user.accepted_privacy_policy,
                     "api_client": api_client,
-                }# yapf: disable
+                }  # yapf: disable
                 participant_object = Participant.objects.filter(
                     **object_file).first()
                 if not participant_object:
