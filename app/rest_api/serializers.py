@@ -483,7 +483,7 @@ class AudioSerializer(serializers.ModelSerializer):
 
     def get_validations(self, obj):
         request = self.context.get("request")
-        validations = obj.validations.filter(archived=False, deleted=True)
+        validations = obj.validations.filter(archived=False, deleted=False)
         return ValidationSerializer(validations,
                                     many=True,
                                     context={
