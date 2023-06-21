@@ -160,6 +160,7 @@ class UploadAudioAPI(generics.GenericAPIView):
 class GetBulkAssignedToValidate(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AudioSerializer
+    required_permissions = ["setup.validate_audio"]
 
     ##############################################################
     # NOTE: Caching will return audios that may have been validated by the users
@@ -174,12 +175,11 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
         completed = "true" in request.GET.get("completed", "")
         configuration = AppConfiguration.objects.first()
         required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
-        required_audio_validation_count += 1
         assignment, created = AudioValidationAssignment.objects.get_or_create(
             user=request.user)
 
         if created or assignment.audios.all().count() == 0 or completed:
-            audios = Audio.objects.annotate(c=Count("assignments"), val_count=Count("validations")) \
+            audios = Audio.objects.annotate(c=Count("assignments"), val_count=Count("validations", filter=Q(archived=False))) \
                 .filter(c__lt=required_audio_validation_count) \
                 .filter(second_audio_status=ValidationStatus.PENDING.value,
                         deleted=False,
@@ -189,7 +189,7 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
                 .order_by("image", "id")[:count]
             assignment.audios.set(audios)
             assignment.save()
-        audios = assignment.audios.annotate(val_count=Count("validations")).filter(
+        audios = assignment.audios.annotate(val_count=Count("validations", filter=Q(archived=False))).filter(
             audio_status=ValidationStatus.PENDING.value,
             val_count__lt=required_audio_validation_count,
             deleted=False).exclude(Q(validations__user=request.user))\

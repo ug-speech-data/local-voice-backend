@@ -342,9 +342,9 @@ class Audio(models.Model):
             self.transcription_count = self.transcriptions.filter().count()
             self.year = datetime.now().year
         if self.is_accepted:
-            self.audio_status = ValidationStatus.ACCEPTED.value
+            self.second_audio_status = ValidationStatus.ACCEPTED.value
         elif self.rejected:
-            self.audio_status = ValidationStatus.REJECTED.value
+            self.second_audio_status = ValidationStatus.REJECTED.value
 
         if self.file and ".mp3" in self.file.name or self.file_mp3:
             self.main_file_format = "mp3"
