@@ -40,8 +40,8 @@ def language_statistics_in_hours(lang,locale):
     submitted = round(sum([audio.duration for audio in audios]) / hours_in_seconds,decimal_places)
     single_validation = round(sum([audio.duration for audio in audios.annotate(vals_count=Count("validations")).filter(vals_count=1)]) / hours_in_seconds,decimal_places)
     double_validation = round(sum([audio.duration for audio in audios.annotate(vals_count=Count("validations")).filter(vals_count__gt=1)]) / hours_in_seconds,decimal_places)
-    conflicts = round(sum([audio.duration for audio in audios.annotate(vals_count=Count("validations")).filter(rejected=False, is_accepted=False, vals_count__gt=1)]) / hours_in_seconds,decimal_places)
-    approved = round(sum([audio.duration for audio in audios.filter(is_accepted=True, rejected=False)]) / hours_in_seconds,decimal_places)
+    conflicts = round(sum([audio.duration for audio in audios.annotate(vals_count=Count("validations")).filter(second_audio_status="pending", vals_count__gt=1)]) / hours_in_seconds,decimal_places)
+    approved = round(sum([audio.duration for audio in audios.filter(second_audio_status="accepted")]) / hours_in_seconds,decimal_places)
 
     unique_transcriptions = transcriptions
     try:
@@ -72,8 +72,8 @@ def language_statistics(lang,locale):
 
     single_validation = audios.annotate(vals_count=Count("validations")).filter(vals_count=1).count()
     double_validation = audios.annotate(vals_count=Count("validations")).filter(vals_count__gt=1).count()
-    conflicts = audios.annotate(vals_count=Count("validations")).filter(rejected=False, is_accepted=False, vals_count__gt=1).count()
-    approved = audios.filter(is_accepted=True, rejected=False).count()
+    conflicts = audios.annotate(vals_count=Count("validations")).filter(second_audio_status="pending", vals_count__gt=1).count()
+    approved = audios.filter(second_audio_status="accepted").count()
 
     unique_transcriptions = transcriptions
     try:
@@ -136,7 +136,7 @@ def update_statistics():
         logger.error(str(e))
 
     audios_hours_submitted = round(sum([audio.get("duration") for audio in audios.values("duration")]) / hours_in_seconds, decimal_places)
-    audios_hours_approved = round(sum([audio.get("duration") for audio in audios.filter(is_accepted=True).values("duration") ]) / hours_in_seconds, decimal_places)
+    audios_hours_approved = round(sum([audio.get("duration") for audio in audios.filter(second_audio_status="accepted").values("duration") ]) / hours_in_seconds, decimal_places)
     audios_hours_transcribed = round(sum([transcription.audio.duration for transcription in transcriptions]) / hours_in_seconds, decimal_places)
     audios_hours_transcribed_unique = round(sum([transcription.audio.duration for transcription in unique_transcriptions]) / hours_in_seconds, decimal_places)
     stats.audios_hours_submitted = audios_hours_submitted
