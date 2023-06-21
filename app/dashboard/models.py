@@ -52,6 +52,7 @@ class Validation(models.Model):
     is_valid = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     deleted = models.BooleanField(default=False)
+    archived = models.BooleanField(default=False) # i.e., shouldn't be used in computations
 
     class Meta:
         db_table = "validations"
@@ -321,6 +322,7 @@ class Audio(models.Model):
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
     checked_in_for_transcription = models.BooleanField(default=False, db_index=True)
     note = models.CharField(max_length=200, null=True, blank=True)
+    second_audio_status = models.TextField(choices=AUDIO_STATUS_CHOICES, default=ValidationStatus.PENDING.value, db_index=True)
 
     class Meta:
         db_table = "audios"
@@ -370,21 +372,39 @@ class Audio(models.Model):
         self.validations.add(validation)
         self.save()
 
-        is_accepted = self.validation_count >= required_audio_validation_count and self.validations.filter(
-            is_valid=True).count() == self.validation_count
-        self.is_accepted = is_accepted
+        # OLD METHODOLOGY
+        # is_accepted = self.validation_count >= required_audio_validation_count and self.validations.filter(
+        #     is_valid=True).count() == self.validation_count
+        # self.is_accepted = is_accepted
 
-        # self.is_accepted and self.rejected will be removed in the future
+        # # self.is_accepted and self.rejected will be removed in the future
+        # rejected = self.validation_count >= required_audio_validation_count and self.validations.filter(
+        #     is_valid=False).count() == self.validation_count
+        # self.rejected = rejected
+
+        # if is_accepted:
+        #     self.audio_status = ValidationStatus.ACCEPTED.value
+        # elif rejected:
+        #     self.audio_status = ValidationStatus.REJECTED.value
+        # else:
+        #     self.audio_status = ValidationStatus.PENDING.value
+        # self.save()
+
+        # NEW METHODOLOGY
+        is_accepted = self.validation_count >= required_audio_validation_count and self.validations.filter(
+            archived=False,
+            is_valid=True).count() == self.validation_count
+
         rejected = self.validation_count >= required_audio_validation_count and self.validations.filter(
+            archived=False,
             is_valid=False).count() == self.validation_count
-        self.rejected = rejected
 
         if is_accepted:
-            self.audio_status = ValidationStatus.ACCEPTED.value
+            self.second_audio_status = ValidationStatus.ACCEPTED.value
         elif rejected:
-            self.audio_status = ValidationStatus.REJECTED.value
+            self.second_audio_status = ValidationStatus.REJECTED.value
         else:
-            self.audio_status = ValidationStatus.PENDING.value
+            self.second_audio_status = ValidationStatus.PENDING.value
         self.save()
 
     def get_transcriptions(self):

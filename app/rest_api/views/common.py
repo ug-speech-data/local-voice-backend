@@ -254,10 +254,8 @@ class GetAudiosToValidate(generics.GenericAPIView):
         user_email_prefix = request.user.email_address.split("@")[0]
         audios = Audio.objects.annotate(vals_count = Count("validations")).filter(
             deleted=False,
-           is_accepted=False,
-           rejected=False,
            assignments=None,
-           audio_status = ValidationStatus.PENDING.value,
+           second_audio_status = ValidationStatus.PENDING.value,
             vals_count__lt=required_audio_validation_count)\
                 .exclude(Q(validations__user=request.user)|Q(submitted_by__email_address__startswith=user_email_prefix) | Q(id=offset)) \
             .order_by("-vals_count", "image", "id")
@@ -267,7 +265,7 @@ class GetAudiosToValidate(generics.GenericAPIView):
 
         audio = audios.first()
         if audio:
-            audio.audio_status = ValidationStatus.IN_REVIEW.value
+            audio.second_audio_status = ValidationStatus.IN_REVIEW.value
             audio.save()
 
         data = self.serializer_class(audio, context={
@@ -292,8 +290,8 @@ class ValidateAudio(generics.GenericAPIView):
             deleted=False,
             vals_count__lt=required_audio_validation_count,
         ).exclude(
-            Q(audio_status=ValidationStatus.ACCEPTED.value)
-            | Q(audio_status=ValidationStatus.REJECTED.value)).first()
+            Q(second_audio_status=ValidationStatus.ACCEPTED.value)
+            | Q(second_audio_status=ValidationStatus.REJECTED.value)).first()
         if audio:
             audio.validate(request.user, status)
         return Response({

@@ -119,7 +119,7 @@ def update_statistics():
     stats.save()
 
     audios_submitted = audios.count()
-    audios_approved = audios.filter(is_accepted=True).count()
+    audios_approved = audios.filter(second_audio_status="accepted").count()
     audios_transcribed = transcriptions.count()
 
     stats.audios_submitted = audios_submitted
@@ -172,8 +172,8 @@ def update_statistics():
 @shared_task()
 def release_audios_in_review_for_more_than_ten_minutes():
     updated_time = datetime.datetime.now() - datetime.timedelta(minutes=5)
-    orphan_objects = Audio.objects.filter(updated_at__lte=updated_time, audio_status=ValidationStatus.IN_REVIEW.value)
-    res = orphan_objects.update(audio_status=ValidationStatus.PENDING.value)
+    orphan_objects = Audio.objects.filter(updated_at__lte=updated_time, second_audio_status=ValidationStatus.IN_REVIEW.value)
+    res = orphan_objects.update(second_audio_status=ValidationStatus.PENDING.value)
     return f"Made {res} audios available"
 
 @shared_task()

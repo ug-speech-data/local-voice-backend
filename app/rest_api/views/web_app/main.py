@@ -115,11 +115,12 @@ class GetAudiosToTranscribe(generics.GenericAPIView):
 
         audio = Audio.objects.annotate(t_count=Count("transcriptions"), t_assign=Count("transcriptions_assignments")).filter(
             deleted=False,
-            audio_status=ValidationStatus.ACCEPTED.value,
             transcription_status=ValidationStatus.PENDING.value,
             t_assign__lt=required_transcription_validation_count,
             t_count__lt=required_transcription_validation_count,
             locale=request.user.locale)\
+            .filter(Q(second_audio_status=ValidationStatus.ACCEPTED.value) |
+                    Q(audio_status=ValidationStatus.ACCEPTED.value))\
             .exclude(Q(transcriptions__user=request.user) | Q(id=offset))\
             .order_by("image", "-t_count", "?")\
             .first()

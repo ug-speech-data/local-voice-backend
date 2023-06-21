@@ -56,7 +56,7 @@ class MobileAppConfigurationAPI(generics.GenericAPIView):
         data = self.serializer_class(AppConfiguration.objects.first(),
                                      context={
                                          "request": request
-                                     }).data
+        }).data
         return Response({"configuration": data})
 
 
@@ -79,7 +79,8 @@ class GetAssignedImagesAPI(generics.GenericAPIView):
                         total=Count('id')).order_by('total')
 
             result = sorted(result, key=lambda item: item.get("total"))
-            least_used_batch = result[0].get("assigned_image_batch") if result else 1
+            least_used_batch = result[0].get(
+                "assigned_image_batch") if result else 1
 
             user = request.user
             user.assigned_image_batch = least_used_batch
@@ -179,15 +180,13 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
         if created or assignment.audios.all().count() == 0 or completed:
             user_email_prefix = request.user.email_address.split("@")[0]
             audios = Audio.objects.annotate(c=Count("assignments"), val_count=Count("validations")) \
-                    .filter(c__lt=required_audio_validation_count) \
-                    .filter(audio_status = ValidationStatus.PENDING.value,
-                            deleted=False,
-                                is_accepted=False,
-                                rejected=False,
-                                val_count__lt=required_audio_validation_count,
-                            locale=request.user.locale) \
-                    .exclude(Q(validations__user=request.user)|Q(submitted_by__email_address__startswith=user_email_prefix))\
-                    .order_by("-val_count", "image", "id")[:count]
+                .filter(c__lt=required_audio_validation_count) \
+                .filter(second_audio_status=ValidationStatus.PENDING.value,
+                        deleted=False,
+                        val_count__lt=required_audio_validation_count,
+                        locale=request.user.locale) \
+                .exclude(Q(validations__user=request.user) | Q(submitted_by__email_address__startswith=user_email_prefix))\
+                .order_by("-val_count", "image", "id")[:count]
             assignment.audios.set(audios)
             assignment.save()
         audios = assignment.audios.annotate(val_count=Count("validations")).filter(
@@ -223,7 +222,8 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
         required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 0
         assignment, created = AudioTranscriptionAssignment.objects.get_or_create(
             user=request.user)
-        EXPECTED_TRANSCRIPTIONS_PER_IMAGE = 24 * required_transcription_validation_count
+        EXPECTED_TRANSCRIPTIONS_PER_IMAGE = 24 * \
+            required_transcription_validation_count
 
         locale_count = f"image__transcription_count_{request.user.locale}"
         if not hasattr(Image, f"transcription_count_{request.user.locale}"):
@@ -239,12 +239,15 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
                 t_count=Count("transcriptions")).filter(
                     Q(**transcription_count_filter)
                     | Q(t_count__gte=1)).filter(
+                Q(second_audio_status=ValidationStatus.ACCEPTED.value) |
+                Q(audio_status=ValidationStatus.ACCEPTED.value)
+            ).filter(
                         transcription_status=ValidationStatus.PENDING.value,
                         locale=request.user.locale,
                         deleted=False,
                         t_assign__lt=required_transcription_validation_count,
                         t_count__lt=required_transcription_validation_count).
-                      exclude(Q(transcriptions__user=request.user)))[:count]
+                exclude(Q(transcriptions__user=request.user)))[:count]
             assignment.audios.set(audios)
             assignment.save()
         audios = assignment.audios.annotate(
