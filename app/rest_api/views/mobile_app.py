@@ -190,7 +190,7 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
             assignment.audios.set(audios)
             assignment.save()
         audios = assignment.audios.annotate(val_count=Count("validations", filter=Q(validations__archived=False))).filter(
-            audio_status=ValidationStatus.PENDING.value,
+            second_audio_status=ValidationStatus.PENDING.value,
             val_count__lt=required_audio_validation_count,
             deleted=False).exclude(Q(validations__user=request.user))\
             .order_by("image", "id")
