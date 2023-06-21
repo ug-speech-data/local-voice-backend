@@ -174,6 +174,7 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
         completed = "true" in request.GET.get("completed", "")
         configuration = AppConfiguration.objects.first()
         required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
+        required_audio_validation_count += 1
         assignment, created = AudioValidationAssignment.objects.get_or_create(
             user=request.user)
 
