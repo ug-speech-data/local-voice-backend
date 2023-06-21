@@ -179,7 +179,7 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
             user=request.user)
 
         if created or assignment.audios.all().count() == 0 or completed:
-            audios = Audio.objects.annotate(c=Count("assignments"), val_count=Count("validations", filter=Q(archived=False))) \
+            audios = Audio.objects.annotate(c=Count("assignments"), val_count=Count("validations", filter=Q(validations__archived=False))) \
                 .filter(c__lt=required_audio_validation_count) \
                 .filter(second_audio_status=ValidationStatus.PENDING.value,
                         deleted=False,
@@ -189,7 +189,7 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
                 .order_by("image", "id")[:count]
             assignment.audios.set(audios)
             assignment.save()
-        audios = assignment.audios.annotate(val_count=Count("validations", filter=Q(archived=False))).filter(
+        audios = assignment.audios.annotate(val_count=Count("validations", filter=Q(validations__archived=False))).filter(
             audio_status=ValidationStatus.PENDING.value,
             val_count__lt=required_audio_validation_count,
             deleted=False).exclude(Q(validations__user=request.user))\
