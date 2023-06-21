@@ -170,7 +170,7 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
     # @method_decorator(cache_page(60 * 2* 15))
     # @method_decorator(vary_on_headers(*["Authorization"]))
     def get(self, request, *args, **kwargs):
-        count = min(request.data.get("count") or 480, 1000)
+        count = min(request.data.get("count") or 1000, 1000)
         completed = "true" in request.GET.get("completed", "")
         configuration = AppConfiguration.objects.first()
         required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
@@ -179,14 +179,13 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
             user=request.user)
 
         if created or assignment.audios.all().count() == 0 or completed:
-            user_email_prefix = request.user.email_address.split("@")[0]
             audios = Audio.objects.annotate(c=Count("assignments"), val_count=Count("validations")) \
                 .filter(c__lt=required_audio_validation_count) \
                 .filter(second_audio_status=ValidationStatus.PENDING.value,
                         deleted=False,
                         val_count__lt=required_audio_validation_count,
                         locale=request.user.locale) \
-                .exclude(Q(validations__user=request.user) | Q(submitted_by__email_address__startswith=user_email_prefix))\
+                .exclude(Q(validations__user=request.user) | Q(submitted_by=request.user))\
                 .order_by("-val_count", "image", "id")[:count]
             assignment.audios.set(audios)
             assignment.save()

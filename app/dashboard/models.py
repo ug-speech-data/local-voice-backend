@@ -338,7 +338,7 @@ class Audio(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         if self.pk is not None:
-            self.validation_count = self.validations.all().count()
+            self.validation_count = self.validations.filter(archived=False).count()
             self.transcription_count = self.transcriptions.filter().count()
             self.year = datetime.now().year
         if self.is_accepted:
@@ -393,11 +393,11 @@ class Audio(models.Model):
         # NEW METHODOLOGY
         is_accepted = self.validation_count >= required_audio_validation_count and self.validations.filter(
             archived=False,
-            is_valid=True).count() == self.validation_count
+            is_valid=True).count() >= self.validation_count
 
         rejected = self.validation_count >= required_audio_validation_count and self.validations.filter(
             archived=False,
-            is_valid=False).count() == self.validation_count
+            is_valid=False).count() >= self.validation_count
 
         if is_accepted:
             self.second_audio_status = ValidationStatus.ACCEPTED.value
