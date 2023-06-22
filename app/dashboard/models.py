@@ -360,11 +360,7 @@ class Audio(models.Model):
         return reduce(lambda x, y: x | y, queries)
 
     def validate(self, user, status):
-        required_audio_validation_count = AppConfiguration.objects.first(
-        ).required_audio_validation_count
-
-        validation = Validation.objects.filter(
-            user=user, audio_validations=self).first()
+        validation = Validation.objects.filter(archived=False, user=user, audio_validations=self).first()
         if validation is None:
             validation = Validation.objects.create(user=user)
         validation.is_valid = status == "accepted"
@@ -391,14 +387,17 @@ class Audio(models.Model):
         # self.save()
 
         # NEW METHODOLOGY
-        is_accepted = self.validation_count >= required_audio_validation_count and self.validations.filter(
-            archived=False,
-            is_valid=True).count() >= self.validation_count
+        self.update_validation()
 
+    def update_validation(self):
+        required_audio_validation_count = AppConfiguration.objects.first(
+        ).required_audio_validation_count
+        
+        is_accepted = self.validation_count >= required_audio_validation_count and self.validations.filter(archived=False, is_valid=True).count() >= self.validation_count
         rejected = self.validation_count >= required_audio_validation_count and self.validations.filter(
             archived=False,
             is_valid=False).count() >= self.validation_count
-
+        
         if is_accepted:
             self.second_audio_status = ValidationStatus.ACCEPTED.value
         elif rejected:
