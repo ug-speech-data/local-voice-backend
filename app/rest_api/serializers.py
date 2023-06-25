@@ -709,6 +709,7 @@ class PaymentUserSerializer(serializers.ModelSerializer):
             "transcriptions_resolved",
             "audios_by_recruits_benefit",
             "accepted_audios_from_recruits",
+            "archived",
         ]
 
 

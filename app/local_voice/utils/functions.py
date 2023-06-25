@@ -13,10 +13,16 @@ logger = logging.getLogger("app")
 
 
 def apply_filters(objects, filters):
+    if "archive" not in "".join(filters) and hasattr(objects.first(), "archived"):
+        objects = objects.filter(archived=False)
+
     for filter in filters:
         filter = filter.split(":")
         if len(filter) == 2:
             key, value = filter
+            if hasattr(objects.first(), key):
+                if type(getattr(objects.first(), key)) == bool:
+                    value = "1" in value or "t" in value
             if value == "null":
                 objects = objects.filter(**{key: None})
             else:
@@ -108,5 +114,5 @@ def relevant_permission_objects():
     permissions = Permission.objects.filter(
         content_type__app_label__in=apps_list,
         content_type__model__in=models).exclude(codename="manage_payment")\
-    .order_by("name")
+        .order_by("name")
     return permissions

@@ -943,3 +943,21 @@ class SearchUser(generics.GenericAPIView):
                 "request": request
             }, many=True).data,
         })
+
+
+class ArchiveUser(generics.GenericAPIView):
+    serializer_class = UserSerializer
+
+    def post(self, request, *args, **kwargs):
+        user_id = request.data.get("user_id")        
+        user = User.objects.filter(id=user_id).first()
+        if user:
+            user.archived = not user.archived
+            user.save()
+        else:
+            return Response({
+                "message": "User not found."
+            })
+        return Response({
+            "message": "User updated."
+        })

@@ -16,6 +16,7 @@ urlpatterns = [
     path("auth/user-permissions/", views.MyPermissions.as_view()),
     path("auth/logout/", views.LogoutApiView.as_view()),
     path("search-users", views.SearchUser.as_view()),
+    path("archive-user/", views.ArchiveUser.as_view()),
 ]
 
 urlpatterns += [
