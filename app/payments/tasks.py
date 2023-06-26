@@ -212,7 +212,7 @@ def update_user_amounts():
             (user.audios_transcribed + user.transcriptions_resolved) * TRANSCRIPTION_RATE)
         amount_accrued_by_recruits = Decimal(participant_audios * amount / 2)
 
-        wallet = Wallet.objects.select_for_update(
+        wallet = Wallet.objects.select_for_update().get(
             id=user.wallet.id) or Wallet.objects.create()
         wallet.set_validation_benefit(validations_amount)
         wallet.set_recording_benefit(audios_amount)
