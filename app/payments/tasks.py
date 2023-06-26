@@ -175,7 +175,7 @@ def update_user_amounts():
     configuration = AppConfiguration.objects.first()
     amount = configuration.audio_aggregators_amount_per_audio if configuration else 0
     amount_per_audio_validation = configuration.amount_per_audio_validation if configuration else 0
-    TRANSCRIPTION_RATE = 0.41
+    TRANSCRIPTION_RATE = 0.7
     # dagbfh
     for user in User.objects.filter(deleted=False, is_active=True):
         user_audios = user.audios.filter(
