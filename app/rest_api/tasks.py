@@ -15,7 +15,7 @@ from accounts.models import User
 from dashboard.models import (Audio, AudioTranscriptionAssignment,
                               AudioValidationAssignment, ExportTag,
                               Notification, Transcription)
-from local_voice.utils.constants import TranscriptionStatus
+from local_voice.utils.constants import TranscriptionStatus, ValidationStatus
 from setup.models import AppConfiguration
 
 logger = logging.getLogger("app")
@@ -227,24 +227,21 @@ def convert_audio_file_to_mp3(audio_id):
 def get_audios_rejected(user):
     from dashboard.models import Audio
     return Audio.objects.filter(submitted_by=user,
-                                rejected=True,
                                 deleted=False,
-                                is_accepted=False).count()
+                                second_audio_status=ValidationStatus.REJECTED.value).count()
 
 
 def get_audios_pending(user):
     from dashboard.models import Audio
     return Audio.objects.filter(submitted_by=user,
-                                rejected=False,
                                 deleted=False,
-                                is_accepted=False).count()
+                                second_audio_status=ValidationStatus.PENDING.value).count()
 
 
 def get_audios_accepted(user):
     return Audio.objects.filter(submitted_by=user,
-                                rejected=False,
                                 deleted=False,
-                                is_accepted=True).count()
+                                second_audio_status=ValidationStatus.ACCEPTED.value).count()
 
 
 def get_estimated_deduction_amount(user):
