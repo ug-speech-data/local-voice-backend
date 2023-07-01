@@ -881,7 +881,7 @@ class GetAudioTranscriptionToResolve(generics.GenericAPIView):
         with transaction.atomic():
             audio = Audio.objects.annotate(t_count=Count("transcriptions")).filter(
                 deleted=False,
-                audio_status=ValidationStatus.ACCEPTED.value,
+                second_audio_status=ValidationStatus.ACCEPTED.value,
                 transcription_status=TranscriptionStatus.CONFLICT.value,
                 t_count__gte=required_transcription_validation_count,
                 locale=request.user.locale)\

@@ -79,9 +79,7 @@ class AudiosBulkAction(generics.GenericAPIView):
             status = ValidationStatus.ACCEPTED.value if is_accepted else ValidationStatus.REJECTED
             for audio in audios:
                 Audio.objects.filter(id=audio.id).update(
-                    is_accepted=is_accepted,
-                    rejected=rejected,
-                    audio_status=status)
+                    second_audio_status=status)
                 if not audio.conflict_resolved_by:
                     Audio.objects.filter(id=audio.id).update(
                         conflict_resolved_by=request.user)

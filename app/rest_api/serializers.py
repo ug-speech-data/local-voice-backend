@@ -414,14 +414,14 @@ class ParticipantSerializer(serializers.ModelSerializer):
         return round(
             obj.audios.filter(
                 deleted=False,
-                audio_status=ValidationStatus.ACCEPTED.value).count() /
+                second_audio_status=ValidationStatus.ACCEPTED.value).count() /
             audios * 100, 2)
 
     def get_audios_validated(self, obj):
         audios = max(self.get_audio_count(obj), 1)
         return round(
             obj.audios.filter(deleted=False).exclude(
-                audio_status=ValidationStatus.PENDING.value).count() / audios *
+                second_audio_status=ValidationStatus.PENDING.value).count() / audios *
             100, 2)
 
     def get_balance(self, obj):

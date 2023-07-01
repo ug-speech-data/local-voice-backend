@@ -78,9 +78,9 @@ def export_audio_data(user_id, data, base_url):
         audios = audios.filter(locale=locale)
 
     if status == "not_accepted":
-        audios = audios.exclude(audio_status="accepted")
+        audios = audios.exclude(second_audio_status="accepted")
     else:
-        audios = audios.filter(audio_status="accepted")
+        audios = audios.filter(second_audio_status="accepted")
 
     if status == "transcription_resolved":
         audios = audios.filter(
@@ -180,7 +180,7 @@ def convert_files_to_mp3(audio_status=None):
         main_file_format="wav").filter(Q(file_mp3=None) | Q(
             file_mp3="")).order_by("validation_count")
     if audio_status:
-        audios = audios.filter(audio_status=audio_status)
+        audios = audios.filter(second_audio_status=audio_status)
     audios = audios.values("id")
 
     for item in audios:

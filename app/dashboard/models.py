@@ -258,7 +258,7 @@ class Participant(models.Model):
 
     def update_amount(self, amount_per_audio):
         if not (self.flatten):
-            self.amount = self.audios.filter(deleted=False, is_accepted=True).values("image").distinct().count() * amount_per_audio
+            self.amount = self.audios.filter(deleted=False, second_audio_status=ValidationStatus.ACCEPTED.value).values("image").distinct().count() * amount_per_audio
             self.save()
 
     @staticmethod
