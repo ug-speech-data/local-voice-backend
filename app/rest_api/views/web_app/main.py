@@ -760,7 +760,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
         # yapf: disable
 
         rejected = max(0, float(getattr(
-            stats, f"{lang}_audios_double_validation")) - float(getattr(stats, f"{lang}_audios_approved")))
+            stats, f"{lang}_audios_single_validation")) - float(getattr(stats, f"{lang}_audios_approved")))
         return {
             f"{lang}_audios_submitted": getattr(stats, f"{lang}_audios_submitted"),
             f"{lang}_audios_single_validation": getattr(stats, f"{lang}_audios_single_validation"),
