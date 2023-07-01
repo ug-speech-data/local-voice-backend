@@ -750,7 +750,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_double_validation_in_hours": getattr(stats, f"{lang}_audios_double_validation_in_hours"),
             f"{lang}_audios_validation_conflict_in_hours": getattr(stats, f"{lang}_audios_validation_conflict_in_hours"),
             f"{lang}_audios_approved_in_hours": getattr(stats, f"{lang}_audios_approved_in_hours"),
-            f"{lang}_audios_rejected_in_hours": int(getattr(stats, f"{lang}_audios_double_validation_in_hours")) - int(getattr(stats, f"{lang}_audios_approved_in_hours")),
+            f"{lang}_audios_rejected_in_hours": int(getattr(stats, f"{lang}_audios_single_validation_in_hours")) - int(getattr(stats, f"{lang}_audios_approved_in_hours")),
             f"{lang}_audios_transcribed_in_hours": getattr(stats, f"{lang}_audios_transcribed_in_hours"),
             f"{lang}_audios_transcribed_in_hours_unique": getattr(stats, f"{lang}_audios_transcribed_in_hours_unique"),
         }
@@ -767,7 +767,7 @@ class GetDashboardStatistics(generics.GenericAPIView):
             f"{lang}_audios_double_validation": getattr(stats, f"{lang}_audios_double_validation"),
             f"{lang}_audios_validation_conflict": getattr(stats, f"{lang}_audios_validation_conflict"),
             f"{lang}_audios_approved": getattr(stats, f"{lang}_audios_approved"),
-            f"{lang}_audios_rejected_percentage": round(rejected / max(1, float(getattr(stats, f"{lang}_audios_double_validation"))) * 100, 2),
+            f"{lang}_audios_rejected_percentage": round(rejected / max(1, float(getattr(stats, f"{lang}_audios_single_validation"))) * 100, 2),
             f"{lang}_audios_transcribed": getattr(stats, f"{lang}_audios_transcribed"),
             f"{lang}_audios_transcribed_unique": getattr(stats, f"{lang}_audios_transcribed_unique"),
         }

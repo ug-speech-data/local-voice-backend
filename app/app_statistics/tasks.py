@@ -38,9 +38,9 @@ def language_statistics_in_hours(lang,locale):
     transcriptions = Transcription.objects.filter(deleted=False, audio__locale=locale)
 
     submitted = round(sum([audio.duration for audio in audios]) / hours_in_seconds,decimal_places)
-    single_validation = round(sum([audio.duration for audio in audios.annotate(vals_count=Count("validations")).filter(vals_count=1)]) / hours_in_seconds,decimal_places)
-    double_validation = round(sum([audio.duration for audio in audios.annotate(vals_count=Count("validations")).filter(vals_count__gt=1)]) / hours_in_seconds,decimal_places)
-    conflicts = round(sum([audio.duration for audio in audios.annotate(vals_count=Count("validations")).filter(second_audio_status="pending", vals_count__gt=1)]) / hours_in_seconds,decimal_places)
+    single_validation = round(sum([audio.duration for audio in audios.exclude(second_audio_status=ValidationStatus.PENDING.value)]) / hours_in_seconds,decimal_places)
+    # double_validation = round(sum([audio.duration for audio in audios.annotate(vals_count=Count("validations")).filter(vals_count__gt=1)]) / hours_in_seconds,decimal_places)
+    # conflicts = round(sum([audio.duration for audio in audios.annotate(vals_count=Count("validations")).filter(second_audio_status="pending", vals_count__gt=1)]) / hours_in_seconds,decimal_places)
     approved = round(sum([audio.duration for audio in audios.filter(second_audio_status="accepted")]) / hours_in_seconds,decimal_places)
 
     unique_transcriptions = transcriptions
@@ -56,8 +56,8 @@ def language_statistics_in_hours(lang,locale):
     return {
         f"{lang}_audios_submitted_in_hours": submitted,
         f"{lang}_audios_single_validation_in_hours": single_validation,
-        f"{lang}_audios_double_validation_in_hours": double_validation,
-        f"{lang}_audios_validation_conflict_in_hours": conflicts,
+        # f"{lang}_audios_double_validation_in_hours": double_validation,
+        # f"{lang}_audios_validation_conflict_in_hours": conflicts,
         f"{lang}_audios_approved_in_hours": approved,
         f"{lang}_audios_transcribed_in_hours": audios_transcribed_hours,
         f"{lang}_audios_transcribed_in_hours_unique": audios_transcribed_in_hours_unique,
@@ -70,9 +70,9 @@ def language_statistics(lang,locale):
     transcriptions = Transcription.objects.filter(deleted=False, audio__locale=locale)
     submitted = audios.count()
 
-    single_validation = audios.annotate(vals_count=Count("validations")).filter(vals_count=1).count()
-    double_validation = audios.annotate(vals_count=Count("validations")).filter(vals_count__gt=1).count()
-    conflicts = audios.annotate(vals_count=Count("validations")).filter(second_audio_status="pending", vals_count__gt=1).count()
+    single_validation = audios.exclude(second_audio_status=ValidationStatus.PENDING.value).count()
+    # double_validation = audios.annotate(vals_count=Count("validations")).filter(vals_count__gt=1).count()
+    # conflicts = audios.annotate(vals_count=Count("validations")).filter(second_audio_status="pending", vals_count__gt=1).count()
     approved = audios.filter(second_audio_status="accepted").count()
 
     unique_transcriptions = transcriptions
@@ -90,8 +90,8 @@ def language_statistics(lang,locale):
     return {
         f"{lang}_audios_submitted": submitted,
         f"{lang}_audios_single_validation": single_validation,
-        f"{lang}_audios_double_validation": double_validation,
-        f"{lang}_audios_validation_conflict": conflicts,
+        # f"{lang}_audios_double_validation": double_validation,
+        # f"{lang}_audios_validation_conflict": conflicts,
         f"{lang}_audios_approved": approved,
         f"{lang}_audios_transcribed": audios_transcribed,
         f"{lang}_audios_transcribed_in_hours": audios_transcribed_in_hours,
@@ -151,8 +151,8 @@ def update_statistics():
         language_stat = language_statistics(lang,locale)
         setattr(stats,f"{lang}_audios_submitted",language_stat.get(f"{lang}_audios_submitted"))
         setattr(stats,f"{lang}_audios_single_validation",language_stat.get(f"{lang}_audios_single_validation"))
-        setattr(stats,f"{lang}_audios_double_validation",language_stat.get(f"{lang}_audios_double_validation"))
-        setattr(stats,f"{lang}_audios_validation_conflict",language_stat.get(f"{lang}_audios_validation_conflict"))
+        # setattr(stats,f"{lang}_audios_double_validation",language_stat.get(f"{lang}_audios_double_validation"))
+        # setattr(stats,f"{lang}_audios_validation_conflict",language_stat.get(f"{lang}_audios_validation_conflict"))
         setattr(stats,f"{lang}_audios_approved",language_stat.get(f"{lang}_audios_approved"))
         setattr(stats,f"{lang}_audios_transcribed",language_stat.get(f"{lang}_audios_transcribed"))
         setattr(stats,f"{lang}_audios_transcribed_unique",language_stat.get(f"{lang}_audios_transcribed_unique"))
@@ -161,8 +161,8 @@ def update_statistics():
         language_stat_in_hours = language_statistics_in_hours(lang,locale)
         setattr(stats,f"{lang}_audios_submitted_in_hours",language_stat_in_hours.get(f"{lang}_audios_submitted_in_hours"))
         setattr(stats,f"{lang}_audios_single_validation_in_hours",language_stat_in_hours.get(f"{lang}_audios_single_validation_in_hours"))
-        setattr(stats,f"{lang}_audios_double_validation_in_hours",language_stat_in_hours.get(f"{lang}_audios_double_validation_in_hours"))
-        setattr(stats,f"{lang}_audios_validation_conflict_in_hours",language_stat_in_hours.get(f"{lang}_audios_validation_conflict_in_hours"))
+        # setattr(stats,f"{lang}_audios_double_validation_in_hours",language_stat_in_hours.get(f"{lang}_audios_double_validation_in_hours"))
+        # setattr(stats,f"{lang}_audios_validation_conflict_in_hours",language_stat_in_hours.get(f"{lang}_audios_validation_conflict_in_hours"))
         setattr(stats,f"{lang}_audios_approved_in_hours",language_stat_in_hours.get(f"{lang}_audios_approved_in_hours"))
         setattr(stats,f"{lang}_audios_transcribed_in_hours",language_stat_in_hours.get(f"{lang}_audios_transcribed_in_hours"))
         setattr(stats,f"{lang}_audios_transcribed_in_hours_unique",language_stat_in_hours.get(f"{lang}_audios_transcribed_in_hours_unique"))
