@@ -237,8 +237,7 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
             audios = (Audio.objects.annotate(
                 t_assign=Count("transcriptions_assignments"),
                 t_count=Count("transcriptions")).filter(
-                    Q(**transcription_count_filter)
-                    | Q(t_count__gte=1)).filter(
+                    Q(**transcription_count_filter)).filter(
                 Q(second_audio_status=ValidationStatus.ACCEPTED.value) |
                 Q(audio_status=ValidationStatus.ACCEPTED.value)
             ).filter(
