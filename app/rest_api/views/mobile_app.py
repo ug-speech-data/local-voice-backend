@@ -230,7 +230,7 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
             return Response({"message": "Invalid locale"})
 
         transcription_count_filter = {
-            f"{locale_count}__lt": EXPECTED_TRANSCRIPTIONS_PER_IMAGE
+            f"{locale_count}__lte": EXPECTED_TRANSCRIPTIONS_PER_IMAGE
         }
 
         if created or assignment.audios.all().count() == 0 or completed:
@@ -255,7 +255,7 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
                 transcription_status=ValidationStatus.PENDING.value,
                 t_count__lt=required_transcription_validation_count,
                 deleted=False).exclude(
-                    Q(transcriptions__user=request.user)).order_by("image", locale_count, "-t_count")
+                    Q(transcriptions__user=request.user)).order_by("image", locale_count, "t_count")
 
         data = self.serializer_class(audios,
                                      many=True,
