@@ -57,6 +57,7 @@ urlpatterns += [
 
     path("get-assigned-audios-to-validate/", views.GetBulkAssignedToValidate.as_view()),
     path("get-assigned-audios-to-transcribe/", views.GetBulkAssignedToTranscribe.as_view()),
+    path("get-assigned-transcriptions-to-resolve/", views.GetBulkAssignedTranscriptionsToResolve.as_view()),
 ]
 
 

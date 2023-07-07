@@ -922,6 +922,7 @@ class GetAudioTranscriptionToResolve(generics.GenericAPIView):
         return Response({
             "message":
             "Transcription update successfully",
+            "status": "success",
             "audio":
             self.serializer_class(audio, context={
                 "request": request
@@ -949,7 +950,7 @@ class ArchiveUser(generics.GenericAPIView):
     serializer_class = UserSerializer
 
     def post(self, request, *args, **kwargs):
-        user_id = request.data.get("user_id")        
+        user_id = request.data.get("user_id")
         user = User.objects.filter(id=user_id).first()
         if user:
             user.archived = not user.archived

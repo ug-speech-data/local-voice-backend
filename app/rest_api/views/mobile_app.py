@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from accounts.models import User
 from dashboard.models import (Audio, AudioTranscriptionAssignment,
-                              AudioValidationAssignment, Image)
+                              AudioValidationAssignment, Image, TranscriptionResolutionAssignment)
 from local_voice.utils.constants import ValidationStatus
 from rest_api.serializers import (AudioSerializer, AudioUploadSerializer,
                                   ImageSerializer,
@@ -257,6 +257,52 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
                 deleted=False).exclude(
                     Q(transcriptions__user=request.user)).order_by("image", locale_count, "t_count")
 
+        data = self.serializer_class(audios,
+                                     many=True,
+                                     context={
+                                         "request": request
+                                     }).data
+        return Response({"audios": data})
+
+
+
+class GetBulkAssignedTranscriptionsToResolve(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AudioSerializer
+
+    ##############################################################
+    # NOTE: Caching will return audios that may have been validated by the users
+    # and deleted from their device resulting in double validation
+    # The app sends request every ~30 minutes to this endpoint automatically.
+    # Users can trigger this requests too by themselves.
+    ##############################################################
+    # @method_decorator(cache_page(60 * 2* 15))
+    # @method_decorator(vary_on_headers(*["Authorization"]))
+    def get(self, request, *args, **kwargs):
+        count = min(request.data.get("count") or 480, 1000)
+        completed = "true" in request.GET.get("completed", "")
+        required_transcription_validation_count = 1
+        assignment, created = TranscriptionResolutionAssignment.objects.get_or_create(
+            user=request.user)
+
+        if created or assignment.audios.all().count() == 0 or completed:
+            audios = (Audio.objects.annotate(
+                t_assign=Count("transcription_resolutions_assignments"),
+                t_count=Count("transcriptions")).filter(
+                        transcription_status=ValidationStatus.PENDING.value,
+                        locale=request.user.locale,
+                        deleted=False,
+                        t_assign__lt=required_transcription_validation_count,
+                        t_count__gte=1).
+                exclude(Q(transcriptions__user=request.user)))[:count]
+            assignment.audios.set(audios)
+            assignment.save()
+        audios = assignment.audios.annotate(
+            t_count=Count("transcriptions")).filter(
+                transcription_status=ValidationStatus.PENDING.value,
+                t_count__lt=required_transcription_validation_count,
+                deleted=False).exclude(
+                    Q(transcriptions__user=request.user)).order_by("image", "t_count")
         data = self.serializer_class(audios,
                                      many=True,
                                      context={
