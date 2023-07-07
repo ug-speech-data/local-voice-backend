@@ -300,7 +300,6 @@ class GetBulkAssignedTranscriptionsToResolve(generics.GenericAPIView):
         audios = assignment.audios.annotate(
             t_count=Count("transcriptions")).filter(
                 transcription_status=ValidationStatus.PENDING.value,
-                t_count__lt=required_transcription_validation_count,
                 deleted=False).exclude(
                     Q(transcriptions__user=request.user)).order_by("image", "t_count")
         data = self.serializer_class(audios,
