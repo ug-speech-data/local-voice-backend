@@ -78,9 +78,9 @@ def export_audio_data(user_id, data, base_url):
         audios = audios.filter(locale=locale)
 
     if status == "not_accepted":
-        audios = audios.exclude(second_audio_status="accepted")
+        audios = audios.exclude(audio_status="accepted")
     else:
-        audios = audios.filter(second_audio_status="accepted")
+        audios = audios.filter(audio_status="accepted")
 
     if status == "transcription_resolved":
         audios = audios.filter(
@@ -180,7 +180,7 @@ def convert_files_to_mp3(audio_status=None):
         main_file_format="wav").filter(Q(file_mp3=None) | Q(
             file_mp3="")).order_by("validation_count")
     if audio_status:
-        audios = audios.filter(second_audio_status=audio_status)
+        audios = audios.filter(audio_status=audio_status)
     audios = audios.values("id")
 
     for item in audios:
@@ -228,20 +228,20 @@ def get_audios_rejected(user):
     from dashboard.models import Audio
     return Audio.objects.filter(submitted_by=user,
                                 deleted=False,
-                                second_audio_status=ValidationStatus.REJECTED.value).count()
+                                audio_status=ValidationStatus.REJECTED.value).count()
 
 
 def get_audios_pending(user):
     from dashboard.models import Audio
     return Audio.objects.filter(submitted_by=user,
                                 deleted=False,
-                                second_audio_status=ValidationStatus.PENDING.value).count()
+                                audio_status=ValidationStatus.PENDING.value).count()
 
 
 def get_audios_accepted(user):
     return Audio.objects.filter(submitted_by=user,
                                 deleted=False,
-                                second_audio_status=ValidationStatus.ACCEPTED.value).count()
+                                audio_status=ValidationStatus.ACCEPTED.value).count()
 
 
 def get_estimated_deduction_amount(user):
@@ -309,11 +309,11 @@ def update_user_stats():
             sum(audios.values_list("duration", flat=True)) / 3600, 2)
         total_approved = round(
             sum(
-                audios.filter(second_audio_status="accepted").values_list(
+                audios.filter(audio_status="accepted").values_list(
                     "duration", flat=True)) / 3600, 2)
         total_rejected = round(
             sum(
-                audios.filter(second_audio_status="rejected").values_list(
+                audios.filter(audio_status="rejected").values_list(
                     "duration", flat=True)) / 3600, 2)
         User.objects.filter(id=lead.id).update(
             proxy_audios_submitted_in_hours=total_sumitted,
