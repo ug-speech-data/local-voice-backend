@@ -29,7 +29,7 @@ urlpatterns += [
     path("validate-image/", views.ValidateImage.as_view()),
     path("validate-audio/", views.ValidateAudio.as_view()),
     path("submit-transcription/", views.SubmitTranscription.as_view()),
-    path("validate-transcription/", views.ValidateTranscription.as_view()),
+    path("validate-transcription/", views.ValidateTranscription.as_view()), #deprecated
 
     path("categories/", views.CategoriesAPI.as_view()),
     path("groups/", views.GroupsAPI.as_view()),

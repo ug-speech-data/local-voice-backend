@@ -454,6 +454,7 @@ class Transcription(models.Model):
             self.validation_count = self.validations.all().count()
         return super().save(*args, **kwargs)
 
+    # Deprecated
     def validate(self, user, status):
         required_transcription_validation_count = AppConfiguration.objects.first(
         ).required_transcription_validation_count
