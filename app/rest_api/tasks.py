@@ -14,6 +14,7 @@ from django.db.models import Count, Q
 from accounts.models import User
 from dashboard.models import (Audio, AudioTranscriptionAssignment,
                               AudioValidationAssignment, ExportTag,
+                              TranscriptionResolutionAssignment,
                               Notification, Transcription)
 from local_voice.utils.constants import TranscriptionStatus, ValidationStatus
 from setup.models import AppConfiguration
@@ -78,9 +79,9 @@ def export_audio_data(user_id, data, base_url):
         audios = audios.filter(locale=locale)
 
     if status == "not_accepted":
-        audios = audios.exclude(audio_status="accepted")
+        audios = audios.exclude(second_audio_status="accepted")
     else:
-        audios = audios.filter(audio_status="accepted")
+        audios = audios.filter(second_audio_status="accepted")
 
     if status == "transcription_resolved":
         audios = audios.filter(
@@ -175,12 +176,12 @@ def export_audio_data(user_id, data, base_url):
 
 
 @shared_task()
-def convert_files_to_mp3(audio_status=None):
+def convert_files_to_mp3(second_audio_status=None):
     audios = Audio.objects.filter(
         main_file_format="wav").filter(Q(file_mp3=None) | Q(
             file_mp3="")).order_by("validation_count")
-    if audio_status:
-        audios = audios.filter(audio_status=audio_status)
+    if second_audio_status:
+        audios = audios.filter(second_audio_status=second_audio_status)
     audios = audios.values("id")
 
     for item in audios:
@@ -228,20 +229,20 @@ def get_audios_rejected(user):
     from dashboard.models import Audio
     return Audio.objects.filter(submitted_by=user,
                                 deleted=False,
-                                audio_status=ValidationStatus.REJECTED.value).count()
+                                second_audio_status=ValidationStatus.REJECTED.value).count()
 
 
 def get_audios_pending(user):
     from dashboard.models import Audio
     return Audio.objects.filter(submitted_by=user,
                                 deleted=False,
-                                audio_status=ValidationStatus.PENDING.value).count()
+                                second_audio_status=ValidationStatus.PENDING.value).count()
 
 
 def get_audios_accepted(user):
     return Audio.objects.filter(submitted_by=user,
                                 deleted=False,
-                                audio_status=ValidationStatus.ACCEPTED.value).count()
+                                second_audio_status=ValidationStatus.ACCEPTED.value).count()
 
 
 def get_estimated_deduction_amount(user):
@@ -309,11 +310,11 @@ def update_user_stats():
             sum(audios.values_list("duration", flat=True)) / 3600, 2)
         total_approved = round(
             sum(
-                audios.filter(audio_status="accepted").values_list(
+                audios.filter(second_audio_status="accepted").values_list(
                     "duration", flat=True)) / 3600, 2)
         total_rejected = round(
             sum(
-                audios.filter(audio_status="rejected").values_list(
+                audios.filter(second_audio_status="rejected").values_list(
                     "duration", flat=True)) / 3600, 2)
         User.objects.filter(id=lead.id).update(
             proxy_audios_submitted_in_hours=total_sumitted,
@@ -342,6 +343,19 @@ def release_audios_not_being_transcribed_by_users_assigned():
     expiry_date = datetime.now() - timedelta(
         hours=hours_to_keep_audios_for_transcription)
     forgotten_assignments = AudioTranscriptionAssignment.objects.filter(
+        created_at__lte=expiry_date)
+    deleted, _ = forgotten_assignments.delete()
+    logger.info(f"Made {deleted} audios available for reassignment.")
+
+
+@shared_task()
+def release_transcriptions_not_being_resolve_by_users_assigned():
+    configuration = AppConfiguration.objects.first()
+    hours_to_keep_audios_for_transcription = configuration.hours_to_keep_audios_for_transcription if configuration else 6
+
+    expiry_date = datetime.now() - timedelta(
+        hours=hours_to_keep_audios_for_transcription)
+    forgotten_assignments = TranscriptionResolutionAssignment.objects.filter(
         created_at__lte=expiry_date)
     deleted, _ = forgotten_assignments.delete()
     logger.info(f"Made {deleted} audios available for reassignment.")

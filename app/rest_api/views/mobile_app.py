@@ -285,7 +285,7 @@ class GetBulkAssignedTranscriptionsToResolve(generics.GenericAPIView):
         assignment, created = TranscriptionResolutionAssignment.objects.get_or_create(
             user=request.user)
 
-        if created or assignment.audios.all().count() == 0 or completed:
+        if created or assignment.audios.filter(locale=request.user.locale).count() == 0 or completed:
             audios = (Audio.objects.annotate(
                 t_assign=Count("transcription_resolutions_assignments"),
                 t_count=Count("transcriptions")).filter(
@@ -300,6 +300,7 @@ class GetBulkAssignedTranscriptionsToResolve(generics.GenericAPIView):
         audios = assignment.audios.annotate(
             t_count=Count("transcriptions")).filter(
                 transcription_status=ValidationStatus.PENDING.value,
+                locale=request.user.locale,
                 deleted=False).exclude(
                     Q(transcriptions__user=request.user)).order_by("image", "t_count")
         data = self.serializer_class(audios,

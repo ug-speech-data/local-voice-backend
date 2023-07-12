@@ -180,7 +180,7 @@ def update_user_amounts():
     for user in User.objects.filter(deleted=False, is_active=True):
         user_audios = user.audios.filter(
             deleted=False,
-            audio_status=ValidationStatus.ACCEPTED.value,
+            second_audio_status=ValidationStatus.ACCEPTED.value,
             participant__type=ParticipantType.ASSISTED.value).count()
         participant_audios = 0
         email_prefix = user.email_address.split("@")[0]
@@ -196,7 +196,7 @@ def update_user_amounts():
 
             participant_audios = Audio.objects.filter(
                 participant__type=ParticipantType.INDEPENDENT.value,
-                audio_status=ValidationStatus.ACCEPTED.value,
+                second_audio_status=ValidationStatus.ACCEPTED.value,
                 deleted=False,
                 submitted_by__in=users_participants).count()
 
