@@ -935,7 +935,7 @@ class SearchUser(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         query = request.GET.get("query")
-        users = User.objects.filter(Q(surname__icontains=query) |
+        users = User.objects.filter(deleted=False, is_active=True).filter(Q(surname__icontains=query) |
                                     Q(other_names__icontains=query) |
                                     Q(phone=query))
         users = users[:5]
