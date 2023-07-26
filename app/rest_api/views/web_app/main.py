@@ -450,9 +450,11 @@ class CollectedAudiosAPI(SimpleCrudMixin):
         if status == "accept":
             audio_obj.rejected = False
             audio_obj.is_accepted = True
+            audio_obj.second_audio_status = ValidationStatus.ACCEPTED.value
         else:
             audio_obj.rejected = True
             audio_obj.is_accepted = False
+            audio_obj.second_audio_status = ValidationStatus.REJECTED.value
 
         if not audio_obj.conflict_resolved_by:
             audio_obj.conflict_resolved_by = request.user
@@ -936,8 +938,8 @@ class SearchUser(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         query = request.GET.get("query")
         users = User.objects.filter(deleted=False, is_active=True).filter(Q(surname__icontains=query) |
-                                    Q(other_names__icontains=query) |
-                                    Q(phone=query))
+                                                                          Q(other_names__icontains=query) |
+                                                                          Q(phone=query))
         users = users[:5]
         return Response({
             "users": self.serializer_class(users, context={
