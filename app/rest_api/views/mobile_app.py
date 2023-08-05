@@ -175,8 +175,14 @@ class GetBulkAssignedToValidate(generics.GenericAPIView):
         completed = "true" in request.GET.get("completed", "")
         configuration = AppConfiguration.objects.first()
         required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
-        assignment, created = AudioValidationAssignment.objects.get_or_create(
-            user=request.user)
+
+        assignment = AudioValidationAssignment.objects.filter(
+            user=request.user).first()
+        created = False
+        if not assignment:
+            assignment = AudioValidationAssignment.objects.create(
+                user=request.user)
+            created = True
 
         if created or assignment.audios.all().count() == 0 or completed:
             audios = Audio.objects.annotate(c=Count("assignments"), val_count=Count("validations", filter=Q(validations__archived=False))) \
@@ -220,8 +226,15 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
         completed = "true" in request.GET.get("completed", "")
         configuration = AppConfiguration.objects.first()
         required_transcription_validation_count = configuration.required_transcription_validation_count if configuration else 0
-        assignment, created = AudioTranscriptionAssignment.objects.get_or_create(
-            user=request.user)
+
+        assignment = AudioTranscriptionAssignment.objects.filter(
+            user=request.user).first()
+        created = False
+        if not assignment:
+            assignment = AudioTranscriptionAssignment.objects.create(
+                user=request.user)
+            created = True
+
         EXPECTED_TRANSCRIPTIONS_PER_IMAGE = 24 * \
             required_transcription_validation_count
 
@@ -265,7 +278,6 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
         return Response({"audios": data})
 
 
-
 class GetBulkAssignedTranscriptionsToResolve(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AudioSerializer
@@ -282,18 +294,24 @@ class GetBulkAssignedTranscriptionsToResolve(generics.GenericAPIView):
         count = min(request.data.get("count") or 480, 1000)
         completed = "true" in request.GET.get("completed", "")
         required_transcription_validation_count = 1
-        assignment, created = TranscriptionResolutionAssignment.objects.get_or_create(
-            user=request.user)
+
+        assignment = TranscriptionResolutionAssignment.objects.filter(
+            user=request.user).first()
+        created = False
+        if not assignment:
+            assignment = TranscriptionResolutionAssignment.objects.create(
+                user=request.user)
+            created = True
 
         if created or assignment.audios.filter(locale=request.user.locale).count() == 0 or completed:
             audios = (Audio.objects.annotate(
                 t_assign=Count("transcription_resolutions_assignments"),
                 t_count=Count("transcriptions")).filter(
-                        transcription_status=ValidationStatus.PENDING.value,
-                        locale=request.user.locale,
-                        deleted=False,
-                        t_assign__lt=required_transcription_validation_count,
-                        t_count__gte=1).
+                transcription_status=ValidationStatus.PENDING.value,
+                locale=request.user.locale,
+                deleted=False,
+                t_assign__lt=required_transcription_validation_count,
+                t_count__gte=1).
                 exclude(Q(transcriptions__user=request.user)))[:count]
             assignment.audios.set(audios)
             assignment.save()
