@@ -156,7 +156,7 @@ class UploadAudioAPI(generics.GenericAPIView):
             error_messages = []
             for field, errors in serializer.errors.items():
                 error_messages.append(f"{field}: " + str(errors))
-            logger.error(error_messages)
+            logger.error(str(request.user) + " " + str(error_messages))
             return Response({"error_messages": error_messages}, 400)
 
 
