@@ -1,14 +1,20 @@
+from redis.exceptions import ConnectionError
+import redis
+from datetime import timedelta
 import logging
 import time
 from importlib import import_module
 
 from django.conf import settings
-from django.contrib.auth.models import Permission
 from django.core.cache import cache
+from rest_framework.response import Response
 
 from accounts.models import ActivityLog
 
 logger = logging.getLogger("user_activity")
+
+
+redis_client = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
 
 
 class UserRestrict(object):
@@ -20,10 +26,14 @@ class UserRestrict(object):
         """
         Checks if different session exists for user and deletes it.
         """
+        print("cache_key","cache_key")
+
         if request.user.is_authenticated:
             cache_timeout = 86400
             cache_key = "user_pk_%s_restrict" % request.user.pk
             cache_value = cache.get(cache_key)
+
+            print("cache_key",cache_key)
 
             if cache_value:
                 if request.session.session_key != cache_value:
@@ -80,4 +90,43 @@ class LogUserVisits(object):
                 ActivityLog.objects.create(username=username,
                                            action=action,
                                            duration_in_mills=duration_in_mills)
+        return response
+
+
+class RateLimitter(object):
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        """
+        Log the different pages visited by user.
+        """
+        print("request.user",request.user)
+        if request.user.is_authenticated:
+            user_key = "user_"+request.user.id
+        else:
+            if not request.session.session_key:
+                request.session.create()
+            user_key = request.session.session_key
+
+        start = time.time_ns()
+        last_visit = None
+        try:
+            last_visit = redis_client.get(user_key)
+            print("last_visit",user_key, last_visit)
+        except ConnectionError as e:
+            logger.warning("Redis is not working")
+            logger.error(str(e))
+        if last_visit == None:
+            try:
+                redis_client.set(user_key, start, ex=timedelta(seconds=20))
+            except ConnectionError as e:
+                logger.error(str(e))
+        else:
+            print("exceeded")
+            return Response({"message": "Rate limit exceeded"}, 400)
+
+        response = self.get_response(request)
+
         return response

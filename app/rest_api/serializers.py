@@ -750,7 +750,7 @@ class AudioUploadSerializer(serializers.Serializer):
         remoteImageID = serializers.IntegerField()
         duration = serializers.IntegerField()
         device_id = serializers.CharField()
-        environment = serializers.CharField()
+        # environment = serializers.CharField(required=False)
 
     class _ParticipantSerializer(serializers.Serializer):
         momoNumber = serializers.CharField(max_length=10)
@@ -883,7 +883,7 @@ class AudioUploadSerializer(serializers.Serializer):
                     duration=audio_data.get("duration"),
                     locale=user.locale,
                     device_id=audio_data.get("device_id"),
-                    environment=audio_data.get("environment"),
+                    environment=audio_data.get("environment") or request.user.recording_environment,
                     participant=participant_object,
                     main_file_format="mp3" if file_mp3 else "wav",
                     api_client=api_client)
