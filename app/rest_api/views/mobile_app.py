@@ -5,6 +5,8 @@ from django.db.models import Count, Q
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
 
 from accounts.models import User
 from dashboard.models import (Audio, AudioTranscriptionAssignment,
@@ -121,6 +123,7 @@ class UploadAudioAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AudioUploadSerializer
 
+    @method_decorator(ratelimit(key='user_or_ip', rate='1/s'))
     def post(self, request, *args, **kwargs):
         # Convert json serialized fields into JSON object
         request_data = {}

@@ -966,7 +966,6 @@ class GetUserStatistics(SimpleCrudMixin):
 
     def post(self, request, *args, **kwargs):
         user_id = request.data.get("user_id")
-        print("user_id",user_id)
         user = User.objects.filter(id=user_id).first()
         if not user:
             return Response({

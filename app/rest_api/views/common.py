@@ -6,6 +6,8 @@ from knox.models import AuthToken
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
 
 from accounts.forms import UserForm
 from accounts.models import User
@@ -252,12 +254,12 @@ class GetAudiosToValidate(generics.GenericAPIView):
         required_audio_validation_count = configuration.required_audio_validation_count if configuration else 0
 
         user_email_prefix = request.user.email_address.split("@")[0]
-        audios = Audio.objects.annotate(vals_count = Count("validations", filter=Q(validations__archived=False))).filter(
+        audios = Audio.objects.annotate(vals_count=Count("validations", filter=Q(validations__archived=False))).filter(
             deleted=False,
-           assignments=None,
-           second_audio_status = ValidationStatus.PENDING.value,
+            assignments=None,
+            second_audio_status=ValidationStatus.PENDING.value,
             vals_count__lt=required_audio_validation_count)\
-                .exclude(Q(validations__user=request.user)|Q(submitted_by__email_address__startswith=user_email_prefix) | Q(id=offset)) \
+            .exclude(Q(validations__user=request.user) | Q(submitted_by__email_address__startswith=user_email_prefix) | Q(id=offset)) \
             .order_by("-vals_count", "image", "id")
 
         if not request.user.is_superuser:
@@ -280,6 +282,7 @@ class ValidateAudio(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
     required_permissions = ["setup.validate_audio"]
 
+    @method_decorator(ratelimit(key='user_or_ip', rate='1/s'))
     def post(self, request, *args, **kwargs):
         audio_id = request.data.get("id")
         status = request.data.get("status")
@@ -304,6 +307,7 @@ class SubmitTranscription(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, APILevelPermissionCheck]
     required_permissions = ["setup.transcribe_audio"]
 
+    @method_decorator(ratelimit(key='user_or_ip', rate='1/s'))
     def post(self, request, *args, **kwargs):
         audio_id = request.data.get("id")
         configuration = AppConfiguration.objects.first()
@@ -313,7 +317,7 @@ class SubmitTranscription(generics.GenericAPIView):
             id=audio_id,
             t_count__lt=required_transcription_validation_count)\
             .exclude(transcriptions__user=request.user)\
-                .first()
+            .first()
         if audio:
             text = request.data.get("text")
             transcription, _ = Transcription.objects.get_or_create(
