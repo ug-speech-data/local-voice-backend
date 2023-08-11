@@ -13,6 +13,15 @@ from rest_framework.response import Response
 from django.db import transaction
 from accounts.forms import GroupForm, UserForm
 from accounts.models import User
+from rest_api.tasks import (get_audios_pending,
+                            get_audios_rejected,
+                            get_audios_accepted,
+                            get_audios_submitted,
+                            get_audios_validated,
+                            get_conflicts_resolved,
+                            get_transcriptions_resolved,
+                            get_audios_transcribed)
+from rest_api.serializers import UserStatisticSerializer
 from local_voice.utils.constants import TranscriptionStatus
 from app_statistics.models import Statistics
 from dashboard.forms import CategoryForm
@@ -945,6 +954,36 @@ class SearchUser(generics.GenericAPIView):
             "users": self.serializer_class(users, context={
                 "request": request
             }, many=True).data,
+        })
+
+
+class GetUserStatistics(SimpleCrudMixin):
+    serializer_class = UserStatisticSerializer
+    required_permissions = ["setup.view_user_stats"]
+    model_class = User
+    response_data_label = "user"
+    response_data_label_plural = "users"
+
+    def post(self, request, *args, **kwargs):
+        user_id = request.data.get("user_id")
+        print("user_id",user_id)
+        user = User.objects.filter(id=user_id).first()
+        if not user:
+            return Response({
+                "message": "User not found."
+            })
+        user.audios_rejected = get_audios_rejected(user)
+        user.audios_pending = get_audios_pending(user)
+        user.audios_accepted = get_audios_accepted(user)
+        user.audios_submitted = get_audios_submitted(user)
+        user.audios_validated = get_audios_validated(user)
+        user.conflicts_resolved = get_conflicts_resolved(user)
+        user.transcriptions_resolved = get_transcriptions_resolved(user)
+        user.audios_transcribed = get_audios_transcribed(user)
+        user.save()
+
+        return Response({
+            "message": "User stat updated."
         })
 
 

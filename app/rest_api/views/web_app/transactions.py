@@ -202,3 +202,28 @@ class GetPayHubBalance(generics.GenericAPIView):
             logger.error(e)
             balance = "Error"
         return Response({"balance": str(balance)})
+
+
+class PayUnregisteredUsers(generics.GenericAPIView):
+    required_permissions = ["setup.manage_payment"]
+
+    def post(self, request, *args, **kwargs):
+        amount = request.data.get("amount")
+        fullname = request.data.get("fullname")
+        momo_number = request.data.get("momo_number")
+        network = request.data.get("network")
+        note = request.data.get("note")
+
+        transaction = Transaction.objects.create(
+            amount=amount,
+            fullname=fullname,
+            phone_number=momo_number,
+            network=network,
+            initiated_by=request.user,
+            direction=TransactionDirection.OUT.value,
+            note=note)
+
+        # Make API calls
+        transaction.execute()
+
+        return Response({"message": "Initiated payment successfully."})

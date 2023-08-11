@@ -78,6 +78,30 @@ class AudiosByLeadsSerializer(serializers.ModelSerializer):
         ]
 
 
+class UserStatisticSerializer(serializers.ModelSerializer):
+
+    def get_fullname(self, user):
+        return user.get_name()
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "fullname",
+            "email_address",
+            "locale",
+            "phone",
+            "audios_submitted",
+            "audios_validated",
+            "audios_rejected",
+            "audios_pending",
+            "audios_accepted",
+            "conflicts_resolved",
+            "transcriptions_resolved",
+            "audios_transcribed",
+        ]
+
+
 class UserSerializer(serializers.ModelSerializer):
     photo_url = serializers.SerializerMethodField()
     short_name = serializers.SerializerMethodField()

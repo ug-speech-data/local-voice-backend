@@ -76,4 +76,5 @@ class SetupPerms(models.Model):
             ("record_self", "Can record oneself"),
             ("record_others", "Can record others"),
             ("approve_sample_audio_recorders", "Can approve sample audio recorders"),
+            ('view_user_stats', 'Can view user statistics'),
         ]
