@@ -26,14 +26,11 @@ class UserRestrict(object):
         """
         Checks if different session exists for user and deletes it.
         """
-        print("cache_key","cache_key")
 
         if request.user.is_authenticated:
             cache_timeout = 86400
             cache_key = "user_pk_%s_restrict" % request.user.pk
             cache_value = cache.get(cache_key)
-
-            print("cache_key",cache_key)
 
             if cache_value:
                 if request.session.session_key != cache_value:
@@ -102,7 +99,6 @@ class RateLimitter(object):
         """
         Log the different pages visited by user.
         """
-        print("request.user",request.user)
         if request.user.is_authenticated:
             user_key = "user_"+request.user.id
         else:
@@ -114,7 +110,6 @@ class RateLimitter(object):
         last_visit = None
         try:
             last_visit = redis_client.get(user_key)
-            print("last_visit",user_key, last_visit)
         except ConnectionError as e:
             logger.warning("Redis is not working")
             logger.error(str(e))
@@ -124,7 +119,6 @@ class RateLimitter(object):
             except ConnectionError as e:
                 logger.error(str(e))
         else:
-            print("exceeded")
             return Response({"message": "Rate limit exceeded"}, 400)
 
         response = self.get_response(request)
