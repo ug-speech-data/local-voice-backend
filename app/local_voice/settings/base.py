@@ -85,7 +85,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'local_voice.middleware.AddPermissionToResponse',
     'local_voice.middleware.UserRestrict',
-    'local_voice.middleware.RateLimitter',
 ]
 
 ROOT_URLCONF = 'local_voice.urls'

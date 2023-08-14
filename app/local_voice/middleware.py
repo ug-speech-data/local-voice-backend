@@ -89,38 +89,3 @@ class LogUserVisits(object):
                                            duration_in_mills=duration_in_mills)
         return response
 
-
-class RateLimitter(object):
-
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        """
-        Log the different pages visited by user.
-        """
-        if request.user.is_authenticated:
-            user_key = "user_"+request.user.id
-        else:
-            if not request.session.session_key:
-                request.session.create()
-            user_key = request.session.session_key
-
-        start = time.time_ns()
-        last_visit = None
-        try:
-            last_visit = redis_client.get(user_key)
-        except ConnectionError as e:
-            logger.warning("Redis is not working")
-            logger.error(str(e))
-        if last_visit == None:
-            try:
-                redis_client.set(user_key, start, ex=timedelta(seconds=20))
-            except ConnectionError as e:
-                logger.error(str(e))
-        else:
-            return Response({"message": "Rate limit exceeded"}, 400)
-
-        response = self.get_response(request)
-
-        return response
