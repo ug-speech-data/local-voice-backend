@@ -20,7 +20,7 @@ class PayHub:
             "callback_url": callback_url,
         }
         return requests.post(
-            "https://www.payhubghana.com/api/v1.0/debit_mobile_account/",
+            "https://www.payhubghana.io/api/v1.0/debit_mobile_account/",
             data=data,
             headers=self.headers)
 
@@ -35,16 +35,16 @@ class PayHub:
             "callback_url": callback_url,
         }
         return requests.post(
-            "https://www.payhubghana.com/api/v1.0/credit_mobile_account/",
+            "https://www.payhubghana.io/api/v1.0/credit_mobile_account/",
             data=data,
             headers=self.headers)
 
     def status_check(self, transaction_id):
         return requests.get(
-            f"https://www.payhubghana.com/api/v1.0/transaction_status?transaction_id={transaction_id}",
+            f"https://www.payhubghana.io/api/v1.0/transaction_status?transaction_id={transaction_id}",
             headers=self.headers)
 
     def balance(self):
         return requests.get(
-            f"https://www.payhubghana.com/api/v1.0/wallet_balance?wallet_id={settings.PAYHUB_WALLET_ID}",
+            f"https://www.payhubghana.io/api/v1.0/wallet_balance?wallet_id={settings.PAYHUB_WALLET_ID}",
             headers=self.headers)
