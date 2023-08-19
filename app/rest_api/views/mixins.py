@@ -1,7 +1,9 @@
+from datetime import datetime
 import math
 
 from rest_framework import generics
 from rest_framework.response import Response
+from django.utils.timezone import make_aware
 
 from local_voice.utils.functions import apply_filters, get_errors_from_form
 
@@ -12,6 +14,8 @@ class SimpleCrudMixin(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         filters = request.GET.getlist("filters")
+        start_date = request.GET.get("start_date")
+        end_date = request.GET.get("end_date")
         query = request.GET.get("query") or request.GET.get("q")
 
         objects = self.model_class.objects.all().order_by(
@@ -22,6 +26,15 @@ class SimpleCrudMixin(generics.GenericAPIView):
                              "generate_query"):  # type: ignore
             objects = objects.filter(
                 self.model_class.generate_query(query))  # type: ignore
+
+        if hasattr(self.model_class, "created_at"):
+            if start_date:
+                start_date = datetime.strptime(start_date, '%Y-%m-%d')
+                objects = objects.filter(
+                    created_at__gte=make_aware(start_date))
+            if end_date:
+                end_date = datetime.strptime(end_date, '%Y-%m-%d')
+                objects = objects.filter(created_at__lte=make_aware(end_date))
 
         if hasattr(self.model_class, "deleted"):  # type: ignore
             objects = objects.filter(deleted=False)
@@ -44,10 +57,11 @@ class SimpleCrudMixin(generics.GenericAPIView):
         prev_page = page - 1 if page > 1 else None
         next_page = page + 1 if total_pages > page else None
 
-        #yapf: disable
+        # yapf: disable
         response_data = {
             self.response_data_label_plural:
-            self.serializer_class(paginated_objects, context={"request": request},many=True).data,
+            self.serializer_class(paginated_objects, context={
+                                  "request": request}, many=True).data,
             "page": page,
             "page_size": page_size,
             "total": objects.count(),

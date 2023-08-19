@@ -393,9 +393,13 @@ class ImageSerializer(serializers.ModelSerializer):
 
 class TransactionSerializer(serializers.ModelSerializer):
     amount = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
 
     def get_amount(self, obj):
         return round(float(obj.amount), 2)
+
+    def get_created_at(self, obj):
+        return obj.created_at.strftime("%Y-%m-%d")
 
     class Meta:
         model = Transaction
@@ -883,7 +887,8 @@ class AudioUploadSerializer(serializers.Serializer):
                     duration=audio_data.get("duration"),
                     locale=user.locale,
                     device_id=audio_data.get("device_id"),
-                    environment=audio_data.get("environment") or request.user.recording_environment,
+                    environment=audio_data.get(
+                        "environment") or request.user.recording_environment,
                     participant=participant_object,
                     main_file_format="mp3" if file_mp3 else "wav",
                     api_client=api_client)
