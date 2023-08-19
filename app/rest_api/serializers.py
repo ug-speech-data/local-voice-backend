@@ -893,7 +893,7 @@ class AudioUploadSerializer(serializers.Serializer):
                     main_file_format="mp3" if file_mp3 else "wav",
                     api_client=api_client)
 
-                participant_object.update_amount(amount)
+                # participant_object.update_amount(amount)
 
                 # Convert audio to mp3
                 if not file_mp3:
