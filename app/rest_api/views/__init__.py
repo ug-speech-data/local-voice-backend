@@ -67,9 +67,6 @@ class AddImageToDatabase(generics.GenericAPIView):
         source = request.data.get("source")
 
         category = Category.objects.filter(name=category_name).first()
-        if not category:
-            return Response({"message": "Categoory not found"})
-
         image = None
         try:
             image = Image.objects.create(
@@ -80,7 +77,8 @@ class AddImageToDatabase(generics.GenericAPIView):
                 is_downloaded=True,
                 source_url=source,
             )
-            image.categories.add(category)
+            if category:
+                image.categories.add(category)
         except Exception as e:
             logger.error(str(e))
             return Response({"error": str(e)})
