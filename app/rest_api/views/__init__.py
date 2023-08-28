@@ -64,7 +64,7 @@ class AddImageToDatabase(generics.GenericAPIView):
         file = request.data.get("file")
         category_name = request.data.get("category_name")
         name = request.data.get("name")
-        
+
         category = Category.objects.filter(name=category_name).first()
         if not category:
             return Response({"message": "error"}, status=404)
@@ -81,6 +81,7 @@ class AddImageToDatabase(generics.GenericAPIView):
             image.categories.add(category)
         except Exception as e:
             logger.error(str(e))
+            return Response({"error": str(e)}, status=404)
 
         if image:
             image.create_image_thumbnail()
