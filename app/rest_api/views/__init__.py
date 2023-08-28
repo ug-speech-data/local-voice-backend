@@ -4,9 +4,7 @@ from io import BytesIO
 import requests
 from django.core import files
 from django.core.files.base import ContentFile
-from django.db.utils import IntegrityError
 from PIL import Image as PillowImage
-from PIL import UnidentifiedImageError
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 
@@ -57,3 +55,36 @@ class SubmitCrawlerImages(generics.GenericAPIView):
         except Exception as e:
             print(e)
         return Response({"message": "error"}, status=400)
+
+
+class AddImageToDatabase(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        file = request.data.get("file")
+        category_name = request.data.get("category_name")
+        name = request.data.get("name")
+
+        print(file, category_name, name)
+
+        category = Category.objects.filter(name=category_name).first()
+        if not category:
+            return Response({"message": "error"}, status=404)
+
+        image = None
+        try:
+            image = Image.objects.create(
+                name=name,
+                file=file,
+                main_category=category,
+                is_accepted=True,
+                is_downloaded=True,
+            )
+            image.categories.add(category)
+        except Exception as e:
+            logger.error(str(e))
+
+        if image:
+            image.create_image_thumbnail()
+
+        return Response({"message": "success"}, status=200)

@@ -10,8 +10,7 @@ urlpatterns = [
     path("auth/logout/", views.UserLogoutAPI.as_view()),
     path("auth/profile/", views.MyProfile.as_view()),
     path("participants/", views.CreateParticipantAPI.as_view()),
-    path("get-mobile-app-configurations/",
-         views.MobileAppConfigurationAPI.as_view()),
+    path("get-mobile-app-configurations/", views.MobileAppConfigurationAPI.as_view()),
     path("get-assigned-images/", views.GetAssignedImagesAPI.as_view()),
     path("upload-audio/", views.UploadAudioAPI.as_view()),
     path("auth/user-permissions/", views.MyPermissions.as_view()),
@@ -25,16 +24,13 @@ urlpatterns += [
     path("get-image-to-validate", views.GetImagesToValidate.as_view()),
     path("get-audio-to-validate", views.GetAudiosToValidate.as_view()),
     path("get-audio-to-transcribe", views.GetAudiosToTranscribe.as_view()),
-    path("get-transcription-to-validate",
-         views.GetTranscriptionToValidate.as_view()),
-    path("get-transcription-to-resolve/",
-         views.GetAudioTranscriptionToResolve.as_view()),
+    path("get-transcription-to-validate", views.GetTranscriptionToValidate.as_view()),
+    path("get-transcription-to-resolve/", views.GetAudioTranscriptionToResolve.as_view()),
 
     path("validate-image/", views.ValidateImage.as_view()),
     path("validate-audio/", views.ValidateAudio.as_view()),
     path("submit-transcription/", views.SubmitTranscription.as_view()),
-    path("validate-transcription/",
-         views.ValidateTranscription.as_view()),  # deprecated
+    path("validate-transcription/", views.ValidateTranscription.as_view()),  # deprecated
 
     path("categories/", views.CategoriesAPI.as_view()),
     path("groups/", views.GroupsAPI.as_view()),
@@ -48,8 +44,7 @@ urlpatterns += [
     path("collected-participants/", views.CollectedParticipantsAPI.as_view()),
 
     path("reshuffle-images/", views.ReShuffleImageIntoBatches.as_view()),
-    path("assign-images-batch-to-user/",
-         views.AssignImageBatchToUsers.as_view()),
+    path("assign-images-batch-to-user/", views.AssignImageBatchToUsers.as_view()),
 
     path("export-audio-data/", views.ExportAudioData.as_view()),
     path("notifications/", views.NotificationAPI.as_view()),
@@ -61,17 +56,15 @@ urlpatterns += [
     path("get-uploaded-audios/", views.GetUploadedAudios.as_view()),
     path("limited-users/", views.LimitedUsersAPIView.as_view()),
 
-    path("get-assigned-audios-to-validate/",
-         views.GetBulkAssignedToValidate.as_view()),
-    path("get-assigned-audios-to-transcribe/",
-         views.GetBulkAssignedToTranscribe.as_view()),
-    path("get-assigned-transcriptions-to-resolve/",
-         views.GetBulkAssignedTranscriptionsToResolve.as_view()),
+    path("get-assigned-audios-to-validate/", views.GetBulkAssignedToValidate.as_view()),
+    path("get-assigned-audios-to-transcribe/", views.GetBulkAssignedToTranscribe.as_view()),
+    path("get-assigned-transcriptions-to-resolve/", views.GetBulkAssignedTranscriptionsToResolve.as_view()),
 ]
 
 
 urlpatterns += [
     path("submit-crawler-images/", views.SubmitCrawlerImages.as_view()),
+    path("add-image/", views.AddImageToDatabase.as_view()),
     path("web-app-configurations/", views.WebAppConfigurations.as_view()),
 ]
 
