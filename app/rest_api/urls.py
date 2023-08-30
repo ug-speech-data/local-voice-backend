@@ -12,7 +12,7 @@ urlpatterns = [
     path("participants/", views.CreateParticipantAPI.as_view()),
     path("get-mobile-app-configurations/", views.MobileAppConfigurationAPI.as_view()),
     path("get-assigned-images/", views.GetAssignedImagesAPI.as_view()),
-    path("upload-audio/", views.UploadAudioAPI.as_view()),
+    # path("upload-audio/", views.UploadAudioAPI.as_view()),
     path("auth/user-permissions/", views.MyPermissions.as_view()),
     path("auth/logout/", views.LogoutApiView.as_view()),
     path("search-users", views.SearchUser.as_view()),
@@ -73,8 +73,7 @@ urlpatterns += [
     path("participants-bulk-actions/", views.ParticipantsBulkAction.as_view()),
     path("images-bulk-actions/", views.ImagesBulkAction.as_view()),
     path("audios-bulk-actions/", views.AudiosBulkAction.as_view()),
-    path("transcriptions-bulk-actions/",
-         views.TranscriptionsBulkAction.as_view()),
+    path("transcriptions-bulk-actions/", views.TranscriptionsBulkAction.as_view()),
 ]
 
 # Payment
@@ -82,12 +81,10 @@ urlpatterns += [
     path("payments/users", views.GetPaymentUsers.as_view()),
     path("payments/credit-users/", views.CreditUsers.as_view()),
     path("payments/pay-users/", views.PayUsers.as_view()),
-    path("payments/pay-users-validation-benefit/",
-         views.PayValidationBenefit.as_view()),
+    path("payments/pay-users-validation-benefit/", views.PayValidationBenefit.as_view()),
     path("payments/pay-users-balance/", views.PayUsersBalance.as_view()),
     path("payments/transactions-history", views.TransactionHistory.as_view()),
-    path("payments/transactions-status-check",
-         views.TransactionStatusCheck.as_view()),
+    path("payments/transactions-status-check", views.TransactionStatusCheck.as_view()),
     path("payments/balance", views.GetPayHubBalance.as_view()),
     path("payments/pay-ungresiter-user/", views.PayUnregisteredUsers.as_view()),
 ]
