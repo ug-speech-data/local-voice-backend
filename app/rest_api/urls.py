@@ -12,7 +12,7 @@ urlpatterns = [
     path("participants/", views.CreateParticipantAPI.as_view()),
     path("get-mobile-app-configurations/", views.MobileAppConfigurationAPI.as_view()),
     path("get-assigned-images/", views.GetAssignedImagesAPI.as_view()),
-    # path("upload-audio/", views.UploadAudioAPI.as_view()),
+    path("upload-audio/", views.UploadAudioAPI.as_view()),
     path("auth/user-permissions/", views.MyPermissions.as_view()),
     path("auth/logout/", views.LogoutApiView.as_view()),
     path("search-users", views.SearchUser.as_view()),
