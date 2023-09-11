@@ -256,8 +256,7 @@ class GetBulkAssignedToTranscribe(generics.GenericAPIView):
                 t_assign=Count("transcriptions_assignments"),
                 t_count=Count("transcriptions")).filter(
                     Q(**transcription_count_filter)).filter(
-                Q(second_audio_status=ValidationStatus.ACCEPTED.value) |
-                Q(audio_status=ValidationStatus.ACCEPTED.value)
+                Q(second_audio_status=ValidationStatus.ACCEPTED.value)
             ).filter(
                         transcription_status=ValidationStatus.PENDING.value,
                         locale=request.user.locale,

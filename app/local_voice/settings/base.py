@@ -71,7 +71,6 @@ INSTALLED_APPS = [
     "django_celery_beat",
 ]
 
-# Allow CORS
 CORS_ALLOW_ALL_ORIGINS = True
 
 MIDDLEWARE = [
