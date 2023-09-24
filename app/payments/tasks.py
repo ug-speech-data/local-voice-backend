@@ -160,10 +160,16 @@ def check_transaction_status(transaction_id, rounds=5, wait=5):
 
 @shared_task()
 @db_transaction.atomic()
-def update_participants_amount():
+def update_participants_amount(filterUnpaid=True):
     configuration = AppConfiguration.objects.first()
     amount = configuration.individual_audio_aggregators_amount_per_audio if configuration else 0
-    for participant in Participant.objects.select_for_update().filter(flatten=False, paid=False):
+    participants = Participant.objects.select_for_update().filter(
+        excluded_from_payment=False, flatten=False)
+
+    if filterUnpaid == True:
+        participants = participants.filter(paid=False)
+
+    for participant in participants:
         if participant.type == ParticipantType.ASSISTED.value:
             amount = configuration.participant_amount_per_audio if configuration else 0
         participant.update_amount(amount)

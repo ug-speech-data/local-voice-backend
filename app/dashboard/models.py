@@ -231,6 +231,9 @@ class Participant(models.Model):
         return self.transactions
 
     def pay_participant(self, user):
+        if self.excluded_from_payment:
+            return
+        
         paid = sum(self.transactions.exclude(Q(status="failed")).values_list("amount", flat=True))
         self.balance = decimal.Decimal(self.amount) - decimal.Decimal(paid)
         self.save()

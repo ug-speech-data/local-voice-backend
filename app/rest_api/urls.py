@@ -87,4 +87,6 @@ urlpatterns += [
     path("payments/transactions-status-check", views.TransactionStatusCheck.as_view()),
     path("payments/balance", views.GetPayHubBalance.as_view()),
     path("payments/pay-ungresiter-user/", views.PayUnregisteredUsers.as_view()),
+    
+    path("payments/recalculate-participant-amounts/", views.RecalculateParticipantAmount.as_view()),
 ]

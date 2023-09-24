@@ -1,5 +1,7 @@
 import logging
-from payments.tasks import bulk_check_transaction_status
+
+from dashboard.models import Participant
+from payments.tasks import bulk_check_transaction_status, update_participants_amount
 
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -227,3 +229,13 @@ class PayUnregisteredUsers(generics.GenericAPIView):
         transaction.execute()
 
         return Response({"message": "Initiated payment successfully."})
+
+
+class RecalculateParticipantAmount(generics.GenericAPIView):
+    required_permissions = ["setup.manage_payment"]
+
+    def post(self, request, *args, **kwargs):
+        participants = Participant.objects.filter(
+            excluded_from_payment=False, flatten=False)
+        update_participants_amount.delay(filterUnpaid=False)
+        return Response({"message": f"Initiated recalcuation for {participants.count()} successfully."})
