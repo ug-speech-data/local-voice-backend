@@ -207,6 +207,7 @@ class Participant(models.Model):
     gender = models.CharField(max_length=255, blank=True, null=True)
     fullname = models.CharField(max_length=255, blank=True, null=True)
     email_address = models.EmailField(max_length=255, default="")
+    excluded_from_payment = models.BooleanField(default=False)
     slug = models.SlugField(max_length=255, blank=True, null=True)
     submitted_by = models.ForeignKey(
         User, related_name="participant", on_delete=models.PROTECT)
