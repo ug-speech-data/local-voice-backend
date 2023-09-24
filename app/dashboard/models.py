@@ -206,6 +206,7 @@ class Participant(models.Model):
     age = models.IntegerField(blank=True, null=True)
     gender = models.CharField(max_length=255, blank=True, null=True)
     fullname = models.CharField(max_length=255, blank=True, null=True)
+    email_address = models.EmailField(max_length=255, default="")
     slug = models.SlugField(max_length=255, blank=True, null=True)
     submitted_by = models.ForeignKey(
         User, related_name="participant", on_delete=models.PROTECT)
