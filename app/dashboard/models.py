@@ -51,6 +51,7 @@ class Validation(models.Model):
     user = models.ForeignKey(User, related_name="validations", on_delete=models.PROTECT)
     is_valid = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     deleted = models.BooleanField(default=False)
     archived = models.BooleanField(default=False) # i.e., shouldn't be used in computations
 
