@@ -373,3 +373,158 @@ def clear_temp_dir():
         if os.path.isfile(file):
             logger.info('Deleting file:', file)
             os.remove(file)
+
+
+@shared_task()
+def upload_file_to_drop_box(user_id, data, base_url):
+    update_notification = Notification.objects.create(
+        message="Data export started",
+        title="Data Export",
+        type="info",
+        user_id=user_id)
+    update_notification = Notification.objects.filter(
+        id=update_notification.id)
+
+    # Apply filters
+    status = data.get("status")
+    tag = data.get("tag")
+    locale = data.get("locale", "")
+    randomise = "t" in data.get("randomise", "").lower()
+    number_of_files = data.get("number_of_files", "0")
+    skip = data.get("skip", "0")
+
+    # Create temp directory
+    temp = os.path.join(settings.MEDIA_ROOT, "temps")
+    if not os.path.exists(temp):
+        os.makedirs(temp)
+
+    timestamp = datetime.today().strftime("%Y%m%d%H%M%S")
+    output_filename = f"temps/export_audio_{locale}_{timestamp}.zip"
+    output_filename = output_filename.replace(" ", "_")
+    output_dir = settings.MEDIA_ROOT / output_filename
+
+    columns = [
+        'IMAGE_PATH',
+        'IMAGE_SRC_URL',
+        "AUDIO_PATH",
+        'ORG_NAME',
+        'PROJECT_NAME ',
+        'SPEAKER_ID',
+        "LOCALE",
+        "TRANSCRIPTION",
+        "GENDER",
+        "AGE",
+        "DEVICE",
+        "ENVIRONMENT",
+        "YEAR",
+    ]
+    rows = []
+    audios = Audio.objects.filter(deleted=False)
+
+    number_of_files = int(number_of_files) if str(
+        number_of_files).isdigit() else 0
+    skip = int(skip) if str(skip).isdigit() else 0
+
+    if tag:
+        audios = audios.exclude(tags__tag=tag)
+
+    if locale != "all":
+        audios = audios.filter(locale=locale)
+
+    if status == "not_accepted":
+        audios = audios.exclude(second_audio_status="accepted")
+    else:
+        audios = audios.filter(second_audio_status="accepted")
+
+    if status == "transcription_resolved":
+        audios = audios.filter(
+            transcription_status=TranscriptionStatus.ACCEPTED.value)
+
+    if status == "transcribed":
+        audios = audios.annotate(t_count=Count("transcriptions")).filter(
+            t_count__gt=0)
+
+    if randomise:
+        audios = audios.order_by("?")
+    else:
+        audios = audios.order_by("id")
+    if number_of_files > 0:
+        audios = audios[:number_of_files]
+
+    if skip > 0:
+        audios = audios[skip:]
+
+    total_audios = audios.count()
+    skip_count = 0
+    with zipfile.ZipFile(output_dir,
+                         'w',
+                         compression=zipfile.ZIP_DEFLATED,
+                         allowZip64=True) as zip_file:
+        
+        
+        for index, audio in enumerate(audios):
+            if not (audio.file and audio.image and audio.image.file):
+                continue
+            try:
+                message = f"{round((index + 1) / total_audios * 100, 2)}% Done: Writing audio {index + 1} of {total_audios}. Skipped {skip_count}"
+                update_notification.update(message=message)
+                # Copy audio and image files to temp directory
+                audio_filename = audio.file_mp3.name if audio.file_mp3 else audio.file.name
+                image_filename = audio.image.file.name
+                new_image_filename = image_filename.split("/")[0] + "/" + str(
+                    audio.image.id).zfill(4) + "." + image_filename.split(
+                        ".")[-1]
+                zip_file.write(
+                    settings.MEDIA_ROOT / audio_filename,
+                    arcname=f"assets/{audio.locale}_{audio_filename}")
+                zip_file.write(settings.MEDIA_ROOT / image_filename,
+                               arcname=f"assets/{new_image_filename}")
+
+                participant = audio.participant
+                transcriptions = "\n\n".join(audio.get_transcriptions())
+
+                row = [
+                    f"assets/{new_image_filename}",
+                    audio.image.source_url,
+                    f"assets/{audio.locale}_{audio_filename}",
+                    "University of Ghana",
+                    "Waxal",
+                    participant.id if participant else audio.submitted_by.id,
+                    audio.locale,
+                    transcriptions,
+                    participant.gender
+                    if participant else audio.submitted_by.gender,
+                    participant.age if participant else audio.submitted_by.age,
+                    audio.device_id,
+                    audio.environment,
+                    audio.year,
+                ]
+                rows.append(row)
+            except Exception as e:
+                logger.error(str(e))
+                skip_count += 1
+
+        message = f"Writing excel file..."
+        update_notification.update(message=message)
+
+        # Write data to excel file
+        df = pd.DataFrame(rows, columns=columns)
+        df.to_excel(temp + '/waxal-project-data.xlsx')
+        zip_file.write(temp + '/waxal-project-data.xlsx',
+                       arcname='waxal-project-data.xlsx')
+        os.remove(temp + '/waxal-project-data.xlsx')
+
+    if tag:
+        message = f"Tagging {total_audios} exported files ...."
+        update_notification.update(message=message)
+        for audio in audios:
+            ExportTag.objects.create(user_id=user_id, tag=tag, audio=audio)
+
+    message = f"Export completed successfully. Exported {total_audios} files, skipped {skip_count}."
+    update_notification.update(message=message)
+    Notification.objects.create(
+        message=f"Exported {total_audios} files successfully. Click on the attached link to download.",
+        url=base_url + settings.MEDIA_URL + output_filename,
+        title="Data Exported",
+        type="success",
+        user_id=user_id)
