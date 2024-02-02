@@ -132,7 +132,7 @@ class PayValidationBenefit(generics.GenericAPIView):
     def post(self, request, **kwargs):
         user_ids = request.data.get("ids")
         users = User.objects.filter(id__in=user_ids)
-        callback_url = request.build_absolute_uri(reverse("payment:callback"))
+        callback_url = request.build_absolute_uri(reverse("payments:callback"))
         for user in users:
             wallet = user.wallet
             amount = min(wallet.validation_benefit, wallet.balance)
@@ -166,7 +166,7 @@ class PayUsersBalance(generics.GenericAPIView):
     def post(self, request, **kwargs):
         user_ids = request.data.get("ids")
         users = User.objects.filter(id__in=user_ids)
-        callback_url = request.build_absolute_uri(reverse("payment:callback"))
+        callback_url = request.build_absolute_uri(reverse("payments:callback"))
         for user in users:
             wallet = user.wallet
             amount = wallet.balance
@@ -217,7 +217,7 @@ class PayUnregisteredUsers(generics.GenericAPIView):
         momo_number = request.data.get("momo_number")
         network = request.data.get("network")
         note = request.data.get("note")
-        callback_url = request.build_absolute_uri(reverse("payment:callback"))
+        callback_url = request.build_absolute_uri(reverse("payments:callback"))
 
         transaction = Transaction.objects.create(
             amount=amount,
