@@ -1,5 +1,5 @@
 import logging
-
+from django.urls import reverse
 from dashboard.models import Participant
 from payments.tasks import bulk_check_transaction_status, update_participants_amount
 
@@ -132,6 +132,7 @@ class PayValidationBenefit(generics.GenericAPIView):
     def post(self, request, **kwargs):
         user_ids = request.data.get("ids")
         users = User.objects.filter(id__in=user_ids)
+        callback_url = request.build_absolute_uri(reverse("payment:callback"))
         for user in users:
             wallet = user.wallet
             amount = min(wallet.validation_benefit, wallet.balance)
@@ -150,7 +151,7 @@ class PayValidationBenefit(generics.GenericAPIView):
                 note="VALIDATION_PAYOUT")
 
             # Make API calls
-            transaction.execute()
+            transaction.execute(callback_url)
 
         return Response({
             "message":
@@ -165,6 +166,7 @@ class PayUsersBalance(generics.GenericAPIView):
     def post(self, request, **kwargs):
         user_ids = request.data.get("ids")
         users = User.objects.filter(id__in=user_ids)
+        callback_url = request.build_absolute_uri(reverse("payment:callback"))
         for user in users:
             wallet = user.wallet
             amount = wallet.balance
@@ -183,7 +185,7 @@ class PayUsersBalance(generics.GenericAPIView):
                 note="PAYOUT")
 
             # Make API calls
-            transaction.execute()
+            transaction.execute(callback_url)
 
         return Response({
             "message":
@@ -215,6 +217,7 @@ class PayUnregisteredUsers(generics.GenericAPIView):
         momo_number = request.data.get("momo_number")
         network = request.data.get("network")
         note = request.data.get("note")
+        callback_url = request.build_absolute_uri(reverse("payment:callback"))
 
         transaction = Transaction.objects.create(
             amount=amount,
@@ -226,7 +229,7 @@ class PayUnregisteredUsers(generics.GenericAPIView):
             note=note)
 
         # Make API calls
-        transaction.execute()
+        transaction.execute(callback_url)
 
         return Response({"message": "Initiated payment successfully."})
 

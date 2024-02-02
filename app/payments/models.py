@@ -73,7 +73,7 @@ class Transaction(models.Model):
             self.recheck_status()
         return execute_transaction.delay(self.transaction_id, callback_url)
 
-    def retry(self):
+    def retry(self, callback_url=None):
         """Retry this transaction in the case of failure. This method is idempotent."""
         if self.success():
             logger.info(
@@ -81,12 +81,12 @@ class Transaction(models.Model):
             return
         if not self.accepted_by_provider:
             # This transaction has not been executed yet.
-            self.execute()
+            self.execute(callback_url)
         else:
             # This transaction has been executed, recheck the status in the provider's system.
-            self.recheck_status()
+            self.recheck_status(callback_url)
 
-    def recheck_status(self):
+    def recheck_status(self, callback_url=None):
         """This method updates the status of this transaction.
         As well as performing other idempotent actions related to the transactions.
         i.e., crediting stores, updating wallets, etc. supposed they've not been done already.
@@ -96,7 +96,7 @@ class Transaction(models.Model):
         if self.accepted_by_provider:
             check_transaction_status.delay(self.transaction_id)
         else:
-            self.retry()
+            self.retry(callback_url)
 
 
     @method_decorator(django_db_transaction.atomic())
