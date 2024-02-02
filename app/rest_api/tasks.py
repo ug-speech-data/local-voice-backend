@@ -474,11 +474,11 @@ def upload_file_to_drop_box(user_id, data, base_url):
                 new_image_filename = image_filename.split("/")[0] + "/" + str(
                     audio.image.id).zfill(4) + "." + image_filename.split(
                         ".")[-1]
-                zip_file.write(
-                    settings.MEDIA_ROOT / audio_filename,
-                    arcname=f"assets/{audio.locale}_{audio_filename}")
-                zip_file.write(settings.MEDIA_ROOT / image_filename,
-                               arcname=f"assets/{new_image_filename}")
+                # zip_file.write(
+                #     settings.MEDIA_ROOT / audio_filename,
+                #     arcname=f"assets/{audio.locale}_{audio_filename}")
+                # zip_file.write(settings.MEDIA_ROOT / image_filename,
+                #                arcname=f"assets/{new_image_filename}")
 
                 participant = audio.participant
                 transcriptions = "\n\n".join(audio.get_transcriptions())

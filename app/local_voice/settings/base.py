@@ -25,6 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = os.environ.get(
     "SECRET_KEY",
     "django-insecure-w$@7)5qq$h0-w6(9y5@4(l0yyb7yqqbyn6qg(j5q^01ghonojy")
+DROP_BOX_KEY = os.environ.get("DROP_BOX_KEY", default="")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = int(os.environ.get("DEBUG", default=1))
