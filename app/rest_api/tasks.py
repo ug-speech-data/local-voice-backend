@@ -38,6 +38,7 @@ def export_audio_data(user_id, data, base_url):
     locale = data.get("locale", "")
     randomise = "t" in data.get("randomise", "").lower()
     number_of_files = data.get("number_of_files", "0")
+    data_type = data.get("data_type", "metadata_and_audio")
     skip = data.get("skip", "0")
 
     # Create temp directory
@@ -46,7 +47,7 @@ def export_audio_data(user_id, data, base_url):
         os.makedirs(temp)
 
     timestamp = datetime.today().strftime("%Y%m%d%H%M%S")
-    output_filename = f"temps/export_audio_{locale}_{timestamp}.zip"
+    output_filename = f"temps/export_audio_{locale}_{data_type}_{timestamp}.zip"
     output_filename = output_filename.replace(" ", "_")
     output_dir = settings.MEDIA_ROOT / output_filename
 
@@ -119,11 +120,13 @@ def export_audio_data(user_id, data, base_url):
                 new_image_filename = image_filename.split("/")[0] + "/" + str(
                     audio.image.id).zfill(4) + "." + image_filename.split(
                         ".")[-1]
-                zip_file.write(
-                    settings.MEDIA_ROOT / audio_filename,
-                    arcname=f"assets/{audio.locale}_{audio_filename}")
-                zip_file.write(settings.MEDIA_ROOT / image_filename,
-                               arcname=f"assets/{new_image_filename}")
+
+                if data_type == "metadata_only":
+                    zip_file.write(
+                        settings.MEDIA_ROOT / audio_filename,
+                        arcname=f"assets/{audio.locale}_{audio_filename}")
+                    zip_file.write(settings.MEDIA_ROOT / image_filename,
+                                   arcname=f"assets/{new_image_filename}")
 
                 participant = audio.participant
                 transcriptions = "\n\n".join(audio.get_transcriptions())
@@ -460,8 +463,7 @@ def upload_file_to_drop_box(user_id, data, base_url):
                          'w',
                          compression=zipfile.ZIP_DEFLATED,
                          allowZip64=True) as zip_file:
-        
-        
+
         for index, audio in enumerate(audios):
             if not (audio.file and audio.image and audio.image.file):
                 continue
