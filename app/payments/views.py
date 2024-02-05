@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class PaymentCallbackView(View):
 
-    @method_decorator(csrf_exempt())
+    @method_decorator(csrf_exempt)
     def post(self, request):
         transaction_id = request.GET.get("transaction_id")
 
