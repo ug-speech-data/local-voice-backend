@@ -16,3 +16,4 @@ gevent>=22.10.2
 mutagen>=1.46.0
 django-ratelimit>=4.1.0
 dropbox==11.36.2
+ipython>=8.18.1
