@@ -121,7 +121,7 @@ def export_audio_data(user_id, data, base_url):
                     audio.image.id).zfill(4) + "." + image_filename.split(
                         ".")[-1]
 
-                if data_type == "metadata_only":
+                if data_type != "metadata_only":
                     zip_file.write(
                         settings.MEDIA_ROOT / audio_filename,
                         arcname=f"assets/{audio.locale}_{audio_filename}")
