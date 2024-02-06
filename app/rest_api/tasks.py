@@ -140,9 +140,8 @@ def export_audio_data(user_id, data, base_url):
                     participant.id if participant else audio.submitted_by.id,
                     audio.locale,
                     transcriptions,
-                    participant.gender
-                    if participant else audio.submitted_by.gender,
-                    participant.age if participant else audio.submitted_by.age,
+                    participant.gender if participant and participant.gender else audio.submitted_by.gender,
+                    participant.age if participant and participant.age else audio.submitted_by.age,
                     audio.device_id,
                     audio.environment,
                     audio.year,
