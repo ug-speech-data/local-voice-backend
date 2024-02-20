@@ -6,5 +6,5 @@ from . import views
 app_name = "payments"
 
 urlpatterns = [
-    path("callback", views.PaymentCallbackView.as_view(), name="callback"),
+    path("callback/", views.PaymentCallbackView.as_view(), name="callback"),
 ]
